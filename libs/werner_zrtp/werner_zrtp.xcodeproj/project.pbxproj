@@ -1,0 +1,998 @@
+// !$*UTF8*$!
+{
+	archiveVersion = 1;
+	classes = {
+	};
+	objectVersion = 46;
+	objects = {
+
+/* Begin PBXBuildFile section */
+		4C29D28415C74D5100FC6C17 /* ZrtpSdesStream.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 4C29D28315C74D5100FC6C17 /* ZrtpSdesStream.cpp */; };
+		4C804D9E15B9BAFC0070B93B /* Foundation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 4C804D9D15B9BAFC0070B93B /* Foundation.framework */; };
+		4C804DA415B9BAFC0070B93B /* werner_zrtp.m in Sources */ = {isa = PBXBuildFile; fileRef = 4C804DA315B9BAFC0070B93B /* werner_zrtp.m */; };
+		4C804E6C15B9BB9F0070B93B /* bn.c in Sources */ = {isa = PBXBuildFile; fileRef = 4C804DAB15B9BB9E0070B93B /* bn.c */; };
+		4C804E6D15B9BB9F0070B93B /* bn.h in Headers */ = {isa = PBXBuildFile; fileRef = 4C804DAC15B9BB9E0070B93B /* bn.h */; };
+		4C804E6E15B9BB9F0070B93B /* bn00.c in Sources */ = {isa = PBXBuildFile; fileRef = 4C804DAD15B9BB9E0070B93B /* bn00.c */; };
+		4C804E7815B9BB9F0070B93B /* bnprint.c in Sources */ = {isa = PBXBuildFile; fileRef = 4C804DB815B9BB9E0070B93B /* bnprint.c */; };
+		4C804E7915B9BB9F0070B93B /* bnprint.h in Headers */ = {isa = PBXBuildFile; fileRef = 4C804DB915B9BB9E0070B93B /* bnprint.h */; };
+		4C804E7A15B9BB9F0070B93B /* bnsize00.h in Headers */ = {isa = PBXBuildFile; fileRef = 4C804DBA15B9BB9E0070B93B /* bnsize00.h */; };
+		4C804E7B15B9BB9F0070B93B /* germain.c in Sources */ = {isa = PBXBuildFile; fileRef = 4C804DBB15B9BB9E0070B93B /* germain.c */; };
+		4C804E7C15B9BB9F0070B93B /* germain.h in Headers */ = {isa = PBXBuildFile; fileRef = 4C804DBC15B9BB9E0070B93B /* germain.h */; };
+		4C804E7D15B9BB9F0070B93B /* jacobi.c in Sources */ = {isa = PBXBuildFile; fileRef = 4C804DBD15B9BB9E0070B93B /* jacobi.c */; };
+		4C804E7E15B9BB9F0070B93B /* jacobi.h in Headers */ = {isa = PBXBuildFile; fileRef = 4C804DBE15B9BB9E0070B93B /* jacobi.h */; };
+		4C804E7F15B9BB9F0070B93B /* kludge.h in Headers */ = {isa = PBXBuildFile; fileRef = 4C804DBF15B9BB9E0070B93B /* kludge.h */; };
+		4C804E8015B9BB9F0070B93B /* lbn.h in Headers */ = {isa = PBXBuildFile; fileRef = 4C804DC015B9BB9E0070B93B /* lbn.h */; };
+		4C804E8115B9BB9F0070B93B /* lbn00.c in Sources */ = {isa = PBXBuildFile; fileRef = 4C804DC115B9BB9E0070B93B /* lbn00.c */; };
+		4C804E8815B9BB9F0070B93B /* lbnmem.c in Sources */ = {isa = PBXBuildFile; fileRef = 4C804DC815B9BB9E0070B93B /* lbnmem.c */; };
+		4C804E8915B9BB9F0070B93B /* lbnmem.h in Headers */ = {isa = PBXBuildFile; fileRef = 4C804DC915B9BB9E0070B93B /* lbnmem.h */; };
+		4C804E8A15B9BB9F0070B93B /* legal.c in Sources */ = {isa = PBXBuildFile; fileRef = 4C804DCA15B9BB9E0070B93B /* legal.c */; };
+		4C804E8B15B9BB9F0070B93B /* legal.h in Headers */ = {isa = PBXBuildFile; fileRef = 4C804DCB15B9BB9E0070B93B /* legal.h */; };
+		4C804E8C15B9BB9F0070B93B /* prime.c in Sources */ = {isa = PBXBuildFile; fileRef = 4C804DCC15B9BB9E0070B93B /* prime.c */; };
+		4C804E8D15B9BB9F0070B93B /* prime.h in Headers */ = {isa = PBXBuildFile; fileRef = 4C804DCD15B9BB9E0070B93B /* prime.h */; };
+		4C804E8E15B9BB9F0070B93B /* sieve.c in Sources */ = {isa = PBXBuildFile; fileRef = 4C804DCE15B9BB9E0070B93B /* sieve.c */; };
+		4C804E8F15B9BB9F0070B93B /* sieve.h in Headers */ = {isa = PBXBuildFile; fileRef = 4C804DCF15B9BB9E0070B93B /* sieve.h */; };
+		4C804E9015B9BB9F0070B93B /* EventClass.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 4C804DD115B9BB9F0070B93B /* EventClass.cpp */; };
+		4C804E9115B9BB9F0070B93B /* EventClass.h in Headers */ = {isa = PBXBuildFile; fileRef = 4C804DD215B9BB9F0070B93B /* EventClass.h */; };
+		4C804E9215B9BB9F0070B93B /* MutexClass.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 4C804DD315B9BB9F0070B93B /* MutexClass.cpp */; };
+		4C804E9315B9BB9F0070B93B /* MutexClass.h in Headers */ = {isa = PBXBuildFile; fileRef = 4C804DD415B9BB9F0070B93B /* MutexClass.h */; };
+		4C804E9415B9BB9F0070B93B /* Thread.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 4C804DD515B9BB9F0070B93B /* Thread.cpp */; };
+		4C804E9515B9BB9F0070B93B /* Thread.h in Headers */ = {isa = PBXBuildFile; fileRef = 4C804DD615B9BB9F0070B93B /* Thread.h */; };
+		4C804E9615B9BB9F0070B93B /* aes.h in Headers */ = {isa = PBXBuildFile; fileRef = 4C804DD815B9BB9F0070B93B /* aes.h */; };
+		4C804E9715B9BB9F0070B93B /* aes_modes.c in Sources */ = {isa = PBXBuildFile; fileRef = 4C804DD915B9BB9F0070B93B /* aes_modes.c */; };
+		4C804E9815B9BB9F0070B93B /* aescpp.h in Headers */ = {isa = PBXBuildFile; fileRef = 4C804DDA15B9BB9F0070B93B /* aescpp.h */; };
+		4C804E9915B9BB9F0070B93B /* aescrypt.c in Sources */ = {isa = PBXBuildFile; fileRef = 4C804DDB15B9BB9F0070B93B /* aescrypt.c */; };
+		4C804E9A15B9BB9F0070B93B /* aeskey.c in Sources */ = {isa = PBXBuildFile; fileRef = 4C804DDC15B9BB9F0070B93B /* aeskey.c */; };
+		4C804E9B15B9BB9F0070B93B /* aesopt.h in Headers */ = {isa = PBXBuildFile; fileRef = 4C804DDD15B9BB9F0070B93B /* aesopt.h */; };
+		4C804E9C15B9BB9F0070B93B /* aestab.c in Sources */ = {isa = PBXBuildFile; fileRef = 4C804DDE15B9BB9F0070B93B /* aestab.c */; };
+		4C804E9D15B9BB9F0070B93B /* aestab.h in Headers */ = {isa = PBXBuildFile; fileRef = 4C804DDF15B9BB9F0070B93B /* aestab.h */; };
+		4C804E9E15B9BB9F0070B93B /* brg_endian.h in Headers */ = {isa = PBXBuildFile; fileRef = 4C804DE015B9BB9F0070B93B /* brg_endian.h */; };
+		4C804E9F15B9BB9F0070B93B /* brg_types.h in Headers */ = {isa = PBXBuildFile; fileRef = 4C804DE115B9BB9F0070B93B /* brg_types.h */; };
+		4C804EA015B9BB9F0070B93B /* macSkein.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 4C804DE215B9BB9F0070B93B /* macSkein.cpp */; };
+		4C804EA115B9BB9F0070B93B /* macSkein.h in Headers */ = {isa = PBXBuildFile; fileRef = 4C804DE315B9BB9F0070B93B /* macSkein.h */; };
+		4C804EA215B9BB9F0070B93B /* skein.c in Sources */ = {isa = PBXBuildFile; fileRef = 4C804DE415B9BB9F0070B93B /* skein.c */; };
+		4C804EA315B9BB9F0070B93B /* skein.h in Headers */ = {isa = PBXBuildFile; fileRef = 4C804DE515B9BB9F0070B93B /* skein.h */; };
+		4C804EA415B9BB9F0070B93B /* skein_block.c in Sources */ = {isa = PBXBuildFile; fileRef = 4C804DE615B9BB9F0070B93B /* skein_block.c */; };
+		4C804EA515B9BB9F0070B93B /* skein_iv.h in Headers */ = {isa = PBXBuildFile; fileRef = 4C804DE715B9BB9F0070B93B /* skein_iv.h */; };
+		4C804EA615B9BB9F0070B93B /* skein_port.h in Headers */ = {isa = PBXBuildFile; fileRef = 4C804DE815B9BB9F0070B93B /* skein_port.h */; };
+		4C804EA715B9BB9F0070B93B /* skeinApi.c in Sources */ = {isa = PBXBuildFile; fileRef = 4C804DE915B9BB9F0070B93B /* skeinApi.c */; };
+		4C804EA815B9BB9F0070B93B /* skeinApi.h in Headers */ = {isa = PBXBuildFile; fileRef = 4C804DEA15B9BB9F0070B93B /* skeinApi.h */; };
+		4C804EA915B9BB9F0070B93B /* twofish.c in Sources */ = {isa = PBXBuildFile; fileRef = 4C804DEB15B9BB9F0070B93B /* twofish.c */; };
+		4C804EAA15B9BB9F0070B93B /* twofish.h in Headers */ = {isa = PBXBuildFile; fileRef = 4C804DEC15B9BB9F0070B93B /* twofish.h */; };
+		4C804EAB15B9BB9F0070B93B /* twofish_cfb.c in Sources */ = {isa = PBXBuildFile; fileRef = 4C804DED15B9BB9F0070B93B /* twofish_cfb.c */; };
+		4C804EAC15B9BB9F0070B93B /* ZrtpRandom.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 4C804DEE15B9BB9F0070B93B /* ZrtpRandom.cpp */; };
+		4C804EAD15B9BB9F0070B93B /* ZrtpRandom.h in Headers */ = {isa = PBXBuildFile; fileRef = 4C804DEF15B9BB9F0070B93B /* ZrtpRandom.h */; };
+		4C804EB115B9BB9F0070B93B /* hmac.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 4C804DF615B9BB9F0070B93B /* hmac.cpp */; };
+		4C804EB215B9BB9F0070B93B /* hmac.h in Headers */ = {isa = PBXBuildFile; fileRef = 4C804DF715B9BB9F0070B93B /* hmac.h */; };
+		4C804EB515B9BB9F0070B93B /* sha1.c in Sources */ = {isa = PBXBuildFile; fileRef = 4C804DFC15B9BB9F0070B93B /* sha1.c */; };
+		4C804EB615B9BB9F0070B93B /* sha1.h in Headers */ = {isa = PBXBuildFile; fileRef = 4C804DFD15B9BB9F0070B93B /* sha1.h */; };
+		4C804EB715B9BB9F0070B93B /* SrtpSymCrypto.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 4C804DFE15B9BB9F0070B93B /* SrtpSymCrypto.cpp */; };
+		4C804EB815B9BB9F0070B93B /* SrtpSymCrypto.h in Headers */ = {isa = PBXBuildFile; fileRef = 4C804DFF15B9BB9F0070B93B /* SrtpSymCrypto.h */; };
+		4C804EB915B9BB9F0070B93B /* CryptoContext.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 4C804E0015B9BB9F0070B93B /* CryptoContext.cpp */; };
+		4C804EBA15B9BB9F0070B93B /* CryptoContext.h in Headers */ = {isa = PBXBuildFile; fileRef = 4C804E0115B9BB9F0070B93B /* CryptoContext.h */; };
+		4C804EBB15B9BB9F0070B93B /* CryptoContextCtrl.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 4C804E0215B9BB9F0070B93B /* CryptoContextCtrl.cpp */; };
+		4C804EBC15B9BB9F0070B93B /* CryptoContextCtrl.h in Headers */ = {isa = PBXBuildFile; fileRef = 4C804E0315B9BB9F0070B93B /* CryptoContextCtrl.h */; };
+		4C804EBD15B9BB9F0070B93B /* SrtpHandler.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 4C804E0415B9BB9F0070B93B /* SrtpHandler.cpp */; };
+		4C804EBE15B9BB9F0070B93B /* SrtpHandler.h in Headers */ = {isa = PBXBuildFile; fileRef = 4C804E0515B9BB9F0070B93B /* SrtpHandler.h */; };
+		4C804EBF15B9BB9F0070B93B /* Base32.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 4C804E0715B9BB9F0070B93B /* Base32.cpp */; };
+		4C804EC015B9BB9F0070B93B /* aesCFB.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 4C804E0915B9BB9F0070B93B /* aesCFB.cpp */; };
+		4C804EC115B9BB9F0070B93B /* aesCFB.h in Headers */ = {isa = PBXBuildFile; fileRef = 4C804E0A15B9BB9F0070B93B /* aesCFB.h */; };
+		4C804EC915B9BB9F0070B93B /* hmac256.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 4C804E1315B9BB9F0070B93B /* hmac256.cpp */; };
+		4C804ECA15B9BB9F0070B93B /* hmac256.h in Headers */ = {isa = PBXBuildFile; fileRef = 4C804E1415B9BB9F0070B93B /* hmac256.h */; };
+		4C804ECB15B9BB9F0070B93B /* hmac384.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 4C804E1515B9BB9F0070B93B /* hmac384.cpp */; };
+		4C804ECC15B9BB9F0070B93B /* hmac384.h in Headers */ = {isa = PBXBuildFile; fileRef = 4C804E1615B9BB9F0070B93B /* hmac384.h */; };
+		4C804ED415B9BB9F0070B93B /* sha2.c in Sources */ = {isa = PBXBuildFile; fileRef = 4C804E1F15B9BB9F0070B93B /* sha2.c */; };
+		4C804ED515B9BB9F0070B93B /* sha2.h in Headers */ = {isa = PBXBuildFile; fileRef = 4C804E2015B9BB9F0070B93B /* sha2.h */; };
+		4C804ED615B9BB9F0070B93B /* sha256.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 4C804E2115B9BB9F0070B93B /* sha256.cpp */; };
+		4C804ED715B9BB9F0070B93B /* sha256.h in Headers */ = {isa = PBXBuildFile; fileRef = 4C804E2215B9BB9F0070B93B /* sha256.h */; };
+		4C804ED815B9BB9F0070B93B /* sha384.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 4C804E2315B9BB9F0070B93B /* sha384.cpp */; };
+		4C804ED915B9BB9F0070B93B /* sha384.h in Headers */ = {isa = PBXBuildFile; fileRef = 4C804E2415B9BB9F0070B93B /* sha384.h */; };
+		4C804EDA15B9BB9F0070B93B /* twoCFB.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 4C804E2515B9BB9F0070B93B /* twoCFB.cpp */; };
+		4C804EDB15B9BB9F0070B93B /* twoCFB.h in Headers */ = {isa = PBXBuildFile; fileRef = 4C804E2615B9BB9F0070B93B /* twoCFB.h */; };
+		4C804EDC15B9BB9F0070B93B /* zrtpDH.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 4C804E2715B9BB9F0070B93B /* zrtpDH.cpp */; };
+		4C804EDD15B9BB9F0070B93B /* zrtpDH.h in Headers */ = {isa = PBXBuildFile; fileRef = 4C804E2815B9BB9F0070B93B /* zrtpDH.h */; };
+		4C804EDE15B9BB9F0070B93B /* Base32.h in Headers */ = {isa = PBXBuildFile; fileRef = 4C804E2A15B9BB9F0070B93B /* Base32.h */; };
+		4C804EDF15B9BB9F0070B93B /* ZIDCache.h in Headers */ = {isa = PBXBuildFile; fileRef = 4C804E2B15B9BB9F0070B93B /* ZIDCache.h */; };
+		4C804EE015B9BB9F0070B93B /* ZIDCacheDb.h in Headers */ = {isa = PBXBuildFile; fileRef = 4C804E2C15B9BB9F0070B93B /* ZIDCacheDb.h */; };
+		4C804EE115B9BB9F0070B93B /* ZIDCacheFile.h in Headers */ = {isa = PBXBuildFile; fileRef = 4C804E2D15B9BB9F0070B93B /* ZIDCacheFile.h */; };
+		4C804EE215B9BB9F0070B93B /* ZIDRecord.h in Headers */ = {isa = PBXBuildFile; fileRef = 4C804E2E15B9BB9F0070B93B /* ZIDRecord.h */; };
+		4C804EE315B9BB9F0070B93B /* ZIDRecordDb.h in Headers */ = {isa = PBXBuildFile; fileRef = 4C804E2F15B9BB9F0070B93B /* ZIDRecordDb.h */; };
+		4C804EE415B9BB9F0070B93B /* ZIDRecordFile.h in Headers */ = {isa = PBXBuildFile; fileRef = 4C804E3015B9BB9F0070B93B /* ZIDRecordFile.h */; };
+		4C804EE515B9BB9F0070B93B /* ZRtp.h in Headers */ = {isa = PBXBuildFile; fileRef = 4C804E3115B9BB9F0070B93B /* ZRtp.h */; };
+		4C804EE615B9BB9F0070B93B /* zrtpB64Decode.h in Headers */ = {isa = PBXBuildFile; fileRef = 4C804E3215B9BB9F0070B93B /* zrtpB64Decode.h */; };
+		4C804EE715B9BB9F0070B93B /* zrtpB64Encode.h in Headers */ = {isa = PBXBuildFile; fileRef = 4C804E3315B9BB9F0070B93B /* zrtpB64Encode.h */; };
+		4C804EE815B9BB9F0070B93B /* zrtpCacheDb.h in Headers */ = {isa = PBXBuildFile; fileRef = 4C804E3415B9BB9F0070B93B /* zrtpCacheDb.h */; };
+		4C804EE915B9BB9F0070B93B /* zrtpCacheDbBackend.h in Headers */ = {isa = PBXBuildFile; fileRef = 4C804E3515B9BB9F0070B93B /* zrtpCacheDbBackend.h */; };
+		4C804EEA15B9BB9F0070B93B /* ZrtpCallback.h in Headers */ = {isa = PBXBuildFile; fileRef = 4C804E3615B9BB9F0070B93B /* ZrtpCallback.h */; };
+		4C804EEB15B9BB9F0070B93B /* ZrtpCallbackWrapper.h in Headers */ = {isa = PBXBuildFile; fileRef = 4C804E3715B9BB9F0070B93B /* ZrtpCallbackWrapper.h */; };
+		4C804EEC15B9BB9F0070B93B /* ZrtpCodes.h in Headers */ = {isa = PBXBuildFile; fileRef = 4C804E3815B9BB9F0070B93B /* ZrtpCodes.h */; };
+		4C804EED15B9BB9F0070B93B /* ZrtpConfigure.h in Headers */ = {isa = PBXBuildFile; fileRef = 4C804E3915B9BB9F0070B93B /* ZrtpConfigure.h */; };
+		4C804EEE15B9BB9F0070B93B /* ZrtpCrc32.h in Headers */ = {isa = PBXBuildFile; fileRef = 4C804E3A15B9BB9F0070B93B /* ZrtpCrc32.h */; };
+		4C804EEF15B9BB9F0070B93B /* ZrtpCWrapper.h in Headers */ = {isa = PBXBuildFile; fileRef = 4C804E3B15B9BB9F0070B93B /* ZrtpCWrapper.h */; };
+		4C804EF015B9BB9F0070B93B /* zrtpPacket.h in Headers */ = {isa = PBXBuildFile; fileRef = 4C804E3C15B9BB9F0070B93B /* zrtpPacket.h */; };
+		4C804EF115B9BB9F0070B93B /* ZrtpPacketBase.h in Headers */ = {isa = PBXBuildFile; fileRef = 4C804E3D15B9BB9F0070B93B /* ZrtpPacketBase.h */; };
+		4C804EF215B9BB9F0070B93B /* ZrtpPacketClearAck.h in Headers */ = {isa = PBXBuildFile; fileRef = 4C804E3E15B9BB9F0070B93B /* ZrtpPacketClearAck.h */; };
+		4C804EF315B9BB9F0070B93B /* ZrtpPacketCommit.h in Headers */ = {isa = PBXBuildFile; fileRef = 4C804E3F15B9BB9F0070B93B /* ZrtpPacketCommit.h */; };
+		4C804EF415B9BB9F0070B93B /* ZrtpPacketConf2Ack.h in Headers */ = {isa = PBXBuildFile; fileRef = 4C804E4015B9BB9F0070B93B /* ZrtpPacketConf2Ack.h */; };
+		4C804EF515B9BB9F0070B93B /* ZrtpPacketConfirm.h in Headers */ = {isa = PBXBuildFile; fileRef = 4C804E4115B9BB9F0070B93B /* ZrtpPacketConfirm.h */; };
+		4C804EF615B9BB9F0070B93B /* ZrtpPacketDHPart.h in Headers */ = {isa = PBXBuildFile; fileRef = 4C804E4215B9BB9F0070B93B /* ZrtpPacketDHPart.h */; };
+		4C804EF715B9BB9F0070B93B /* ZrtpPacketError.h in Headers */ = {isa = PBXBuildFile; fileRef = 4C804E4315B9BB9F0070B93B /* ZrtpPacketError.h */; };
+		4C804EF815B9BB9F0070B93B /* ZrtpPacketErrorAck.h in Headers */ = {isa = PBXBuildFile; fileRef = 4C804E4415B9BB9F0070B93B /* ZrtpPacketErrorAck.h */; };
+		4C804EF915B9BB9F0070B93B /* ZrtpPacketGoClear.h in Headers */ = {isa = PBXBuildFile; fileRef = 4C804E4515B9BB9F0070B93B /* ZrtpPacketGoClear.h */; };
+		4C804EFA15B9BB9F0070B93B /* ZrtpPacketHello.h in Headers */ = {isa = PBXBuildFile; fileRef = 4C804E4615B9BB9F0070B93B /* ZrtpPacketHello.h */; };
+		4C804EFB15B9BB9F0070B93B /* ZrtpPacketHelloAck.h in Headers */ = {isa = PBXBuildFile; fileRef = 4C804E4715B9BB9F0070B93B /* ZrtpPacketHelloAck.h */; };
+		4C804EFC15B9BB9F0070B93B /* ZrtpPacketPing.h in Headers */ = {isa = PBXBuildFile; fileRef = 4C804E4815B9BB9F0070B93B /* ZrtpPacketPing.h */; };
+		4C804EFD15B9BB9F0070B93B /* ZrtpPacketPingAck.h in Headers */ = {isa = PBXBuildFile; fileRef = 4C804E4915B9BB9F0070B93B /* ZrtpPacketPingAck.h */; };
+		4C804EFE15B9BB9F0070B93B /* ZrtpPacketRelayAck.h in Headers */ = {isa = PBXBuildFile; fileRef = 4C804E4A15B9BB9F0070B93B /* ZrtpPacketRelayAck.h */; };
+		4C804EFF15B9BB9F0070B93B /* ZrtpPacketSASrelay.h in Headers */ = {isa = PBXBuildFile; fileRef = 4C804E4B15B9BB9F0070B93B /* ZrtpPacketSASrelay.h */; };
+		4C804F0015B9BB9F0070B93B /* ZrtpStateClass.h in Headers */ = {isa = PBXBuildFile; fileRef = 4C804E4C15B9BB9F0070B93B /* ZrtpStateClass.h */; };
+		4C804F0115B9BB9F0070B93B /* ZrtpStates.h in Headers */ = {isa = PBXBuildFile; fileRef = 4C804E4D15B9BB9F0070B93B /* ZrtpStates.h */; };
+		4C804F0215B9BB9F0070B93B /* ZrtpTextData.h in Headers */ = {isa = PBXBuildFile; fileRef = 4C804E4E15B9BB9F0070B93B /* ZrtpTextData.h */; };
+		4C804F0315B9BB9F0070B93B /* ZrtpUserCallback.h in Headers */ = {isa = PBXBuildFile; fileRef = 4C804E4F15B9BB9F0070B93B /* ZrtpUserCallback.h */; };
+		4C804F0415B9BB9F0070B93B /* ZIDCacheDb.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 4C804E5015B9BB9F0070B93B /* ZIDCacheDb.cpp */; };
+		4C804F0615B9BB9F0070B93B /* ZIDRecordDb.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 4C804E5215B9BB9F0070B93B /* ZIDRecordDb.cpp */; };
+		4C804F0715B9BB9F0070B93B /* ZIDRecordFile.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 4C804E5315B9BB9F0070B93B /* ZIDRecordFile.cpp */; };
+		4C804F0815B9BB9F0070B93B /* ZRtp.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 4C804E5415B9BB9F0070B93B /* ZRtp.cpp */; };
+		4C804F0915B9BB9F0070B93B /* zrtpB64Decode.c in Sources */ = {isa = PBXBuildFile; fileRef = 4C804E5515B9BB9F0070B93B /* zrtpB64Decode.c */; };
+		4C804F0A15B9BB9F0070B93B /* zrtpB64Encode.c in Sources */ = {isa = PBXBuildFile; fileRef = 4C804E5615B9BB9F0070B93B /* zrtpB64Encode.c */; };
+		4C804F0B15B9BB9F0070B93B /* zrtpCacheSqliteBackend.c in Sources */ = {isa = PBXBuildFile; fileRef = 4C804E5715B9BB9F0070B93B /* zrtpCacheSqliteBackend.c */; };
+		4C804F0C15B9BB9F0070B93B /* ZrtpCallbackWrapper.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 4C804E5815B9BB9F0070B93B /* ZrtpCallbackWrapper.cpp */; };
+		4C804F0D15B9BB9F0070B93B /* ZrtpConfigure.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 4C804E5915B9BB9F0070B93B /* ZrtpConfigure.cpp */; };
+		4C804F0E15B9BB9F0070B93B /* ZrtpCrc32.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 4C804E5A15B9BB9F0070B93B /* ZrtpCrc32.cpp */; };
+		4C804F0F15B9BB9F0070B93B /* ZrtpCWrapper.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 4C804E5B15B9BB9F0070B93B /* ZrtpCWrapper.cpp */; };
+		4C804F1015B9BB9F0070B93B /* ZrtpPacketClearAck.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 4C804E5C15B9BB9F0070B93B /* ZrtpPacketClearAck.cpp */; };
+		4C804F1115B9BB9F0070B93B /* ZrtpPacketCommit.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 4C804E5D15B9BB9F0070B93B /* ZrtpPacketCommit.cpp */; };
+		4C804F1215B9BB9F0070B93B /* ZrtpPacketConf2Ack.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 4C804E5E15B9BB9F0070B93B /* ZrtpPacketConf2Ack.cpp */; };
+		4C804F1315B9BB9F0070B93B /* ZrtpPacketConfirm.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 4C804E5F15B9BB9F0070B93B /* ZrtpPacketConfirm.cpp */; };
+		4C804F1415B9BB9F0070B93B /* ZrtpPacketDHPart.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 4C804E6015B9BB9F0070B93B /* ZrtpPacketDHPart.cpp */; };
+		4C804F1515B9BB9F0070B93B /* ZrtpPacketError.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 4C804E6115B9BB9F0070B93B /* ZrtpPacketError.cpp */; };
+		4C804F1615B9BB9F0070B93B /* ZrtpPacketErrorAck.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 4C804E6215B9BB9F0070B93B /* ZrtpPacketErrorAck.cpp */; };
+		4C804F1715B9BB9F0070B93B /* ZrtpPacketGoClear.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 4C804E6315B9BB9F0070B93B /* ZrtpPacketGoClear.cpp */; };
+		4C804F1815B9BB9F0070B93B /* ZrtpPacketHello.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 4C804E6415B9BB9F0070B93B /* ZrtpPacketHello.cpp */; };
+		4C804F1915B9BB9F0070B93B /* ZrtpPacketHelloAck.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 4C804E6515B9BB9F0070B93B /* ZrtpPacketHelloAck.cpp */; };
+		4C804F1A15B9BB9F0070B93B /* ZrtpPacketPing.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 4C804E6615B9BB9F0070B93B /* ZrtpPacketPing.cpp */; };
+		4C804F1B15B9BB9F0070B93B /* ZrtpPacketPingAck.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 4C804E6715B9BB9F0070B93B /* ZrtpPacketPingAck.cpp */; };
+		4C804F1C15B9BB9F0070B93B /* ZrtpPacketRelayAck.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 4C804E6815B9BB9F0070B93B /* ZrtpPacketRelayAck.cpp */; };
+		4C804F1D15B9BB9F0070B93B /* ZrtpPacketSASrelay.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 4C804E6915B9BB9F0070B93B /* ZrtpPacketSASrelay.cpp */; };
+		4C804F1E15B9BB9F0070B93B /* ZrtpStateClass.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 4C804E6A15B9BB9F0070B93B /* ZrtpStateClass.cpp */; };
+		4C804F1F15B9BB9F0070B93B /* ZrtpTextData.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 4C804E6B15B9BB9F0070B93B /* ZrtpTextData.cpp */; };
+		4C804F2A15B9BBB00070B93B /* CtZrtpCallback.h in Headers */ = {isa = PBXBuildFile; fileRef = 4C804F2315B9BBB00070B93B /* CtZrtpCallback.h */; };
+		4C804F2B15B9BBB00070B93B /* CtZrtpSession.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 4C804F2415B9BBB00070B93B /* CtZrtpSession.cpp */; };
+		4C804F2C15B9BBB00070B93B /* CtZrtpSession.h in Headers */ = {isa = PBXBuildFile; fileRef = 4C804F2515B9BBB00070B93B /* CtZrtpSession.h */; };
+		4C804F2D15B9BBB00070B93B /* CtZrtpStream.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 4C804F2615B9BBB00070B93B /* CtZrtpStream.cpp */; };
+		4C804F2E15B9BBB00070B93B /* CtZrtpStream.h in Headers */ = {isa = PBXBuildFile; fileRef = 4C804F2715B9BBB00070B93B /* CtZrtpStream.h */; };
+		4C804F2F15B9BBB00070B93B /* testdriver.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 4C804F2815B9BBB00070B93B /* testdriver.cpp */; };
+		4C804F6A15BC16070070B93B /* ec.c in Sources */ = {isa = PBXBuildFile; fileRef = 4C804F6615BC16070070B93B /* ec.c */; };
+		4C804F6B15BC16070070B93B /* ec.h in Headers */ = {isa = PBXBuildFile; fileRef = 4C804F6715BC16070070B93B /* ec.h */; };
+		4C804F6C15BC16070070B93B /* ecdh.c in Sources */ = {isa = PBXBuildFile; fileRef = 4C804F6815BC16070070B93B /* ecdh.c */; };
+		4C804F6D15BC16070070B93B /* ecdh.h in Headers */ = {isa = PBXBuildFile; fileRef = 4C804F6915BC16070070B93B /* ecdh.h */; };
+		4CA399BA15F51BD10040A290 /* osSpecifics.c in Sources */ = {isa = PBXBuildFile; fileRef = 4CA399B915F51BD10040A290 /* osSpecifics.c */; };
+/* End PBXBuildFile section */
+
+/* Begin PBXFileReference section */
+		4C29D28315C74D5100FC6C17 /* ZrtpSdesStream.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = ZrtpSdesStream.cpp; sourceTree = "<group>"; };
+		4C804D9A15B9BAFC0070B93B /* libwerner_zrtp.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = libwerner_zrtp.a; sourceTree = BUILT_PRODUCTS_DIR; };
+		4C804D9D15B9BAFC0070B93B /* Foundation.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Foundation.framework; path = System/Library/Frameworks/Foundation.framework; sourceTree = SDKROOT; };
+		4C804DA115B9BAFC0070B93B /* werner_zrtp-Prefix.pch */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = "werner_zrtp-Prefix.pch"; sourceTree = "<group>"; };
+		4C804DA215B9BAFC0070B93B /* werner_zrtp.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = werner_zrtp.h; sourceTree = "<group>"; };
+		4C804DA315B9BAFC0070B93B /* werner_zrtp.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = werner_zrtp.m; sourceTree = "<group>"; };
+		4C804DAB15B9BB9E0070B93B /* bn.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = bn.c; sourceTree = "<group>"; };
+		4C804DAC15B9BB9E0070B93B /* bn.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = bn.h; sourceTree = "<group>"; };
+		4C804DAD15B9BB9E0070B93B /* bn00.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = bn00.c; sourceTree = "<group>"; };
+		4C804DB815B9BB9E0070B93B /* bnprint.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = bnprint.c; sourceTree = "<group>"; };
+		4C804DB915B9BB9E0070B93B /* bnprint.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = bnprint.h; sourceTree = "<group>"; };
+		4C804DBA15B9BB9E0070B93B /* bnsize00.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = bnsize00.h; sourceTree = "<group>"; };
+		4C804DBB15B9BB9E0070B93B /* germain.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = germain.c; sourceTree = "<group>"; };
+		4C804DBC15B9BB9E0070B93B /* germain.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = germain.h; sourceTree = "<group>"; };
+		4C804DBD15B9BB9E0070B93B /* jacobi.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = jacobi.c; sourceTree = "<group>"; };
+		4C804DBE15B9BB9E0070B93B /* jacobi.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = jacobi.h; sourceTree = "<group>"; };
+		4C804DBF15B9BB9E0070B93B /* kludge.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = kludge.h; sourceTree = "<group>"; };
+		4C804DC015B9BB9E0070B93B /* lbn.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = lbn.h; sourceTree = "<group>"; };
+		4C804DC115B9BB9E0070B93B /* lbn00.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = lbn00.c; sourceTree = "<group>"; };
+		4C804DC815B9BB9E0070B93B /* lbnmem.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = lbnmem.c; sourceTree = "<group>"; };
+		4C804DC915B9BB9E0070B93B /* lbnmem.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = lbnmem.h; sourceTree = "<group>"; };
+		4C804DCA15B9BB9E0070B93B /* legal.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = legal.c; sourceTree = "<group>"; };
+		4C804DCB15B9BB9E0070B93B /* legal.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = legal.h; sourceTree = "<group>"; };
+		4C804DCC15B9BB9E0070B93B /* prime.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = prime.c; sourceTree = "<group>"; };
+		4C804DCD15B9BB9E0070B93B /* prime.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = prime.h; sourceTree = "<group>"; };
+		4C804DCE15B9BB9E0070B93B /* sieve.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = sieve.c; sourceTree = "<group>"; };
+		4C804DCF15B9BB9E0070B93B /* sieve.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = sieve.h; sourceTree = "<group>"; };
+		4C804DD115B9BB9F0070B93B /* EventClass.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = EventClass.cpp; sourceTree = "<group>"; };
+		4C804DD215B9BB9F0070B93B /* EventClass.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = EventClass.h; sourceTree = "<group>"; };
+		4C804DD315B9BB9F0070B93B /* MutexClass.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = MutexClass.cpp; sourceTree = "<group>"; };
+		4C804DD415B9BB9F0070B93B /* MutexClass.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = MutexClass.h; sourceTree = "<group>"; };
+		4C804DD515B9BB9F0070B93B /* Thread.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = Thread.cpp; sourceTree = "<group>"; };
+		4C804DD615B9BB9F0070B93B /* Thread.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = Thread.h; sourceTree = "<group>"; };
+		4C804DD815B9BB9F0070B93B /* aes.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = aes.h; sourceTree = "<group>"; };
+		4C804DD915B9BB9F0070B93B /* aes_modes.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = aes_modes.c; sourceTree = "<group>"; };
+		4C804DDA15B9BB9F0070B93B /* aescpp.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = aescpp.h; sourceTree = "<group>"; };
+		4C804DDB15B9BB9F0070B93B /* aescrypt.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = aescrypt.c; sourceTree = "<group>"; };
+		4C804DDC15B9BB9F0070B93B /* aeskey.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = aeskey.c; sourceTree = "<group>"; };
+		4C804DDD15B9BB9F0070B93B /* aesopt.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = aesopt.h; sourceTree = "<group>"; };
+		4C804DDE15B9BB9F0070B93B /* aestab.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = aestab.c; sourceTree = "<group>"; };
+		4C804DDF15B9BB9F0070B93B /* aestab.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = aestab.h; sourceTree = "<group>"; };
+		4C804DE015B9BB9F0070B93B /* brg_endian.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = brg_endian.h; sourceTree = "<group>"; };
+		4C804DE115B9BB9F0070B93B /* brg_types.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = brg_types.h; sourceTree = "<group>"; };
+		4C804DE215B9BB9F0070B93B /* macSkein.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = macSkein.cpp; sourceTree = "<group>"; };
+		4C804DE315B9BB9F0070B93B /* macSkein.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = macSkein.h; sourceTree = "<group>"; };
+		4C804DE415B9BB9F0070B93B /* skein.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = skein.c; sourceTree = "<group>"; };
+		4C804DE515B9BB9F0070B93B /* skein.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = skein.h; sourceTree = "<group>"; };
+		4C804DE615B9BB9F0070B93B /* skein_block.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = skein_block.c; sourceTree = "<group>"; };
+		4C804DE715B9BB9F0070B93B /* skein_iv.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = skein_iv.h; sourceTree = "<group>"; };
+		4C804DE815B9BB9F0070B93B /* skein_port.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = skein_port.h; sourceTree = "<group>"; };
+		4C804DE915B9BB9F0070B93B /* skeinApi.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = skeinApi.c; sourceTree = "<group>"; };
+		4C804DEA15B9BB9F0070B93B /* skeinApi.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = skeinApi.h; sourceTree = "<group>"; };
+		4C804DEB15B9BB9F0070B93B /* twofish.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = twofish.c; sourceTree = "<group>"; };
+		4C804DEC15B9BB9F0070B93B /* twofish.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = twofish.h; sourceTree = "<group>"; };
+		4C804DED15B9BB9F0070B93B /* twofish_cfb.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = twofish_cfb.c; sourceTree = "<group>"; };
+		4C804DEE15B9BB9F0070B93B /* ZrtpRandom.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = ZrtpRandom.cpp; sourceTree = "<group>"; };
+		4C804DEF15B9BB9F0070B93B /* ZrtpRandom.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ZrtpRandom.h; sourceTree = "<group>"; };
+		4C804DF615B9BB9F0070B93B /* hmac.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = hmac.cpp; sourceTree = "<group>"; };
+		4C804DF715B9BB9F0070B93B /* hmac.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = hmac.h; sourceTree = "<group>"; };
+		4C804DFC15B9BB9F0070B93B /* sha1.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = sha1.c; sourceTree = "<group>"; };
+		4C804DFD15B9BB9F0070B93B /* sha1.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = sha1.h; sourceTree = "<group>"; };
+		4C804DFE15B9BB9F0070B93B /* SrtpSymCrypto.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = SrtpSymCrypto.cpp; sourceTree = "<group>"; };
+		4C804DFF15B9BB9F0070B93B /* SrtpSymCrypto.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = SrtpSymCrypto.h; sourceTree = "<group>"; };
+		4C804E0015B9BB9F0070B93B /* CryptoContext.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = CryptoContext.cpp; sourceTree = "<group>"; };
+		4C804E0115B9BB9F0070B93B /* CryptoContext.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = CryptoContext.h; sourceTree = "<group>"; };
+		4C804E0215B9BB9F0070B93B /* CryptoContextCtrl.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = CryptoContextCtrl.cpp; sourceTree = "<group>"; };
+		4C804E0315B9BB9F0070B93B /* CryptoContextCtrl.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = CryptoContextCtrl.h; sourceTree = "<group>"; };
+		4C804E0415B9BB9F0070B93B /* SrtpHandler.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = SrtpHandler.cpp; sourceTree = "<group>"; };
+		4C804E0515B9BB9F0070B93B /* SrtpHandler.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = SrtpHandler.h; sourceTree = "<group>"; };
+		4C804E0715B9BB9F0070B93B /* Base32.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = Base32.cpp; sourceTree = "<group>"; };
+		4C804E0915B9BB9F0070B93B /* aesCFB.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = aesCFB.cpp; sourceTree = "<group>"; };
+		4C804E0A15B9BB9F0070B93B /* aesCFB.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = aesCFB.h; sourceTree = "<group>"; };
+		4C804E1315B9BB9F0070B93B /* hmac256.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = hmac256.cpp; sourceTree = "<group>"; };
+		4C804E1415B9BB9F0070B93B /* hmac256.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = hmac256.h; sourceTree = "<group>"; };
+		4C804E1515B9BB9F0070B93B /* hmac384.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = hmac384.cpp; sourceTree = "<group>"; };
+		4C804E1615B9BB9F0070B93B /* hmac384.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = hmac384.h; sourceTree = "<group>"; };
+		4C804E1F15B9BB9F0070B93B /* sha2.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = sha2.c; sourceTree = "<group>"; };
+		4C804E2015B9BB9F0070B93B /* sha2.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = sha2.h; sourceTree = "<group>"; };
+		4C804E2115B9BB9F0070B93B /* sha256.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = sha256.cpp; sourceTree = "<group>"; };
+		4C804E2215B9BB9F0070B93B /* sha256.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = sha256.h; sourceTree = "<group>"; };
+		4C804E2315B9BB9F0070B93B /* sha384.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = sha384.cpp; sourceTree = "<group>"; };
+		4C804E2415B9BB9F0070B93B /* sha384.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = sha384.h; sourceTree = "<group>"; };
+		4C804E2515B9BB9F0070B93B /* twoCFB.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = twoCFB.cpp; sourceTree = "<group>"; };
+		4C804E2615B9BB9F0070B93B /* twoCFB.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = twoCFB.h; sourceTree = "<group>"; };
+		4C804E2715B9BB9F0070B93B /* zrtpDH.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = zrtpDH.cpp; sourceTree = "<group>"; };
+		4C804E2815B9BB9F0070B93B /* zrtpDH.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = zrtpDH.h; sourceTree = "<group>"; };
+		4C804E2A15B9BB9F0070B93B /* Base32.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = Base32.h; sourceTree = "<group>"; };
+		4C804E2B15B9BB9F0070B93B /* ZIDCache.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ZIDCache.h; sourceTree = "<group>"; };
+		4C804E2C15B9BB9F0070B93B /* ZIDCacheDb.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ZIDCacheDb.h; sourceTree = "<group>"; };
+		4C804E2D15B9BB9F0070B93B /* ZIDCacheFile.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ZIDCacheFile.h; sourceTree = "<group>"; };
+		4C804E2E15B9BB9F0070B93B /* ZIDRecord.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ZIDRecord.h; sourceTree = "<group>"; };
+		4C804E2F15B9BB9F0070B93B /* ZIDRecordDb.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ZIDRecordDb.h; sourceTree = "<group>"; };
+		4C804E3015B9BB9F0070B93B /* ZIDRecordFile.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ZIDRecordFile.h; sourceTree = "<group>"; };
+		4C804E3115B9BB9F0070B93B /* ZRtp.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ZRtp.h; sourceTree = "<group>"; };
+		4C804E3215B9BB9F0070B93B /* zrtpB64Decode.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = zrtpB64Decode.h; sourceTree = "<group>"; };
+		4C804E3315B9BB9F0070B93B /* zrtpB64Encode.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = zrtpB64Encode.h; sourceTree = "<group>"; };
+		4C804E3415B9BB9F0070B93B /* zrtpCacheDb.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = zrtpCacheDb.h; sourceTree = "<group>"; };
+		4C804E3515B9BB9F0070B93B /* zrtpCacheDbBackend.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = zrtpCacheDbBackend.h; sourceTree = "<group>"; };
+		4C804E3615B9BB9F0070B93B /* ZrtpCallback.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ZrtpCallback.h; sourceTree = "<group>"; };
+		4C804E3715B9BB9F0070B93B /* ZrtpCallbackWrapper.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ZrtpCallbackWrapper.h; sourceTree = "<group>"; };
+		4C804E3815B9BB9F0070B93B /* ZrtpCodes.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ZrtpCodes.h; sourceTree = "<group>"; };
+		4C804E3915B9BB9F0070B93B /* ZrtpConfigure.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ZrtpConfigure.h; sourceTree = "<group>"; };
+		4C804E3A15B9BB9F0070B93B /* ZrtpCrc32.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ZrtpCrc32.h; sourceTree = "<group>"; };
+		4C804E3B15B9BB9F0070B93B /* ZrtpCWrapper.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ZrtpCWrapper.h; sourceTree = "<group>"; };
+		4C804E3C15B9BB9F0070B93B /* zrtpPacket.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = zrtpPacket.h; sourceTree = "<group>"; };
+		4C804E3D15B9BB9F0070B93B /* ZrtpPacketBase.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ZrtpPacketBase.h; sourceTree = "<group>"; };
+		4C804E3E15B9BB9F0070B93B /* ZrtpPacketClearAck.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ZrtpPacketClearAck.h; sourceTree = "<group>"; };
+		4C804E3F15B9BB9F0070B93B /* ZrtpPacketCommit.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ZrtpPacketCommit.h; sourceTree = "<group>"; };
+		4C804E4015B9BB9F0070B93B /* ZrtpPacketConf2Ack.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ZrtpPacketConf2Ack.h; sourceTree = "<group>"; };
+		4C804E4115B9BB9F0070B93B /* ZrtpPacketConfirm.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ZrtpPacketConfirm.h; sourceTree = "<group>"; };
+		4C804E4215B9BB9F0070B93B /* ZrtpPacketDHPart.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ZrtpPacketDHPart.h; sourceTree = "<group>"; };
+		4C804E4315B9BB9F0070B93B /* ZrtpPacketError.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ZrtpPacketError.h; sourceTree = "<group>"; };
+		4C804E4415B9BB9F0070B93B /* ZrtpPacketErrorAck.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ZrtpPacketErrorAck.h; sourceTree = "<group>"; };
+		4C804E4515B9BB9F0070B93B /* ZrtpPacketGoClear.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ZrtpPacketGoClear.h; sourceTree = "<group>"; };
+		4C804E4615B9BB9F0070B93B /* ZrtpPacketHello.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ZrtpPacketHello.h; sourceTree = "<group>"; };
+		4C804E4715B9BB9F0070B93B /* ZrtpPacketHelloAck.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ZrtpPacketHelloAck.h; sourceTree = "<group>"; };
+		4C804E4815B9BB9F0070B93B /* ZrtpPacketPing.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ZrtpPacketPing.h; sourceTree = "<group>"; };
+		4C804E4915B9BB9F0070B93B /* ZrtpPacketPingAck.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ZrtpPacketPingAck.h; sourceTree = "<group>"; };
+		4C804E4A15B9BB9F0070B93B /* ZrtpPacketRelayAck.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ZrtpPacketRelayAck.h; sourceTree = "<group>"; };
+		4C804E4B15B9BB9F0070B93B /* ZrtpPacketSASrelay.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ZrtpPacketSASrelay.h; sourceTree = "<group>"; };
+		4C804E4C15B9BB9F0070B93B /* ZrtpStateClass.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ZrtpStateClass.h; sourceTree = "<group>"; };
+		4C804E4D15B9BB9F0070B93B /* ZrtpStates.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ZrtpStates.h; sourceTree = "<group>"; };
+		4C804E4E15B9BB9F0070B93B /* ZrtpTextData.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ZrtpTextData.h; sourceTree = "<group>"; };
+		4C804E4F15B9BB9F0070B93B /* ZrtpUserCallback.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ZrtpUserCallback.h; sourceTree = "<group>"; };
+		4C804E5015B9BB9F0070B93B /* ZIDCacheDb.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = ZIDCacheDb.cpp; sourceTree = "<group>"; };
+		4C804E5215B9BB9F0070B93B /* ZIDRecordDb.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = ZIDRecordDb.cpp; sourceTree = "<group>"; };
+		4C804E5315B9BB9F0070B93B /* ZIDRecordFile.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = ZIDRecordFile.cpp; sourceTree = "<group>"; };
+		4C804E5415B9BB9F0070B93B /* ZRtp.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = ZRtp.cpp; sourceTree = "<group>"; };
+		4C804E5515B9BB9F0070B93B /* zrtpB64Decode.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = zrtpB64Decode.c; sourceTree = "<group>"; };
+		4C804E5615B9BB9F0070B93B /* zrtpB64Encode.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = zrtpB64Encode.c; sourceTree = "<group>"; };
+		4C804E5715B9BB9F0070B93B /* zrtpCacheSqliteBackend.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = zrtpCacheSqliteBackend.c; sourceTree = "<group>"; };
+		4C804E5815B9BB9F0070B93B /* ZrtpCallbackWrapper.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = ZrtpCallbackWrapper.cpp; sourceTree = "<group>"; };
+		4C804E5915B9BB9F0070B93B /* ZrtpConfigure.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = ZrtpConfigure.cpp; sourceTree = "<group>"; };
+		4C804E5A15B9BB9F0070B93B /* ZrtpCrc32.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = ZrtpCrc32.cpp; sourceTree = "<group>"; };
+		4C804E5B15B9BB9F0070B93B /* ZrtpCWrapper.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = ZrtpCWrapper.cpp; sourceTree = "<group>"; };
+		4C804E5C15B9BB9F0070B93B /* ZrtpPacketClearAck.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = ZrtpPacketClearAck.cpp; sourceTree = "<group>"; };
+		4C804E5D15B9BB9F0070B93B /* ZrtpPacketCommit.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = ZrtpPacketCommit.cpp; sourceTree = "<group>"; };
+		4C804E5E15B9BB9F0070B93B /* ZrtpPacketConf2Ack.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = ZrtpPacketConf2Ack.cpp; sourceTree = "<group>"; };
+		4C804E5F15B9BB9F0070B93B /* ZrtpPacketConfirm.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = ZrtpPacketConfirm.cpp; sourceTree = "<group>"; };
+		4C804E6015B9BB9F0070B93B /* ZrtpPacketDHPart.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = ZrtpPacketDHPart.cpp; sourceTree = "<group>"; };
+		4C804E6115B9BB9F0070B93B /* ZrtpPacketError.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = ZrtpPacketError.cpp; sourceTree = "<group>"; };
+		4C804E6215B9BB9F0070B93B /* ZrtpPacketErrorAck.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = ZrtpPacketErrorAck.cpp; sourceTree = "<group>"; };
+		4C804E6315B9BB9F0070B93B /* ZrtpPacketGoClear.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = ZrtpPacketGoClear.cpp; sourceTree = "<group>"; };
+		4C804E6415B9BB9F0070B93B /* ZrtpPacketHello.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = ZrtpPacketHello.cpp; sourceTree = "<group>"; };
+		4C804E6515B9BB9F0070B93B /* ZrtpPacketHelloAck.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = ZrtpPacketHelloAck.cpp; sourceTree = "<group>"; };
+		4C804E6615B9BB9F0070B93B /* ZrtpPacketPing.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = ZrtpPacketPing.cpp; sourceTree = "<group>"; };
+		4C804E6715B9BB9F0070B93B /* ZrtpPacketPingAck.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = ZrtpPacketPingAck.cpp; sourceTree = "<group>"; };
+		4C804E6815B9BB9F0070B93B /* ZrtpPacketRelayAck.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = ZrtpPacketRelayAck.cpp; sourceTree = "<group>"; };
+		4C804E6915B9BB9F0070B93B /* ZrtpPacketSASrelay.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = ZrtpPacketSASrelay.cpp; sourceTree = "<group>"; };
+		4C804E6A15B9BB9F0070B93B /* ZrtpStateClass.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = ZrtpStateClass.cpp; sourceTree = "<group>"; };
+		4C804E6B15B9BB9F0070B93B /* ZrtpTextData.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = ZrtpTextData.cpp; sourceTree = "<group>"; };
+		4C804F2115B9BBB00070B93B /* .kdev_include_paths */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = .kdev_include_paths; sourceTree = "<group>"; };
+		4C804F2215B9BBB00070B93B /* CMakeLists.txt */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = CMakeLists.txt; sourceTree = "<group>"; };
+		4C804F2315B9BBB00070B93B /* CtZrtpCallback.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = CtZrtpCallback.h; sourceTree = "<group>"; };
+		4C804F2415B9BBB00070B93B /* CtZrtpSession.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = CtZrtpSession.cpp; sourceTree = "<group>"; };
+		4C804F2515B9BBB00070B93B /* CtZrtpSession.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = CtZrtpSession.h; sourceTree = "<group>"; };
+		4C804F2615B9BBB00070B93B /* CtZrtpStream.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = CtZrtpStream.cpp; sourceTree = "<group>"; };
+		4C804F2715B9BBB00070B93B /* CtZrtpStream.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = CtZrtpStream.h; sourceTree = "<group>"; };
+		4C804F2815B9BBB00070B93B /* testdriver.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = testdriver.cpp; sourceTree = "<group>"; };
+		4C804F6615BC16070070B93B /* ec.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = ec.c; sourceTree = "<group>"; };
+		4C804F6715BC16070070B93B /* ec.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ec.h; sourceTree = "<group>"; };
+		4C804F6815BC16070070B93B /* ecdh.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = ecdh.c; sourceTree = "<group>"; };
+		4C804F6915BC16070070B93B /* ecdh.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ecdh.h; sourceTree = "<group>"; };
+		4CA399B915F51BD10040A290 /* osSpecifics.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = osSpecifics.c; sourceTree = "<group>"; };
+/* End PBXFileReference section */
+
+/* Begin PBXFrameworksBuildPhase section */
+		4C804D9715B9BAFC0070B93B /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				4C804D9E15B9BAFC0070B93B /* Foundation.framework in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXFrameworksBuildPhase section */
+
+/* Begin PBXGroup section */
+		4C804D8F15B9BAFC0070B93B = {
+			isa = PBXGroup;
+			children = (
+				4C804D9F15B9BAFC0070B93B /* werner_zrtp */,
+				4C804D9C15B9BAFC0070B93B /* Frameworks */,
+				4C804D9B15B9BAFC0070B93B /* Products */,
+			);
+			sourceTree = "<group>";
+		};
+		4C804D9B15B9BAFC0070B93B /* Products */ = {
+			isa = PBXGroup;
+			children = (
+				4C804D9A15B9BAFC0070B93B /* libwerner_zrtp.a */,
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		4C804D9C15B9BAFC0070B93B /* Frameworks */ = {
+			isa = PBXGroup;
+			children = (
+				4C804D9D15B9BAFC0070B93B /* Foundation.framework */,
+			);
+			name = Frameworks;
+			sourceTree = "<group>";
+		};
+		4C804D9F15B9BAFC0070B93B /* werner_zrtp */ = {
+			isa = PBXGroup;
+			children = (
+				4C804DAA15B9BB9E0070B93B /* bnlib */,
+				4C804DD015B9BB9E0070B93B /* common */,
+				4C804DD715B9BB9F0070B93B /* cryptcommon */,
+				4C804DF015B9BB9F0070B93B /* srtp */,
+				4C804E0615B9BB9F0070B93B /* zrtp */,
+				4C804DA215B9BAFC0070B93B /* werner_zrtp.h */,
+				4C804F2015B9BBB00070B93B /* tivi */,
+				4C804DA315B9BAFC0070B93B /* werner_zrtp.m */,
+				4C804DA015B9BAFC0070B93B /* Supporting Files */,
+			);
+			path = werner_zrtp;
+			sourceTree = "<group>";
+		};
+		4C804DA015B9BAFC0070B93B /* Supporting Files */ = {
+			isa = PBXGroup;
+			children = (
+				4C804DA115B9BAFC0070B93B /* werner_zrtp-Prefix.pch */,
+			);
+			name = "Supporting Files";
+			sourceTree = "<group>";
+		};
+		4C804DAA15B9BB9E0070B93B /* bnlib */ = {
+			isa = PBXGroup;
+			children = (
+				4C804DAB15B9BB9E0070B93B /* bn.c */,
+				4C804DAC15B9BB9E0070B93B /* bn.h */,
+				4C804F6515BC16070070B93B /* ec */,
+				4C804DAD15B9BB9E0070B93B /* bn00.c */,
+				4C804DB815B9BB9E0070B93B /* bnprint.c */,
+				4C804DB915B9BB9E0070B93B /* bnprint.h */,
+				4C804DBA15B9BB9E0070B93B /* bnsize00.h */,
+				4C804DBB15B9BB9E0070B93B /* germain.c */,
+				4C804DBC15B9BB9E0070B93B /* germain.h */,
+				4C804DBD15B9BB9E0070B93B /* jacobi.c */,
+				4C804DBE15B9BB9E0070B93B /* jacobi.h */,
+				4C804DBF15B9BB9E0070B93B /* kludge.h */,
+				4C804DC015B9BB9E0070B93B /* lbn.h */,
+				4C804DC115B9BB9E0070B93B /* lbn00.c */,
+				4C804DC815B9BB9E0070B93B /* lbnmem.c */,
+				4C804DC915B9BB9E0070B93B /* lbnmem.h */,
+				4C804DCA15B9BB9E0070B93B /* legal.c */,
+				4C804DCB15B9BB9E0070B93B /* legal.h */,
+				4C804DCC15B9BB9E0070B93B /* prime.c */,
+				4C804DCD15B9BB9E0070B93B /* prime.h */,
+				4C804DCE15B9BB9E0070B93B /* sieve.c */,
+				4C804DCF15B9BB9E0070B93B /* sieve.h */,
+			);
+			name = bnlib;
+			path = ../../zrtp/bnlib;
+			sourceTree = "<group>";
+		};
+		4C804DD015B9BB9E0070B93B /* common */ = {
+			isa = PBXGroup;
+			children = (
+				4CA399B915F51BD10040A290 /* osSpecifics.c */,
+				4C804DD115B9BB9F0070B93B /* EventClass.cpp */,
+				4C804DD215B9BB9F0070B93B /* EventClass.h */,
+				4C804DD315B9BB9F0070B93B /* MutexClass.cpp */,
+				4C804DD415B9BB9F0070B93B /* MutexClass.h */,
+				4C804DD515B9BB9F0070B93B /* Thread.cpp */,
+				4C804DD615B9BB9F0070B93B /* Thread.h */,
+			);
+			name = common;
+			path = ../../zrtp/common;
+			sourceTree = "<group>";
+		};
+		4C804DD715B9BB9F0070B93B /* cryptcommon */ = {
+			isa = PBXGroup;
+			children = (
+				4C804DD815B9BB9F0070B93B /* aes.h */,
+				4C804DD915B9BB9F0070B93B /* aes_modes.c */,
+				4C804DDA15B9BB9F0070B93B /* aescpp.h */,
+				4C804DDB15B9BB9F0070B93B /* aescrypt.c */,
+				4C804DDC15B9BB9F0070B93B /* aeskey.c */,
+				4C804DDD15B9BB9F0070B93B /* aesopt.h */,
+				4C804DDE15B9BB9F0070B93B /* aestab.c */,
+				4C804DDF15B9BB9F0070B93B /* aestab.h */,
+				4C804DE015B9BB9F0070B93B /* brg_endian.h */,
+				4C804DE115B9BB9F0070B93B /* brg_types.h */,
+				4C804DE215B9BB9F0070B93B /* macSkein.cpp */,
+				4C804DE315B9BB9F0070B93B /* macSkein.h */,
+				4C804DE415B9BB9F0070B93B /* skein.c */,
+				4C804DE515B9BB9F0070B93B /* skein.h */,
+				4C804DE615B9BB9F0070B93B /* skein_block.c */,
+				4C804DE715B9BB9F0070B93B /* skein_iv.h */,
+				4C804DE815B9BB9F0070B93B /* skein_port.h */,
+				4C804DE915B9BB9F0070B93B /* skeinApi.c */,
+				4C804DEA15B9BB9F0070B93B /* skeinApi.h */,
+				4C804DEB15B9BB9F0070B93B /* twofish.c */,
+				4C804DEC15B9BB9F0070B93B /* twofish.h */,
+				4C804DED15B9BB9F0070B93B /* twofish_cfb.c */,
+				4C804DEE15B9BB9F0070B93B /* ZrtpRandom.cpp */,
+				4C804DEF15B9BB9F0070B93B /* ZrtpRandom.h */,
+			);
+			name = cryptcommon;
+			path = ../../zrtp/cryptcommon;
+			sourceTree = "<group>";
+		};
+		4C804DF015B9BB9F0070B93B /* srtp */ = {
+			isa = PBXGroup;
+			children = (
+				4C804DF115B9BB9F0070B93B /* crypto */,
+				4C804E0015B9BB9F0070B93B /* CryptoContext.cpp */,
+				4C804E0115B9BB9F0070B93B /* CryptoContext.h */,
+				4C804E0215B9BB9F0070B93B /* CryptoContextCtrl.cpp */,
+				4C804E0315B9BB9F0070B93B /* CryptoContextCtrl.h */,
+				4C804E0415B9BB9F0070B93B /* SrtpHandler.cpp */,
+				4C804E0515B9BB9F0070B93B /* SrtpHandler.h */,
+			);
+			name = srtp;
+			path = ../../zrtp/srtp;
+			sourceTree = "<group>";
+		};
+		4C804DF115B9BB9F0070B93B /* crypto */ = {
+			isa = PBXGroup;
+			children = (
+				4C804DF215B9BB9F0070B93B /* gcrypt */,
+				4C804DF615B9BB9F0070B93B /* hmac.cpp */,
+				4C804DF715B9BB9F0070B93B /* hmac.h */,
+				4C804DF815B9BB9F0070B93B /* openssl */,
+				4C804DFC15B9BB9F0070B93B /* sha1.c */,
+				4C804DFD15B9BB9F0070B93B /* sha1.h */,
+				4C804DFE15B9BB9F0070B93B /* SrtpSymCrypto.cpp */,
+				4C804DFF15B9BB9F0070B93B /* SrtpSymCrypto.h */,
+			);
+			path = crypto;
+			sourceTree = "<group>";
+		};
+		4C804DF215B9BB9F0070B93B /* gcrypt */ = {
+			isa = PBXGroup;
+			children = (
+			);
+			path = gcrypt;
+			sourceTree = "<group>";
+		};
+		4C804DF815B9BB9F0070B93B /* openssl */ = {
+			isa = PBXGroup;
+			children = (
+			);
+			path = openssl;
+			sourceTree = "<group>";
+		};
+		4C804E0615B9BB9F0070B93B /* zrtp */ = {
+			isa = PBXGroup;
+			children = (
+				4C804E0715B9BB9F0070B93B /* Base32.cpp */,
+				4C804E0815B9BB9F0070B93B /* crypto */,
+				4C804E2915B9BB9F0070B93B /* libzrtpcpp */,
+				4C804E5015B9BB9F0070B93B /* ZIDCacheDb.cpp */,
+				4C804E5215B9BB9F0070B93B /* ZIDRecordDb.cpp */,
+				4C804E5315B9BB9F0070B93B /* ZIDRecordFile.cpp */,
+				4C804E5415B9BB9F0070B93B /* ZRtp.cpp */,
+				4C804E5515B9BB9F0070B93B /* zrtpB64Decode.c */,
+				4C804E5615B9BB9F0070B93B /* zrtpB64Encode.c */,
+				4C804E5715B9BB9F0070B93B /* zrtpCacheSqliteBackend.c */,
+				4C804E5815B9BB9F0070B93B /* ZrtpCallbackWrapper.cpp */,
+				4C804E5915B9BB9F0070B93B /* ZrtpConfigure.cpp */,
+				4C804E5A15B9BB9F0070B93B /* ZrtpCrc32.cpp */,
+				4C804E5B15B9BB9F0070B93B /* ZrtpCWrapper.cpp */,
+				4C804E5C15B9BB9F0070B93B /* ZrtpPacketClearAck.cpp */,
+				4C804E5D15B9BB9F0070B93B /* ZrtpPacketCommit.cpp */,
+				4C29D28315C74D5100FC6C17 /* ZrtpSdesStream.cpp */,
+				4C804E5E15B9BB9F0070B93B /* ZrtpPacketConf2Ack.cpp */,
+				4C804E5F15B9BB9F0070B93B /* ZrtpPacketConfirm.cpp */,
+				4C804E6015B9BB9F0070B93B /* ZrtpPacketDHPart.cpp */,
+				4C804E6115B9BB9F0070B93B /* ZrtpPacketError.cpp */,
+				4C804E6215B9BB9F0070B93B /* ZrtpPacketErrorAck.cpp */,
+				4C804E6315B9BB9F0070B93B /* ZrtpPacketGoClear.cpp */,
+				4C804E6415B9BB9F0070B93B /* ZrtpPacketHello.cpp */,
+				4C804E6515B9BB9F0070B93B /* ZrtpPacketHelloAck.cpp */,
+				4C804E6615B9BB9F0070B93B /* ZrtpPacketPing.cpp */,
+				4C804E6715B9BB9F0070B93B /* ZrtpPacketPingAck.cpp */,
+				4C804E6815B9BB9F0070B93B /* ZrtpPacketRelayAck.cpp */,
+				4C804E6915B9BB9F0070B93B /* ZrtpPacketSASrelay.cpp */,
+				4C804E6A15B9BB9F0070B93B /* ZrtpStateClass.cpp */,
+				4C804E6B15B9BB9F0070B93B /* ZrtpTextData.cpp */,
+			);
+			name = zrtp;
+			path = ../../zrtp/zrtp;
+			sourceTree = "<group>";
+		};
+		4C804E0815B9BB9F0070B93B /* crypto */ = {
+			isa = PBXGroup;
+			children = (
+				4C804E0915B9BB9F0070B93B /* aesCFB.cpp */,
+				4C804E0A15B9BB9F0070B93B /* aesCFB.h */,
+				4C804E0B15B9BB9F0070B93B /* gcrypt */,
+				4C804E1315B9BB9F0070B93B /* hmac256.cpp */,
+				4C804E1415B9BB9F0070B93B /* hmac256.h */,
+				4C804E1515B9BB9F0070B93B /* hmac384.cpp */,
+				4C804E1615B9BB9F0070B93B /* hmac384.h */,
+				4C804E1715B9BB9F0070B93B /* openssl */,
+				4C804E1F15B9BB9F0070B93B /* sha2.c */,
+				4C804E2015B9BB9F0070B93B /* sha2.h */,
+				4C804E2115B9BB9F0070B93B /* sha256.cpp */,
+				4C804E2215B9BB9F0070B93B /* sha256.h */,
+				4C804E2315B9BB9F0070B93B /* sha384.cpp */,
+				4C804E2415B9BB9F0070B93B /* sha384.h */,
+				4C804E2515B9BB9F0070B93B /* twoCFB.cpp */,
+				4C804E2615B9BB9F0070B93B /* twoCFB.h */,
+				4C804E2715B9BB9F0070B93B /* zrtpDH.cpp */,
+				4C804E2815B9BB9F0070B93B /* zrtpDH.h */,
+			);
+			path = crypto;
+			sourceTree = "<group>";
+		};
+		4C804E0B15B9BB9F0070B93B /* gcrypt */ = {
+			isa = PBXGroup;
+			children = (
+			);
+			path = gcrypt;
+			sourceTree = "<group>";
+		};
+		4C804E1715B9BB9F0070B93B /* openssl */ = {
+			isa = PBXGroup;
+			children = (
+			);
+			path = openssl;
+			sourceTree = "<group>";
+		};
+		4C804E2915B9BB9F0070B93B /* libzrtpcpp */ = {
+			isa = PBXGroup;
+			children = (
+				4C804E2A15B9BB9F0070B93B /* Base32.h */,
+				4C804E2B15B9BB9F0070B93B /* ZIDCache.h */,
+				4C804E2C15B9BB9F0070B93B /* ZIDCacheDb.h */,
+				4C804E2D15B9BB9F0070B93B /* ZIDCacheFile.h */,
+				4C804E2E15B9BB9F0070B93B /* ZIDRecord.h */,
+				4C804E2F15B9BB9F0070B93B /* ZIDRecordDb.h */,
+				4C804E3015B9BB9F0070B93B /* ZIDRecordFile.h */,
+				4C804E3115B9BB9F0070B93B /* ZRtp.h */,
+				4C804E3215B9BB9F0070B93B /* zrtpB64Decode.h */,
+				4C804E3315B9BB9F0070B93B /* zrtpB64Encode.h */,
+				4C804E3415B9BB9F0070B93B /* zrtpCacheDb.h */,
+				4C804E3515B9BB9F0070B93B /* zrtpCacheDbBackend.h */,
+				4C804E3615B9BB9F0070B93B /* ZrtpCallback.h */,
+				4C804E3715B9BB9F0070B93B /* ZrtpCallbackWrapper.h */,
+				4C804E3815B9BB9F0070B93B /* ZrtpCodes.h */,
+				4C804E3915B9BB9F0070B93B /* ZrtpConfigure.h */,
+				4C804E3A15B9BB9F0070B93B /* ZrtpCrc32.h */,
+				4C804E3B15B9BB9F0070B93B /* ZrtpCWrapper.h */,
+				4C804E3C15B9BB9F0070B93B /* zrtpPacket.h */,
+				4C804E3D15B9BB9F0070B93B /* ZrtpPacketBase.h */,
+				4C804E3E15B9BB9F0070B93B /* ZrtpPacketClearAck.h */,
+				4C804E3F15B9BB9F0070B93B /* ZrtpPacketCommit.h */,
+				4C804E4015B9BB9F0070B93B /* ZrtpPacketConf2Ack.h */,
+				4C804E4115B9BB9F0070B93B /* ZrtpPacketConfirm.h */,
+				4C804E4215B9BB9F0070B93B /* ZrtpPacketDHPart.h */,
+				4C804E4315B9BB9F0070B93B /* ZrtpPacketError.h */,
+				4C804E4415B9BB9F0070B93B /* ZrtpPacketErrorAck.h */,
+				4C804E4515B9BB9F0070B93B /* ZrtpPacketGoClear.h */,
+				4C804E4615B9BB9F0070B93B /* ZrtpPacketHello.h */,
+				4C804E4715B9BB9F0070B93B /* ZrtpPacketHelloAck.h */,
+				4C804E4815B9BB9F0070B93B /* ZrtpPacketPing.h */,
+				4C804E4915B9BB9F0070B93B /* ZrtpPacketPingAck.h */,
+				4C804E4A15B9BB9F0070B93B /* ZrtpPacketRelayAck.h */,
+				4C804E4B15B9BB9F0070B93B /* ZrtpPacketSASrelay.h */,
+				4C804E4C15B9BB9F0070B93B /* ZrtpStateClass.h */,
+				4C804E4D15B9BB9F0070B93B /* ZrtpStates.h */,
+				4C804E4E15B9BB9F0070B93B /* ZrtpTextData.h */,
+				4C804E4F15B9BB9F0070B93B /* ZrtpUserCallback.h */,
+			);
+			path = libzrtpcpp;
+			sourceTree = "<group>";
+		};
+		4C804F2015B9BBB00070B93B /* tivi */ = {
+			isa = PBXGroup;
+			children = (
+				4C804F2115B9BBB00070B93B /* .kdev_include_paths */,
+				4C804F2215B9BBB00070B93B /* CMakeLists.txt */,
+				4C804F2315B9BBB00070B93B /* CtZrtpCallback.h */,
+				4C804F2415B9BBB00070B93B /* CtZrtpSession.cpp */,
+				4C804F2515B9BBB00070B93B /* CtZrtpSession.h */,
+				4C804F2615B9BBB00070B93B /* CtZrtpStream.cpp */,
+				4C804F2715B9BBB00070B93B /* CtZrtpStream.h */,
+				4C804F2815B9BBB00070B93B /* testdriver.cpp */,
+			);
+			name = tivi;
+			path = ../../zrtp/clients/tivi;
+			sourceTree = "<group>";
+		};
+		4C804F6515BC16070070B93B /* ec */ = {
+			isa = PBXGroup;
+			children = (
+				4C804F6615BC16070070B93B /* ec.c */,
+				4C804F6715BC16070070B93B /* ec.h */,
+				4C804F6815BC16070070B93B /* ecdh.c */,
+				4C804F6915BC16070070B93B /* ecdh.h */,
+			);
+			path = ec;
+			sourceTree = "<group>";
+		};
+/* End PBXGroup section */
+
+/* Begin PBXHeadersBuildPhase section */
+		4C804D9815B9BAFC0070B93B /* Headers */ = {
+			isa = PBXHeadersBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				4C804E6D15B9BB9F0070B93B /* bn.h in Headers */,
+				4C804E7915B9BB9F0070B93B /* bnprint.h in Headers */,
+				4C804E7A15B9BB9F0070B93B /* bnsize00.h in Headers */,
+				4C804E7C15B9BB9F0070B93B /* germain.h in Headers */,
+				4C804E7E15B9BB9F0070B93B /* jacobi.h in Headers */,
+				4C804E7F15B9BB9F0070B93B /* kludge.h in Headers */,
+				4C804E8015B9BB9F0070B93B /* lbn.h in Headers */,
+				4C804E8915B9BB9F0070B93B /* lbnmem.h in Headers */,
+				4C804E8B15B9BB9F0070B93B /* legal.h in Headers */,
+				4C804E8D15B9BB9F0070B93B /* prime.h in Headers */,
+				4C804E8F15B9BB9F0070B93B /* sieve.h in Headers */,
+				4C804E9115B9BB9F0070B93B /* EventClass.h in Headers */,
+				4C804E9315B9BB9F0070B93B /* MutexClass.h in Headers */,
+				4C804E9515B9BB9F0070B93B /* Thread.h in Headers */,
+				4C804E9615B9BB9F0070B93B /* aes.h in Headers */,
+				4C804E9815B9BB9F0070B93B /* aescpp.h in Headers */,
+				4C804E9B15B9BB9F0070B93B /* aesopt.h in Headers */,
+				4C804E9D15B9BB9F0070B93B /* aestab.h in Headers */,
+				4C804E9E15B9BB9F0070B93B /* brg_endian.h in Headers */,
+				4C804E9F15B9BB9F0070B93B /* brg_types.h in Headers */,
+				4C804EA115B9BB9F0070B93B /* macSkein.h in Headers */,
+				4C804EA315B9BB9F0070B93B /* skein.h in Headers */,
+				4C804EA515B9BB9F0070B93B /* skein_iv.h in Headers */,
+				4C804EA615B9BB9F0070B93B /* skein_port.h in Headers */,
+				4C804EA815B9BB9F0070B93B /* skeinApi.h in Headers */,
+				4C804EAA15B9BB9F0070B93B /* twofish.h in Headers */,
+				4C804EAD15B9BB9F0070B93B /* ZrtpRandom.h in Headers */,
+				4C804EB215B9BB9F0070B93B /* hmac.h in Headers */,
+				4C804EB615B9BB9F0070B93B /* sha1.h in Headers */,
+				4C804EB815B9BB9F0070B93B /* SrtpSymCrypto.h in Headers */,
+				4C804EBA15B9BB9F0070B93B /* CryptoContext.h in Headers */,
+				4C804EBC15B9BB9F0070B93B /* CryptoContextCtrl.h in Headers */,
+				4C804EBE15B9BB9F0070B93B /* SrtpHandler.h in Headers */,
+				4C804EC115B9BB9F0070B93B /* aesCFB.h in Headers */,
+				4C804ECA15B9BB9F0070B93B /* hmac256.h in Headers */,
+				4C804ECC15B9BB9F0070B93B /* hmac384.h in Headers */,
+				4C804ED515B9BB9F0070B93B /* sha2.h in Headers */,
+				4C804ED715B9BB9F0070B93B /* sha256.h in Headers */,
+				4C804ED915B9BB9F0070B93B /* sha384.h in Headers */,
+				4C804EDB15B9BB9F0070B93B /* twoCFB.h in Headers */,
+				4C804EDD15B9BB9F0070B93B /* zrtpDH.h in Headers */,
+				4C804EDE15B9BB9F0070B93B /* Base32.h in Headers */,
+				4C804EDF15B9BB9F0070B93B /* ZIDCache.h in Headers */,
+				4C804EE015B9BB9F0070B93B /* ZIDCacheDb.h in Headers */,
+				4C804EE115B9BB9F0070B93B /* ZIDCacheFile.h in Headers */,
+				4C804EE215B9BB9F0070B93B /* ZIDRecord.h in Headers */,
+				4C804EE315B9BB9F0070B93B /* ZIDRecordDb.h in Headers */,
+				4C804EE415B9BB9F0070B93B /* ZIDRecordFile.h in Headers */,
+				4C804EE515B9BB9F0070B93B /* ZRtp.h in Headers */,
+				4C804EE615B9BB9F0070B93B /* zrtpB64Decode.h in Headers */,
+				4C804EE715B9BB9F0070B93B /* zrtpB64Encode.h in Headers */,
+				4C804EE815B9BB9F0070B93B /* zrtpCacheDb.h in Headers */,
+				4C804EE915B9BB9F0070B93B /* zrtpCacheDbBackend.h in Headers */,
+				4C804EEA15B9BB9F0070B93B /* ZrtpCallback.h in Headers */,
+				4C804EEB15B9BB9F0070B93B /* ZrtpCallbackWrapper.h in Headers */,
+				4C804EEC15B9BB9F0070B93B /* ZrtpCodes.h in Headers */,
+				4C804EED15B9BB9F0070B93B /* ZrtpConfigure.h in Headers */,
+				4C804EEE15B9BB9F0070B93B /* ZrtpCrc32.h in Headers */,
+				4C804EEF15B9BB9F0070B93B /* ZrtpCWrapper.h in Headers */,
+				4C804EF015B9BB9F0070B93B /* zrtpPacket.h in Headers */,
+				4C804EF115B9BB9F0070B93B /* ZrtpPacketBase.h in Headers */,
+				4C804EF215B9BB9F0070B93B /* ZrtpPacketClearAck.h in Headers */,
+				4C804EF315B9BB9F0070B93B /* ZrtpPacketCommit.h in Headers */,
+				4C804EF415B9BB9F0070B93B /* ZrtpPacketConf2Ack.h in Headers */,
+				4C804EF515B9BB9F0070B93B /* ZrtpPacketConfirm.h in Headers */,
+				4C804EF615B9BB9F0070B93B /* ZrtpPacketDHPart.h in Headers */,
+				4C804EF715B9BB9F0070B93B /* ZrtpPacketError.h in Headers */,
+				4C804EF815B9BB9F0070B93B /* ZrtpPacketErrorAck.h in Headers */,
+				4C804EF915B9BB9F0070B93B /* ZrtpPacketGoClear.h in Headers */,
+				4C804EFA15B9BB9F0070B93B /* ZrtpPacketHello.h in Headers */,
+				4C804EFB15B9BB9F0070B93B /* ZrtpPacketHelloAck.h in Headers */,
+				4C804EFC15B9BB9F0070B93B /* ZrtpPacketPing.h in Headers */,
+				4C804EFD15B9BB9F0070B93B /* ZrtpPacketPingAck.h in Headers */,
+				4C804EFE15B9BB9F0070B93B /* ZrtpPacketRelayAck.h in Headers */,
+				4C804EFF15B9BB9F0070B93B /* ZrtpPacketSASrelay.h in Headers */,
+				4C804F0015B9BB9F0070B93B /* ZrtpStateClass.h in Headers */,
+				4C804F0115B9BB9F0070B93B /* ZrtpStates.h in Headers */,
+				4C804F0215B9BB9F0070B93B /* ZrtpTextData.h in Headers */,
+				4C804F0315B9BB9F0070B93B /* ZrtpUserCallback.h in Headers */,
+				4C804F2A15B9BBB00070B93B /* CtZrtpCallback.h in Headers */,
+				4C804F2C15B9BBB00070B93B /* CtZrtpSession.h in Headers */,
+				4C804F2E15B9BBB00070B93B /* CtZrtpStream.h in Headers */,
+				4C804F6B15BC16070070B93B /* ec.h in Headers */,
+				4C804F6D15BC16070070B93B /* ecdh.h in Headers */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXHeadersBuildPhase section */
+
+/* Begin PBXNativeTarget section */
+		4C804D9915B9BAFC0070B93B /* werner_zrtp */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 4C804DA715B9BAFC0070B93B /* Build configuration list for PBXNativeTarget "werner_zrtp" */;
+			buildPhases = (
+				4C804D9615B9BAFC0070B93B /* Sources */,
+				4C804D9715B9BAFC0070B93B /* Frameworks */,
+				4C804D9815B9BAFC0070B93B /* Headers */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = werner_zrtp;
+			productName = werner_zrtp;
+			productReference = 4C804D9A15B9BAFC0070B93B /* libwerner_zrtp.a */;
+			productType = "com.apple.product-type.library.static";
+		};
+/* End PBXNativeTarget section */
+
+/* Begin PBXProject section */
+		4C804D9115B9BAFC0070B93B /* Project object */ = {
+			isa = PBXProject;
+			attributes = {
+				LastUpgradeCheck = 0430;
+			};
+			buildConfigurationList = 4C804D9415B9BAFC0070B93B /* Build configuration list for PBXProject "werner_zrtp" */;
+			compatibilityVersion = "Xcode 3.2";
+			developmentRegion = English;
+			hasScannedForEncodings = 0;
+			knownRegions = (
+				en,
+			);
+			mainGroup = 4C804D8F15B9BAFC0070B93B;
+			productRefGroup = 4C804D9B15B9BAFC0070B93B /* Products */;
+			projectDirPath = "";
+			projectRoot = "";
+			targets = (
+				4C804D9915B9BAFC0070B93B /* werner_zrtp */,
+			);
+		};
+/* End PBXProject section */
+
+/* Begin PBXSourcesBuildPhase section */
+		4C804D9615B9BAFC0070B93B /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				4C804DA415B9BAFC0070B93B /* werner_zrtp.m in Sources */,
+				4C804E6C15B9BB9F0070B93B /* bn.c in Sources */,
+				4C804E6E15B9BB9F0070B93B /* bn00.c in Sources */,
+				4C804E7815B9BB9F0070B93B /* bnprint.c in Sources */,
+				4C804E7B15B9BB9F0070B93B /* germain.c in Sources */,
+				4C804E7D15B9BB9F0070B93B /* jacobi.c in Sources */,
+				4C804E8115B9BB9F0070B93B /* lbn00.c in Sources */,
+				4C804E8815B9BB9F0070B93B /* lbnmem.c in Sources */,
+				4C804E8A15B9BB9F0070B93B /* legal.c in Sources */,
+				4C804E8C15B9BB9F0070B93B /* prime.c in Sources */,
+				4C804E8E15B9BB9F0070B93B /* sieve.c in Sources */,
+				4C804E9015B9BB9F0070B93B /* EventClass.cpp in Sources */,
+				4C804E9215B9BB9F0070B93B /* MutexClass.cpp in Sources */,
+				4C804E9415B9BB9F0070B93B /* Thread.cpp in Sources */,
+				4C804E9715B9BB9F0070B93B /* aes_modes.c in Sources */,
+				4C804E9915B9BB9F0070B93B /* aescrypt.c in Sources */,
+				4C804E9A15B9BB9F0070B93B /* aeskey.c in Sources */,
+				4C804E9C15B9BB9F0070B93B /* aestab.c in Sources */,
+				4C804EA015B9BB9F0070B93B /* macSkein.cpp in Sources */,
+				4C804EA215B9BB9F0070B93B /* skein.c in Sources */,
+				4C804EA415B9BB9F0070B93B /* skein_block.c in Sources */,
+				4C804EA715B9BB9F0070B93B /* skeinApi.c in Sources */,
+				4C804EA915B9BB9F0070B93B /* twofish.c in Sources */,
+				4C804EAB15B9BB9F0070B93B /* twofish_cfb.c in Sources */,
+				4C804EAC15B9BB9F0070B93B /* ZrtpRandom.cpp in Sources */,
+				4C804EB115B9BB9F0070B93B /* hmac.cpp in Sources */,
+				4C804EB515B9BB9F0070B93B /* sha1.c in Sources */,
+				4C804EB715B9BB9F0070B93B /* SrtpSymCrypto.cpp in Sources */,
+				4C804EB915B9BB9F0070B93B /* CryptoContext.cpp in Sources */,
+				4C804EBB15B9BB9F0070B93B /* CryptoContextCtrl.cpp in Sources */,
+				4C804EBD15B9BB9F0070B93B /* SrtpHandler.cpp in Sources */,
+				4C804EBF15B9BB9F0070B93B /* Base32.cpp in Sources */,
+				4C804EC015B9BB9F0070B93B /* aesCFB.cpp in Sources */,
+				4C804EC915B9BB9F0070B93B /* hmac256.cpp in Sources */,
+				4C804ECB15B9BB9F0070B93B /* hmac384.cpp in Sources */,
+				4C804ED415B9BB9F0070B93B /* sha2.c in Sources */,
+				4C804ED615B9BB9F0070B93B /* sha256.cpp in Sources */,
+				4C804ED815B9BB9F0070B93B /* sha384.cpp in Sources */,
+				4C804EDA15B9BB9F0070B93B /* twoCFB.cpp in Sources */,
+				4C804EDC15B9BB9F0070B93B /* zrtpDH.cpp in Sources */,
+				4C804F0415B9BB9F0070B93B /* ZIDCacheDb.cpp in Sources */,
+				4C804F0615B9BB9F0070B93B /* ZIDRecordDb.cpp in Sources */,
+				4C804F0715B9BB9F0070B93B /* ZIDRecordFile.cpp in Sources */,
+				4C804F0815B9BB9F0070B93B /* ZRtp.cpp in Sources */,
+				4C804F0915B9BB9F0070B93B /* zrtpB64Decode.c in Sources */,
+				4C804F0A15B9BB9F0070B93B /* zrtpB64Encode.c in Sources */,
+				4C804F0B15B9BB9F0070B93B /* zrtpCacheSqliteBackend.c in Sources */,
+				4C804F0C15B9BB9F0070B93B /* ZrtpCallbackWrapper.cpp in Sources */,
+				4C804F0D15B9BB9F0070B93B /* ZrtpConfigure.cpp in Sources */,
+				4C804F0E15B9BB9F0070B93B /* ZrtpCrc32.cpp in Sources */,
+				4C804F0F15B9BB9F0070B93B /* ZrtpCWrapper.cpp in Sources */,
+				4C804F1015B9BB9F0070B93B /* ZrtpPacketClearAck.cpp in Sources */,
+				4C804F1115B9BB9F0070B93B /* ZrtpPacketCommit.cpp in Sources */,
+				4C804F1215B9BB9F0070B93B /* ZrtpPacketConf2Ack.cpp in Sources */,
+				4C804F1315B9BB9F0070B93B /* ZrtpPacketConfirm.cpp in Sources */,
+				4C804F1415B9BB9F0070B93B /* ZrtpPacketDHPart.cpp in Sources */,
+				4C804F1515B9BB9F0070B93B /* ZrtpPacketError.cpp in Sources */,
+				4C804F1615B9BB9F0070B93B /* ZrtpPacketErrorAck.cpp in Sources */,
+				4C804F1715B9BB9F0070B93B /* ZrtpPacketGoClear.cpp in Sources */,
+				4C804F1815B9BB9F0070B93B /* ZrtpPacketHello.cpp in Sources */,
+				4C804F1915B9BB9F0070B93B /* ZrtpPacketHelloAck.cpp in Sources */,
+				4C804F1A15B9BB9F0070B93B /* ZrtpPacketPing.cpp in Sources */,
+				4C804F1B15B9BB9F0070B93B /* ZrtpPacketPingAck.cpp in Sources */,
+				4C804F1C15B9BB9F0070B93B /* ZrtpPacketRelayAck.cpp in Sources */,
+				4C804F1D15B9BB9F0070B93B /* ZrtpPacketSASrelay.cpp in Sources */,
+				4C804F1E15B9BB9F0070B93B /* ZrtpStateClass.cpp in Sources */,
+				4C804F1F15B9BB9F0070B93B /* ZrtpTextData.cpp in Sources */,
+				4C804F2B15B9BBB00070B93B /* CtZrtpSession.cpp in Sources */,
+				4C804F2D15B9BBB00070B93B /* CtZrtpStream.cpp in Sources */,
+				4C804F2F15B9BBB00070B93B /* testdriver.cpp in Sources */,
+				4C804F6A15BC16070070B93B /* ec.c in Sources */,
+				4C804F6C15BC16070070B93B /* ecdh.c in Sources */,
+				4C29D28415C74D5100FC6C17 /* ZrtpSdesStream.cpp in Sources */,
+				4CA399BA15F51BD10040A290 /* osSpecifics.c in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXSourcesBuildPhase section */
+
+/* Begin XCBuildConfiguration section */
+		4C804DA515B9BAFC0070B93B /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				ARCHS = "$(ARCHS_STANDARD_32_BIT)";
+				COPY_PHASE_STRIP = NO;
+				GCC_C_LANGUAGE_STANDARD = gnu99;
+				GCC_DYNAMIC_NO_PIC = NO;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					"DEBUG=1",
+					"$(inherited)",
+				);
+				GCC_SYMBOLS_PRIVATE_EXTERN = NO;
+				GCC_VERSION = com.apple.compilers.llvm.clang.1_0;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				HEADER_SEARCH_PATHS = (
+					"/Users/janisnarbuts/libs/zrtp/**",
+					"/Users/janisnarbuts/libs/zrtp/zrtp/libzrtpcpp/**",
+				);
+				IPHONEOS_DEPLOYMENT_TARGET = 5.1;
+				SDKROOT = iphoneos;
+			};
+			name = Debug;
+		};
+		4C804DA615B9BAFC0070B93B /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				ARCHS = "$(ARCHS_STANDARD_32_BIT)";
+				COPY_PHASE_STRIP = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu99;
+				GCC_VERSION = com.apple.compilers.llvm.clang.1_0;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				HEADER_SEARCH_PATHS = (
+					"/Users/janisnarbuts/libs/zrtp/**",
+					"/Users/janisnarbuts/libs/zrtp/zrtp/libzrtpcpp/**",
+				);
+				IPHONEOS_DEPLOYMENT_TARGET = 5.1;
+				SDKROOT = iphoneos;
+				VALIDATE_PRODUCT = YES;
+			};
+			name = Release;
+		};
+		4C804DA815B9BAFC0070B93B /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				DSTROOT = /tmp/werner_zrtp.dst;
+				GCC_PRECOMPILE_PREFIX_HEADER = YES;
+				GCC_PREFIX_HEADER = "werner_zrtp/werner_zrtp-Prefix.pch";
+				HEADER_SEARCH_PATHS = (
+					"../zrtp/**",
+					"../zrtp/zrtp/libzrtpcpp/**",
+				);
+				OTHER_LDFLAGS = "-ObjC";
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SKIP_INSTALL = YES;
+			};
+			name = Debug;
+		};
+		4C804DA915B9BAFC0070B93B /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				DSTROOT = /tmp/werner_zrtp.dst;
+				GCC_PRECOMPILE_PREFIX_HEADER = YES;
+				GCC_PREFIX_HEADER = "werner_zrtp/werner_zrtp-Prefix.pch";
+				HEADER_SEARCH_PATHS = (
+					"../zrtp/**",
+					"../zrtp/zrtp/libzrtpcpp/**",
+				);
+				OTHER_LDFLAGS = "-ObjC";
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SKIP_INSTALL = YES;
+			};
+			name = Release;
+		};
+/* End XCBuildConfiguration section */
+
+/* Begin XCConfigurationList section */
+		4C804D9415B9BAFC0070B93B /* Build configuration list for PBXProject "werner_zrtp" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				4C804DA515B9BAFC0070B93B /* Debug */,
+				4C804DA615B9BAFC0070B93B /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		4C804DA715B9BAFC0070B93B /* Build configuration list for PBXNativeTarget "werner_zrtp" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				4C804DA815B9BAFC0070B93B /* Debug */,
+				4C804DA915B9BAFC0070B93B /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+/* End XCConfigurationList section */
+	};
+	rootObject = 4C804D9115B9BAFC0070B93B /* Project object */;
+}

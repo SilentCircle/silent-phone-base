@@ -1,0 +1,118 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<VariablesViewState
+   version = "1.0">
+   <ContextStates>
+      <ContextState
+         contextName = "CSip::parse(char*):CSipParse.cpp">
+         <PersistentStrings>
+            <PersistentString
+               value = "n">
+            </PersistentString>
+         </PersistentStrings>
+      </ContextState>
+      <ContextState
+         contextName = "CPhoneCons::command(char*, int):t_a_main.cpp">
+         <PersistentStrings>
+            <PersistentString
+               value = "iLen">
+            </PersistentString>
+         </PersistentStrings>
+      </ContextState>
+      <ContextState
+         contextName = "fncCBRet(void*, void*, int, char*, int, char const*, int):AppDelegate.mm">
+      </ContextState>
+      <ContextState
+         contextName = "CTiViPhone::recMsg(_SIP_MSG*):CPhone.cpp">
+      </ContextState>
+      <ContextState
+         contextName = "-[QuickContactsViewController addToRecentsMT]:QuickContactsViewController.mm">
+      </ContextState>
+      <ContextState
+         contextName = "-[AppDelegate findCallById:]:AppDelegate.mm">
+         <PersistentStrings>
+            <PersistentString
+               value = "calls[i]">
+            </PersistentString>
+         </PersistentStrings>
+      </ContextState>
+      <ContextState
+         contextName = "-[AppDelegate switchView]:AppDelegate.mm">
+         <PersistentStrings>
+            <PersistentString
+               value = "curCall">
+            </PersistentString>
+         </PersistentStrings>
+      </ContextState>
+      <ContextState
+         contextName = "CTSockTcp::_connect(ADDR*):CTTcp.h">
+      </ContextState>
+      <ContextState
+         contextName = "CTiViPhone::TimerProc(void*):threads.cpp">
+         <PersistentStrings>
+            <PersistentString
+               value = "ph-&gt;uiGT">
+            </PersistentString>
+         </PersistentStrings>
+      </ContextState>
+      <ContextState
+         contextName = "CPhSesions::onSipMsg(CSesBase*, _SIP_MSG*):CSessions.cpp">
+         <PersistentStrings>
+            <PersistentString
+               value = "p_cfg.reg.uiRegUntil">
+            </PersistentString>
+            <PersistentString
+               value = "uiGT">
+            </PersistentString>
+         </PersistentStrings>
+      </ContextState>
+      <ContextState
+         contextName = "-[QuickContactsViewController tableView:cellForRowAtIndexPath:]:QuickContactsViewController.mm">
+         <PersistentStrings>
+            <PersistentString
+               value = "aCell.imgRT">
+            </PersistentString>
+         </PersistentStrings>
+      </ContextState>
+      <ContextState
+         contextName = "CTMAudio::onAudio(AudioBufferList*, int):CTAudioMacOSX_IOS.cpp">
+         <PersistentStrings>
+            <PersistentString
+               value = "tmpBuf">
+            </PersistentString>
+         </PersistentStrings>
+      </ContextState>
+      <ContextState
+         contextName = "CTSockTcp::closeSocket() [inlined]:CTTcp.h">
+      </ContextState>
+      <ContextState
+         contextName = "-[AppDelegate updateRecents:]:AppDelegate.mm">
+      </ContextState>
+      <ContextState
+         contextName = "CTiViPhone::onTimer():CPhone.cpp">
+         <PersistentStrings>
+            <PersistentString
+               value = " p_cfg.reg.uiRegUntil">
+            </PersistentString>
+            <PersistentString
+               value = "uiGT">
+            </PersistentString>
+         </PersistentStrings>
+      </ContextState>
+      <ContextState
+         contextName = "-[QuickContactsViewController showPersonViewController]:QuickContactsViewController.mm">
+         <PersistentStrings>
+            <PersistentString
+               value = "people">
+            </PersistentString>
+         </PersistentStrings>
+      </ContextState>
+      <ContextState
+         contextName = "-[QuickContactsViewController findContectByID]:QuickContactsViewController.mm">
+         <PersistentStrings>
+            <PersistentString
+               value = "value">
+            </PersistentString>
+         </PersistentStrings>
+      </ContextState>
+   </ContextStates>
+</VariablesViewState>

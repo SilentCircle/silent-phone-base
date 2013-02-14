@@ -1,0 +1,7 @@
+//
+// Prefix header for all source files of the 'werner_zrtp' target in the 'werner_zrtp' project
+//
+
+#ifdef __OBJC__
+   #import <Foundation/Foundation.h>
+#endif

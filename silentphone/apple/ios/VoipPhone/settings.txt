@@ -1,0 +1,17 @@
+iSignedCfgRead: 0
+iDisableVideo: 1
+iPayloadSizeSend: 20
+iPayloadSizeSend3G: 40
+iIsTiViServFlag: 0
+iUseVAD: 0
+szApiShortName: FS-devel
+hdr: FS-devel
+acodecs: 9,3,0,8
+acodecs3g: 3,9,0,8
+gw: fs-devel.silentcircle.org
+iSkipXMLCfgServAddr: 0
+iZRTP_On: 1
+szSipTransport: TLS
+iResponseOnlyWithOneCodecIn200Ok: 1
+iCanAttachDetachVideo: 0
+cs: c2042096e63bd4334b9cd7986b78bbcc
