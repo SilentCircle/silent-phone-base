@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Workspace
+   version = "1.0">
+   <FileRef
+      location = "group:../../libs/werner_zrtp/werner_zrtp.xcodeproj">
+   </FileRef>
+   <FileRef
+      location = "group:../../libs/polarssl-1.1.1/iphone/polar_ssl/polar_ssl.xcodeproj">
+   </FileRef>
+   <FileRef
+      location = "container:ios/VoipPhone.xcodeproj">
+   </FileRef>
+</Workspace>
