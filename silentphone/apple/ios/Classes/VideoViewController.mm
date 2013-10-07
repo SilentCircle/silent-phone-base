@@ -37,6 +37,7 @@ NSString *toNSFromTB(CTStrBase *b);
 
 char* z_main(int iResp, int argc, const char* argv[]);;
 unsigned int  getTickCount();
+int isPlaybackVolumeMuted();
 
 @implementation VideoViewController
 
@@ -44,7 +45,7 @@ unsigned int  getTickCount();
 - (id)initWithNibName:(NSString *)nibNameOrNil bundle:(NSBundle *)nibBundleOrNil
 {
    self = [super initWithNibName:nibNameOrNil bundle:nibBundleOrNil];
-
+   
    return self;
 }
 
@@ -60,12 +61,22 @@ unsigned int  getTickCount();
    iUserTouched=0;
    [btDeclineEnd setTitle:@"End Call"];
    [btDeclineEnd setTintColor:[UIColor blackColor]];
+   
+   
+   CALayer *l;
+   
+   [lbVolumeWarning setHidden:YES];
+   l=lbVolumeWarning.layer;
+   l.borderColor = [UIColor whiteColor].CGColor;
+   l.cornerRadius = 5;
+   l.borderWidth=2;
+   
 }
 
 - (void)viewDidUnload
 {
    [super viewDidUnload];
-
+   
    [cvc teardownAVCapture];
    [cvc release];
    [btSendStop release];
@@ -79,25 +90,28 @@ unsigned int  getTickCount();
    
 }
 -(void)onGotoForeground{
-   if(iWasSendingVideoBeforeEnteringBackgr) [self startVideoPress:nil];
+   if(iWasSendingVideoBeforeEnteringBackgr>0) [self startVideoPress:nil];
    iWasSendingVideoBeforeEnteringBackgr=-1;
 }
 
 
 - (BOOL)shouldAutorotateToInterfaceOrientation:(UIInterfaceOrientation)interfaceOrientation
 {
-   //return (interfaceOrientation == UIInterfaceOrientationLandscapeLeft);//UIInterfaceOrientationPortrait  
+   //return (interfaceOrientation == UIInterfaceOrientationLandscapeLeft);//UIInterfaceOrientationPortrait
    return (interfaceOrientation == UIInterfaceOrientationPortrait);
 }
 -(void)setupVO{
-   QuartzImageView *vo=(QuartzImageView*)[self.view viewWithTag:500]; 
+   QuartzImageView *vo=(QuartzImageView*)[self.view viewWithTag:500];
+   
    void g_setQWview(void *p);
    g_setQWview(vo);
-   if(vo && vo->pVO){
-      vo->pVO->start();
-      vo->pVO->startDraw();
-      vo->pVO->endDraw();//draw last img
+   if(vo){
+      vo->iCanDrawOnScreen=1;
+      //TODO redrawAllLayers
+      //vo->pVO->startDraw();
+     // vo->pVO->endDraw();//draw last img
    }
+   
    //if(vo)vo.touchDetector=self;
    if(vo)vo->_touchDetector=self;
 }
@@ -126,26 +140,26 @@ unsigned int  getTickCount();
       if(!iCanAttachDetachVideo)iHideBackToAudioButton=1;
    }
    if(iSimplifyUI)iHideBackToAudioButton=1;
-
+   
 }
 
 -(void)checkButtons{
    
    int c=cvc && [cvc capturing];
    
-
+   
    
    if(c){
-      [btSendStop setTitle:@"Mute Video" forState:UIControlStateNormal ]; 
-      [btSendStop setTitle:@"Mute Video" forState:UIControlStateHighlighted ]; 
+      [btSendStop setTitle:@"Mute Video" forState:UIControlStateNormal ];
+      [btSendStop setTitle:@"Mute Video" forState:UIControlStateHighlighted ];
       if(btSwitch){
          btSwitch.width=0.0;
-
+         
       }
    }
    else {
       [btSendStop setTitle:@"Send Video" forState:UIControlStateNormal];
-      [btSendStop setTitle:@"Pause Video" forState:UIControlStateHighlighted ]; 
+      [btSendStop setTitle:@"Pause Video" forState:UIControlStateHighlighted ];
       if(btSwitch){
          btSwitch.width=0.1;
       }
@@ -156,7 +170,7 @@ unsigned int  getTickCount();
    float w=self.view.frame.size.width/4;
    btDeclineEnd.width=w;
    if(iAnsweredVideo){
-
+      
       btMute.width=0;
       [btDeclineEnd setTitle:@"End Call"];
       [btDeclineEnd setTintColor:[UIColor blackColor]];
@@ -167,11 +181,11 @@ unsigned int  getTickCount();
       [btDeclineEnd setTintColor:[UIColor redColor]];
       btAccept.width=w;
       btMute.width=.1;
-
+      
    }
    if(iSimplifyUI)[btSendStop setHidden:YES];
    if(iSimplifyUI|| iHideBackToAudioButton)[btBack setHidden:YES];
-   // btSwitch 
+   // btSwitch
 }
 
 
@@ -209,8 +223,8 @@ unsigned int  getTickCount();
    iActiveVideo=1;
    if(iStarting)return;
    iStarting=1;
-   cvc->cVI->stop();
-   cvc->cVI->start();
+   cvc->cVI->stop(NULL);
+   cvc->cVI->start(NULL);
    [cvc setupAVCapture];
    
    [self checkButtons];
@@ -220,7 +234,7 @@ unsigned int  getTickCount();
       sprintf(&buf[0],"*C%u",call->iCallId);
       const char *x[2]={"",&buf[0]};
       
-      z_main(0,2,x);   
+      z_main(0,2,x);
    });
    
    iStarting=0;
@@ -230,13 +244,14 @@ unsigned int  getTickCount();
    //NSLog(@"x=%d y=%d",x,y);
    iUserTouched=1;
    
+   [self volumeCheck:nil];
    
    CGPoint p=CGPointMake((float)x,(float)y);
    
-   UILabel *l=(UILabel*)[self.view viewWithTag:20010]; 
+   UILabel *l=(UILabel*)[self.view viewWithTag:20010];
    
    if(updown!=1 && CGRectContainsPoint(cvc.frame,p)){
-      cvc.center=p; 
+      cvc.center=p;
       muteIco.center=p;
       if(l)l.center=CGPointMake(p.x,p.y-32-2);
       iMoving=1;
@@ -263,15 +278,15 @@ unsigned int  getTickCount();
       
       //CGPointMake(cvc.frame.size.width/2,cvc.frame.size.height/2);
       
-      [UIView animateWithDuration:.5 
-                            delay:0.0 
-                          options:UIViewAnimationCurveEaseInOut 
+      [UIView animateWithDuration:.5
+                            delay:0.0
+                          options:UIViewAnimationCurveEaseInOut
                        animations:^ {
                           
                           muteIco.center=nearest;
                           cvc.center=nearest;
                           if(l)l.center=CGPointMake(nearest.x,nearest.y-32);
-                       } 
+                       }
                        completion:^(BOOL finished) {
                        }];
    }
@@ -287,7 +302,7 @@ unsigned int  getTickCount();
  } completion:^{
  while ([yourView.subviews count] > 0)
  [[yourView.subviews lastObject] removeFromSuperview]; // remove all subviews
- // Add your new views here 
+ // Add your new views here
  [UIView animateWithDuration:someDuration delay:someDelay animations:^{
  yourView.transform = CATransform3DMakeRotation(M_PI,1.0,0.0,0.0); //finish the flip
  } completion:^{
@@ -298,7 +313,7 @@ unsigned int  getTickCount();
  */
 
 -(IBAction)switchCameraAnim:(id)sender{
-
+   
    [cvc stopR];
    [cvc switchCamerasStep:1];
    [UIView transitionWithView:cvc
@@ -315,39 +330,40 @@ unsigned int  getTickCount();
                       [cvc startR];
                       
                    }];
-
+   
 }
 
 -(void)checkThumbnailText{
-   UILabel *l=(UILabel*)[self.view viewWithTag:20010]; 
+   UILabel *l=(UILabel*)[self.view viewWithTag:20010];
    if(l){
       int c=cvc && [cvc capturing];
       if(c && strncmp(&call->bufSecureMsgV[0],"SECURE",6)==0){
          int  isSilentCircleSecure(int cid, void *pEng);
-         int iSecureInGreen=isSilentCircleSecure(call->iCallId,call->pEng);
+         int iSecureInGreen=isSilentCircleSecure(call->iCallId, call->pEng);
          [l setTextColor:iSecureInGreen?[UIColor greenColor]:[UIColor whiteColor]];
          [l setHidden:NO];
       }
       else{
          [l setHidden:YES];
       }
-
+      
    }
 }
 
 -(void)showInfoView{
-   UIView *info=(UIView*)[self.view viewWithTag:2000]; 
+   UIView *info=(UIView*)[self.view viewWithTag:2000];
    if(info){
       if(iUserTouched){
          if(!iSimplifyUI && !iHideBackToAudioButton)[btBack setHidden:NO];
          if(!iSimplifyUI)[btSendStop setHidden:NO];
          
       }
-      UILabel *l=(UILabel*)[self.view viewWithTag:2001]; 
+      UILabel *l=(UILabel*)[self.view viewWithTag:2001];
       if(l){
-         [l setText:[NSString stringWithUTF8String:&call->bufSecureMsgV[0]]];//yelow sdes
+         UILabel *l2=(UILabel*)[self.view viewWithTag:20001];
+         call->setSecurityLines(l, l2, 1);
       }
-      l=(UILabel*)[self.view viewWithTag:2002]; 
+      l=(UILabel*)[self.view viewWithTag:2002];
       if(l){
          [l setText:toNSFromTB(&call->zrtpPEER)];
       }
@@ -361,12 +377,12 @@ unsigned int  getTickCount();
          
          //uiDur
          
-         [UIView animateWithDuration:.5 
-                               delay:0.0 
-                             options:UIViewAnimationCurveEaseInOut 
+         [UIView animateWithDuration:.5
+                               delay:0.0
+                             options:UIViewAnimationCurveEaseInOut
                           animations:^ {
                              info.alpha=0.6;
-                          } 
+                          }
                           completion:^(BOOL finished) {
                              [info setHidden:NO];
                              info.alpha=.6;
@@ -388,29 +404,29 @@ unsigned int  getTickCount();
    }
    if(iAnimating)return;
    
-   UIView *info=(UIView*)[self.view viewWithTag:2000]; 
+   UIView *info=(UIView*)[self.view viewWithTag:2000];
    if(info && !info.isHidden){
       iAnimating=1;
       info.alpha=0.6;
-      [UIView animateWithDuration:.5 
-                            delay:0.0 
-                          options:UIViewAnimationCurveEaseInOut 
+      [UIView animateWithDuration:.5
+                            delay:0.0
+                          options:UIViewAnimationCurveEaseInOut
                        animations:^ {
                           info.alpha=0.0;
-                       } 
+                       }
                        completion:^(BOOL finished) {
-
+                          
                           [info setHidden:YES];
                           info.alpha=.6;
                           iAnimating=0;
                           
-                       }];      
+                       }];
    }
    
 }
 
 -(IBAction)stopVideoPress:(id)bt{
-   if(cvc && cvc->cVI)cvc->cVI->stop();
+   if(cvc && cvc->cVI)cvc->cVI->stop(NULL);
    if(cvc) cvc->iCanAutoStart=0;
    [self checkButtons];
    if(cvc)[cvc teardownAVCapture];
@@ -419,7 +435,7 @@ unsigned int  getTickCount();
 
 - (void)viewWillAppear:(BOOL)animated{
    [super viewWillAppear:animated];
-
+   
    
    [self setupVO];
    
@@ -439,10 +455,32 @@ unsigned int  getTickCount();
    }
    else [self checkButtons];
    
-   [self showInfoView]; 
+   [self showInfoView];
    
    [[ UIApplication sharedApplication ] setIdleTimerDisabled: YES ];
    
+   [self performSelector:@selector(volumeCheck:) withObject:nil afterDelay:3];
+   
+}
+-(void)volumeCheck:(id)v{
+   
+   if(isPlaybackVolumeMuted()){
+      [lbVolumeWarning setHidden:NO];
+       [self performSelector:@selector(volumeCheckLoop:) withObject:nil afterDelay:1];
+   }
+   else{
+      [lbVolumeWarning setHidden:YES];
+   }
+}
+
+-(void)volumeCheckLoop:(id)v{
+   
+   if(!isPlaybackVolumeMuted()){
+      [lbVolumeWarning setHidden:YES];
+   }
+   else{
+      [self performSelector:@selector(volumeCheckLoop:) withObject:nil afterDelay:1];
+   }
 }
 
 - (void)viewWillDisappear:(BOOL)animated{
@@ -452,12 +490,13 @@ unsigned int  getTickCount();
    
    [self stopVideoPress:nil];
    
-   QuartzImageView *vo=(QuartzImageView*)[self.view viewWithTag:500]; 
-   if(vo && vo->pVO){
-      vo->pVO->stop();
+   QuartzImageView *vo=(QuartzImageView*)[self.view viewWithTag:500];
+   if(vo){
+      vo->iCanDrawOnScreen=0;
    }
-   void g_setQWview(void *p);
-   g_setQWview(NULL);
+  // void g_setQWview(void *p);
+   //g_setQWview(NULL);
+    
    [[ UIApplication sharedApplication ] setIdleTimerDisabled: NO];
    
    
@@ -476,16 +515,16 @@ unsigned int  getTickCount();
    if(!call->iEnded){
       dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), ^{
          char buf[64];
-         sprintf(&buf[0],"*c%u",call->iCallId);
+         sprintf(&buf[0],"*c%u",call->iCallId);//TODO reinvite all calls
          const char *x[2]={"",&buf[0]};
-         z_main(0,2,x);   
+         z_main(0,2,x);
       });
    }
 }
 
 - (void)willPresentActionSheet:(UIActionSheet *)actionSheet {
    
-
+   
 }
 - (void)actionSheetCancel:(UIActionSheet *)actionSheet{
    iActionSheetIsVisible=0;
@@ -519,17 +558,17 @@ unsigned int  getTickCount();
 -(void)showIncomingCallMT{
    
    //http://stackoverflow.com/questions/6130475/adding-images-to-uiactionsheet-buttons-as-in-uidocumentinteractioncontroller
+   if(!toolBar)return;
    
    CTCall *c=app->calls.getCall(app->calls.eStartupCall,0);
    printf("[c=%p]",c);
    if(!c || (c && c==newCall) || iActionSheetIsVisible)return;
    iActionSheetIsVisible=1;
    
-
+   
    
    NSString *p2= [app loadUserData:c];
-   if(c->img){[c->img retain]; c->iImgRetainCnt++;}
-
+   
    int isVideoCall(int iCallID);
    const char *vc=isVideoCall(c->iCallId)?"video ":"";
    NSString *nsIncom;
@@ -541,11 +580,11 @@ unsigned int  getTickCount();
    UIActionSheet *as = [[UIActionSheet alloc]initWithTitle:nsIncom delegate:self cancelButtonTitle:nil destructiveButtonTitle:nil otherButtonTitles:nil];
    
    as.cancelButtonIndex=[as addButtonWithTitle:@"Ignore"];
-
+   
    as.destructiveButtonIndex=[as addButtonWithTitle:@"End Call + Answer"];
    
    
-
+   
    newCall=c;
    
    as.tag=c->iCallId;

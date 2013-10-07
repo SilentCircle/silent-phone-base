@@ -123,6 +123,18 @@ int getAPILevel(){
 
 void debugsi(char *c, int a){}
 
+
+int isBackgroundReadable(const char *fn){}
+void setFileAttributes(const char *fn, int iProtect){}
+void log_file_protection_prop(const char *fn){}
+
+
+void *initARPool(){
+   return (void*)1;
+}
+void relARPool(void *p){}
+
+
 void initCC(){
    static int iInitOk=0;
    if(iInitOk)return;
@@ -139,12 +151,6 @@ void initCC(){
 }
 
 
-void *initARPool(){
-   return (void*)1;
-}
-void relARPool(void *p){
-   
-}
 
 
 
@@ -160,11 +166,23 @@ void tmp_log(const char *p){
      __android_log_print(ANDROID_LOG_DEBUG,"tivi", p);
 }
 
+void log_audio(char const*, char const*){}
+void log_zrtp(char const*, char const*){}
+
 void tivi_log1(const char *p, int val){
    if(iDebugable)
      __android_log_print(ANDROID_LOG_DEBUG,"tivi", "%s=%d", p, val);
    //printf("%s=%d", p, val);
 }
+
+void log_zrtp(char const *tag, char const *msg){
+   if(iDebugable)
+      __android_log_print(ANDROID_LOG_DEBUG,"tivi", "[%s]%s", tag, msg);
+}
+void log_audio(char const *tag, char const *msg){
+   log_zrtp(tag, msg);
+}
+
 
 static char devID[128] = "";
 
@@ -211,9 +229,129 @@ const char *createZeroTerminated(char *out, int iMaxOutSize, const char *in, int
    }
    return p;
 }
+/*
+
+int t_AttachCurrentThread(){
+   JavaVM *vm;
+   int iAttached;
+   JNIEnv *env;
+   env = NULL;
+   iAttached=0;
+   vm = t_getJavaVM();
+   if(!vm)return -1;
+   
+   int s=vm->GetEnv((void**)&env,JNI_VERSION_1_4);
+   if(s!=JNI_OK){
+      s=vm->AttachCurrentThread(&env, NULL);
+      if(!env || s<0){env=NULL;return -1; }
+      iAttached=1;
+   }
+   return 1;
+}
+*/
+ 
+class CTJNIEnv{
+   JavaVM *vm;
+   JNIEnv *env;
+   
+   int iAttached;
+public:
+   CTJNIEnv(){
+      env = NULL;
+      iAttached=0;
+      vm = t_getJavaVM();
+      if(!vm)return;
+ 
+      int s=vm->GetEnv((void**)&env,JNI_VERSION_1_4);
+      if(s!=JNI_OK){
+         s=vm->AttachCurrentThread(&env, NULL);
+         if(!env || s<0){env=NULL;return; }
+         iAttached=1;
+      }
+   }
+   
+   ~CTJNIEnv(){
+      if(iAttached && vm)vm->DetachCurrentThread();
+   }
+   
+   JNIEnv *getEnv(){
+      return env;
+   }
+};
+
+
+void wakeCallback(int iLock){
+   
+   CTJNIEnv jni;
+   JNIEnv *env=jni.getEnv();
+   if(!env)return;
+
+   jclass tps = env->GetObjectClass(thisTiviPhoneService);//env->FindClass("com/tivi/tiviphone/TiviPhoneService");
+   if(tps){
+      jmethodID midCallBack = env->GetMethodID( tps, "wakeCallback", "(I)V");
+      if(midCallBack){
+         env->CallVoidMethod(thisTiviPhoneService, midCallBack, iLock);
+      }
+      else{
+         tmp_log("wakeCallback fail");
+      }
+   }
+   else{
+      tmp_log("FindClass(TiviPhoneService) fail");
+   }
+}
+
+#if 1
+int fncCBRet(void *ret, void *ph, int iCallID, int msgid, const char *psz, int iSZLen){
+   
+   if(!thisTiviPhoneService)return 0;
+   
+   CTJNIEnv jni;
+   JNIEnv *env=jni.getEnv();
+   if(!env)return 0;
+   
+   if(psz && !iSZLen)iSZLen=strlen(psz);
+   
+   
+   if(msgid==CT_cb_msg::eIncomCall || msgid==CT_cb_msg::eCalling){//depricated
+#define min(_A,_B) ((_A)< (_B) ? (_A) : (_B))
+      strncpy(bufPeerName,psz,min(sizeof(bufPeerName),iSZLen));
+      bufPeerName[sizeof(bufPeerName)-1]=0;
+   }
+
+   
+   jclass tps = env->GetObjectClass(thisTiviPhoneService);//env->FindClass("com/tivi/tiviphone/TiviPhoneService");
+   if(tps){
+      jmethodID midCallBack = env->GetMethodID( tps, "callback", "(IIILjava/lang/String;)V");
+      if(midCallBack){
+         
+         char bufTmp[256];
+         const char *p = createZeroTerminated(&bufTmp[0], sizeof(bufTmp)-1, psz, iSZLen);
+         
+         int iEngID = getEngIDByPtr(ph);
+         
+         env->CallVoidMethod(thisTiviPhoneService, midCallBack, iEngID, iCallID, msgid, p ? env->NewStringUTF(p):NULL);
+      }
+      else{
+         tmp_log("midCallBack fail");
+      }
+   }
+   else{
+      tmp_log("FindClass(TiviPhoneService) fail");
+   }
+   
+   return 0;
+}
+#else
 
 //http://www3.ntu.edu.sg/home/ehchua/programming/java/JavaNativeInterface.html
 int fncCBRet(void *ret, void *ph, int iCallID, int msgid, const char *psz, int iSZLen){
+   
+   if(!thisTiviPhoneService)return 0;
+   
+   JavaVM *vm = t_getJavaVM();
+   
+   if(!vm)return 0;
    
    if(psz && !iSZLen)iSZLen=strlen(psz);
 
@@ -223,12 +361,6 @@ int fncCBRet(void *ret, void *ph, int iCallID, int msgid, const char *psz, int i
       strncpy(bufPeerName,psz,min(sizeof(bufPeerName),iSZLen));
       bufPeerName[sizeof(bufPeerName)-1]=0;
    }
-   
-   if(!thisTiviPhoneService)return 0;
-   
-   JavaVM *vm = t_getJavaVM();
-   
-   if(!vm)return 0;
    
    JNIEnv *env;
    int s=vm->GetEnv((void**)&env,JNI_VERSION_1_4);
@@ -260,7 +392,7 @@ int fncCBRet(void *ret, void *ph, int iCallID, int msgid, const char *psz, int i
    
    return 0;
 }
-
+#endif
 
 extern "C" {
    

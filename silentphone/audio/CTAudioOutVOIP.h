@@ -54,6 +54,7 @@ class CTAudioOutVOIP: public CTAudioGetDataCB, public CTAudioOutBase{
    
    int iPackLostInfo[3];
    int iPackLostPrevV,iPackLostPrevPrevV;
+   int iAudioIsWorking;
 public:
    int iDebugUnderFlow;
    int iUnderflowDetected;
@@ -89,6 +90,10 @@ public:
       if(ao)ao->remCB(this,this);
       relPriv();
    }
+   int iOnlyInConference;
+   int canUseAudioData(){return !iOnlyInConference;}
+   void onlyInConference(int ok){iOnlyInConference=ok;}
+   
    double dbgUnderFlowCTX;
    int getAudioData(void *p, int iSamples, int iDevRate, int iSampleTypeEnum, int iOneSampleSize, int iIsFirstPack){
       
@@ -147,11 +152,9 @@ public:
          
          getNextBuf(tmp,iSamples);
          
-         
          if(iDebugUnderFlow>0){
             
-            int iUnderflow = T_TEST_RTP_QUEUE ? rtp_q.underflow(iRate/iSamples/2) : (bufBytes()<10);
-
+            int iUnderflow = T_TEST_RTP_QUEUE ? rtp_q.underflow(iRate/(iSamples+1)/2) : (bufBytes()<10);
             
             if(iUnderflow && iCanClearPlayedData && !iCNReceived && isPlaying()){
                void createSine(double &ctx, short *s, int iSamples, float freq, int iRate, int iVol, int iIsLast);
@@ -165,12 +168,12 @@ public:
       
       fifoBufConferece.add((char*)tmp,iSamples*2);
       
-      if(iIsSameRateType)return iSamples;
+      if(iIsSameRateType)return 0;// iSamples;
       
       //convert rate
       
       if(iSampleTypeEnum!=CTAudioGetDataCB::eShort){
-         //convertType
+         //convert type
       }
       
       return 0;
@@ -257,7 +260,20 @@ public:
    }
    
    virtual int msg(const char *pid, int iLen, void *p, int iSizeofP){
-      //TODO check msg
+      
+      if(iLen==2 && strcmp(pid,"qd")==0){
+         
+         
+         int bs=bufBytes()>>1;
+         if(bs<0)bs=0;
+         
+         int rs= rtp_q.getRecomendedSampleCnt();
+         if(rs<1)rs=1;
+         
+         int qd=bs*100/(rs);
+         
+         return sprintf((char*)p,"%d",qd);
+      }
       if(iLen==4 && strcmp(pid,"bars")==0){
          
          int v=4;
@@ -297,11 +313,14 @@ public:
          if(jit.iMaxBurst>80)pB="BB";
          else if(jit.iMaxBurst>50)pB="bb";
          else if(jit.iMaxBurst>10)pB="b ";
+         float fR=(float)jit.iBytesToSetBuf/(float)(iRate*2);
+         float fd=f-fR;
          
-         return sprintf((char*)p,"%s%1.1f %1.1f"
+         return sprintf((char*)p,"%s%1.1f%s"//  %1.1f"
                         ,pB
                         ,f
-                        ,(float)jit.iBytesToSetBuf/(float)(iRate*2));
+                        ,fd>.1f?"+": (fd<-.1f?"-":"") //net is better or worse
+                        );
 
       }
       if(iLen==4 && strcmp(pid,"lost")==0){
@@ -324,7 +343,9 @@ public:
          iCanClearPlayedData=0;
          reset();
          rtp_q.setRate(getRate());
-         return ao->play();
+         int r=ao->play();
+         iMSecPlay=-1;
+         return r;
       }
       return 1;
    }
@@ -338,6 +359,7 @@ public:
    int getBufSize(){return iBufSizeInBytes;}
    void stopAfter(int iMs=-1)
    {
+      if(!iAudioIsWorking)return;
       iDebugUnderFlow=0;
       if(iMs>0)
       {
@@ -461,6 +483,8 @@ private:
       iNeedStop=1;
    }
    void reset(){
+      iOnlyInConference=0;
+      iAudioIsWorking=0;
       iPrevLostC=0;
       uiPlayPos=uiWPosLast=0;
       uiNextPP=0;
@@ -729,16 +753,30 @@ private:
 #ifdef   T_USE_PLAY_FASTER_REMOVE_BLOCKS
                   if(iCBB>iLim+frames*2 && (iPrevPackIsSpeech<-20 || iCBB*2>iRate*3 || iOverPlay>100)){
                      if(!iPrevRemoved){
-                        unsigned int uiPrevP=uiPlayPos;
-                        uiPlayPos=findBestAlign(uiPlayPos,max(min(80,frames),160));
-                        
-                        
-                        printf("reducing play delay %d\n",(int)uiPlayPos-(int)uiPrevP+frames*2);
-  
-                        //TODO try align rtp_q, (iPrevPackIsSpeech<0  || )
-                        //rtp_q.realign(lastVoiceSample,last2VoiceSampleMult)
-                        r=getNextBufR(samples,frames);
-                        iPrevPackIsSpeech=vad.isSilence2(samples,frames,getRate());
+                        int mf=max(min(80,frames),160);
+                        if(!T_TEST_RTP_QUEUE){
+                           unsigned int uiPrevP=uiPlayPos;
+                           uiPlayPos=findBestAlign(uiPlayPos,mf);
+                           
+                           printf("reducing play delay %d\n",(int)uiPlayPos-(int)uiPrevP+frames*2);
+                           
+                           r=getNextBufR(samples,frames);
+                           iPrevPackIsSpeech=vad.isSilence2(samples,frames,getRate());
+                        }
+                        else{
+                           //TODO try align rtp_q, (iPrevPackIsSpeech<0  || )
+                           //rtp_q.realign(lastVoiceSample,last2VoiceSampleMult)
+                           int pr=samples[frames-1];
+                           r=getNextBufR(samples,frames);
+                           int skip=findBestAlign(pr,samples,mf);
+                           if(skip>0 && skip<=frames){
+                              int more=frames-skip;
+                              memcpy(samples,&samples[skip],more*sizeof(short));
+                              getNextBufR(&samples[more],skip);
+                           }
+                           printf("reducing play delay %d+%d\n",frames,skip);
+                           iPrevPackIsSpeech=vad.isSilence2(samples,frames,getRate());
+                        }
                      }
                      iPrevRemoved=!iPrevRemoved;
                   }
@@ -765,6 +803,32 @@ private:
    }
    
    int lastVoiceSample,last2VoiceSampleMult;
+   unsigned int findBestAlign(int pr, short *p, int iSamples){
+      int z;
+
+      int iBestPos=0;
+
+      int iMin=10000;
+      double dMin=4000000000.f;
+ 
+      int iPd=((int)p[0]-lastVoiceSample);
+      
+      for(z=0;z<iSamples;z++){
+
+         int iCd=p[z]-pr;
+         int c=abs(iCd-iPd);
+         double sqd=fabs((double)last2VoiceSampleMult-(double)((int)p[z]*pr));
+         //pr2=pr;
+         
+         if(c<iMin*2 && sqd<=dMin){dMin=sqd;iMin=c;iBestPos=z;if(sqd<8)break;};
+         pr=(int)p[z];
+         iPd=pr-lastVoiceSample;
+         
+      }
+      
+      return iBestPos;
+   }
+
    unsigned int findBestAlign(unsigned int i, int iMaxCnt){
       int z;
       unsigned  int iPrevI=i;
@@ -814,6 +878,7 @@ private:
    
    int getNextBufR(short *samples, int frames) 
    {
+      iAudioIsWorking=1;
       uiLastGetMS=getTickCount();
       
       if(iNeedStop){

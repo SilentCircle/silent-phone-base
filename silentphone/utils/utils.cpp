@@ -543,6 +543,21 @@ unsigned int crc32_calc(const void *ptr, size_t cnt, unsigned int crc)
    return crc;
 }
 
+unsigned int crc32_calc_video(const void *ptr, size_t cnt)
+{
+   unsigned int crc=0xEDB88320;
+   const unsigned char *p=(unsigned char *)ptr;
+   const unsigned char *pEnd=p+cnt-32;
+   while(p<pEnd) {
+      crc = (crc >> 4) ^ crc32_tab[(crc & 0xf) ^ (*p & 0xf)];
+      crc = (crc >> 4) ^ crc32_tab[(crc & 0xf) ^ (*p >> 4)];
+      p+=17;
+   }
+   
+   return crc;
+}
+
+
 unsigned int crc32(const void *ptr, size_t cnt){
    return crc32_calc(ptr,cnt,0xEDB88320);
 }
@@ -556,6 +571,22 @@ void safeStrCpy(char *dst, const char *name, int iMaxSize){
    strncpy(dst,name,iMaxSize);
    dst[iMaxSize]=0;
 }
+
+int stripDotsIfNumber(char *p, int iLen){
+   
+   int i;
+   for(i=0;i<iLen;i++)if(!isdigit(p[i]) && p[i]!='.')return iLen;
+   
+   int iNewLen=0;
+   for(i=0;i<iLen;i++){
+      if(p[i]=='.')continue;
+      p[iNewLen]=p[i];
+      iNewLen++;
+   }
+   p[iNewLen]=0;
+   return iNewLen;
+}
+
 
 char *trim(char *sz)
 {
@@ -585,6 +616,31 @@ char *trim(char *sz)
    }
    return sz;
 }
+
+char *stripText(char *dst, int iMax, const char *src, const char *cmp){
+   
+   int i;
+   int l_src=strlen(src);
+   int l_cmp=strlen(cmp);
+   
+   if(iMax<=0)return dst;
+   char *ret=dst;
+   
+   if(l_src>iMax)l_src=iMax;
+   
+   for(i=0;i<l_src;i++){
+      if(strncmp(src, cmp,l_cmp)==0){
+         src+=l_cmp;
+         continue;
+      }
+      *dst=*src;
+      src++;
+      dst++;
+   }
+   *dst=0;
+   return ret;
+}
+
 
 void convert16to8(char *dst, const short *src, int iLen)
 {
@@ -1776,7 +1832,8 @@ char *loadFileW(const  short *fn, int &iLen)
    char *p;
 #if defined(__APPLE__) || defined(__linux__) 
    char bufFn[1024];
-   convert16to8(&bufFn[0],(short*)fn,0);
+   convert16to8S(&bufFn[0],sizeof(bufFn)-1,(short*)fn,0);
+ //  convert16to8(&bufFn[0],(short*)fn,0);
    FILE *f=fopen(bufFn,"rb");
 #else
    wchar_t rb[]={'r','b',0};
@@ -1872,17 +1929,25 @@ char *loadFile(const  char *fn, int &iLen)
 }
 #if  defined(__APPLE__) || defined(ANDROID_NDK)
 #include <unistd.h>
+#include <sys/stat.h>
 #endif
 
 int isFileExists(const char *fn){
+   
    FILE *f=fopen(fn,"rb");
+   
    if(f){
       fclose(f);
       return 1;
    }
+//   perror("isFileExists()");
+   /*
+    struct stat st;
+    int result = stat(fn, &st);
+    return result == 0;
+   */
    return 0;
 }
-
 int isFileExistsW(const short *fn){
    char bufD[1024];
    convert16to8S(&bufD[0],sizeof(bufD)-1,(short*)fn,0);

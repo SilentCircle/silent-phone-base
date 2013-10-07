@@ -50,22 +50,27 @@ CTSipSock::~CTSipSock(){
    addToDelete(-1,NULL);//clean prev sockets
 }
 
+void CTSipSock::del_sock(DEL_SOCK *s){
+   if(!s)return;
+   if(s->iIsTLS && ((CTTLS*)s)->iCallingConnect)return;
+      
+   s->uiDeleteAT=0;
+   puts("del sock");
+   if(s->iIsTLS)delete(CTTLS*) s->sock;
+   else delete(CTSockTcp*)s->sock;
+   s->sock=NULL;
+   
+}
 //iIsTLS = -1 -delete all sock
 void CTSipSock::addToDelete(int iIsTLS, void *s){
    unsigned int uiNow=getTickCount();
-   
 
-   
    int iEmptyCnt=0;
    
    for(int i=0;i<eDelSocketCnt;i++){
       int d=(int)(uiNow-deleteSock[i].uiDeleteAT);//rollover fix
       if(((deleteSock[i].uiDeleteAT && d>0) || iIsTLS==-1) && deleteSock[i].sock) {
-         deleteSock[i].uiDeleteAT=0;
-         puts("del sock");
-         if(deleteSock[i].iIsTLS)delete(CTTLS*) deleteSock[i].sock;
-         else delete(CTSockTcp*)deleteSock[i].sock;
-         deleteSock[i].sock=NULL;
+         del_sock(&deleteSock[i]);
       }
       if(!deleteSock[i].sock)iEmptyCnt++;
    }
@@ -105,10 +110,6 @@ CTSipSock::CTSipSock(CTSockCB &c):CTSockBase(),udp(c),tcp(NULL),sockCB(c),tls(NU
    iSending=0;
    tcp = new CTSockTcp(c);
    tls = new CTTLS(c);
-   //   setSockType(eTCP);
-
-  // setSockType(g_isTLS()?eTLS:(g_isTCP()?eTCP:eUDP));
-
 }
 
 void CTSipSock::setSockType(const char *p){
@@ -312,8 +313,8 @@ void CTSipSock::checkCert(ADDR *address){
 int CTSipSock::closeSocket(){
    if(iIsSuspended){Sleep(20);return 0;}
    if(iType==eUDP)return udp.closeSocket();
-   if(iType==eTCP){return tcp->closeSocket();}
-   if(iType==eTLS){return tls->closeSocket();}
+   if(iType==eTCP && tcp){return tcp->closeSocket();}
+   if(iType==eTLS && tls){return tls->closeSocket();}
    return T_UNKNOWN_SOCK_RET;
 }
 #include <stdarg.h>
@@ -370,10 +371,7 @@ int CTTCP_TLS_SendQ::addToQuve(const char *buf, int iLen, ADDR *address, int iSo
  //nedriikst saglabaat sock
    //TODO if new ip remove or new sockt remo prev msg from q
    if(iLen<11)return 0;///iLen<8 gaja
-   
-
-   
-   
+    
    for(int i=0;i<Q_CNT;i++){
       //TODO chekc addr and content if same skip
       AA_SEND_Q *p=&sendQ[i];
@@ -401,7 +399,7 @@ int CTTCP_TLS_SendQ::addToQuve(const char *buf, int iLen, ADDR *address, int iSo
             p->uiTS=getTickCount();
             if(iLen>sizeof(p->buf)-1){
                iLen=sizeof(p->buf)-1;
-               puts("send buf is too small");
+               tmp_log("AQ: send buf is too small");
             }
             
             memcpy(p->buf,buf,iLen);
@@ -479,7 +477,7 @@ int CTSipSock::sendQuve(){
             
             q->iBusy=3;
             //if binded addr
-            int d = (int)(uiTS-q->uiTS);//rollover fix
+            int d = (int)(uiTS-q->uiTS);
             if(d>8000){
                //timeout
                if(q->uiTS && q->a.ip)
@@ -492,14 +490,15 @@ int CTSipSock::sendQuve(){
             }
             else {
                
-               printf("[send %s [%.*s] %d]",q->a.bufAddr, 30, q->buf,getTickCount()-q->uiTS);
+               printf("[send %s [%.*s] %d]",q->a.bufAddr, 30, q->buf, getTickCount()-q->uiTS);
                int ret=sendToReal(q->buf, q->iLen, &q->a);
-               printf("[inq [%d]]\n", getTickCount()-q->uiTS);
+               uiTS=getTickCount();
+               printf("[inq=%d]\n", uiTS-q->uiTS);
                if(ret<0){
                   failCount++;
                   q->iBusy=0;
+                  char d[64];sprintf(d,"sendToReal()=%d t=%dms\n",ret, uiTS-q->uiTS);tmp_log(d);
                   Sleep(30);
-                  uiTS=getTickCount();
                }
                else sent++;
             }
@@ -511,7 +510,9 @@ int CTSipSock::sendQuve(){
       }
    }
 
-   if(c) printf("send quve %d %d\n",c,sent);
+   if(failCount && c) {
+      char d[64];sprintf(d,"send quve %d %d %d\n",c,sent,failCount);tmp_log(d);
+   }
    return c;
 }
 
@@ -526,7 +527,7 @@ int CTSipSock::sendTo(const char *buf, int iLen, ADDR *address){
 
 int CTSipSock::sendToReal(const char *buf, int iLen, ADDR *address){
    if(iExiting)return -1;
-   if(iIsSuspended){Sleep(20);return -1;}
+   if(iIsSuspended){Sleep(20);return -2;}
 
   if(iType==eUDP){
       return udp.sendTo(buf,iLen,address);
@@ -535,36 +536,40 @@ int CTSipSock::sendToReal(const char *buf, int iLen, ADDR *address){
    
    CTMutexAutoLock al(testTCP_TLSMutex); 
 
-   if(iFlagRecreate || (iType==eTLS && tls && tls->isClosed()) || 
+   if((iFlagRecreate && (iFlagRecreate&4)==0) || (iType==eTLS && tls && (tls->isClosed() || !tls->isConected())) ||
       (iType==eTCP && (!tcp || ((tcp && tcp->getAddrConnected().ip && tcp->getAddrConnected()!=*address))))  ||
       (iType==eTLS && (!tls || ((tls && tls->getAddrConnected().ip && tls->getAddrConnected()!=*address))))
       )
    {
-      if(iFlagRecreate)puts("[iFlagRecreate]");
+      if(iFlagRecreate)tmp_log("[iFlagRecreate]");
       else if(iType==eTCP){
          if(tcp)printf("[tcp %d=%d,%d=%d]",tcp->getAddrConnected().ip,address->ip,tcp->getAddrConnected().getPort(),address->getPort());
       }
       else if(iType==eTLS){
-         if(tls)printf("[tls %d=%d,%d=%d]",tls->getAddrConnected().ip,address->ip,tls->getAddrConnected().getPort(),address->getPort());
          if(tls){
             char bufA[32];
             char bufB[32];
             tls->getAddrConnected().toStr(&bufA[0]);
             address->toStr(&bufB[0]);
-            printf("[%s %s]",bufA,bufB);
+            
+            char d[64];sprintf(d,"[tls conn=%s dst=%s]",bufA,bufB);
+            tmp_log(d);
          }
       }
 
-      iFlagRecreate=0;
+      iFlagRecreate|=4;
       
       iTcpIsSent=0;
       iTlsIsSent=0;
       
-      closeSocket();
+    //  closeSocket(); //createSockBind deletes prev one
       Sleep(20);
+      
 
       int r=createSockBind(1);
-      printf("[cr=%d]",r);
+      void tivi_log1(const char *p, int val);
+      tivi_log1("_recr",r + iType*100);
+     // printf("[cr=%d]",r);
       Bind(addr.getPort(),1);
    }
 
@@ -587,17 +592,19 @@ int CTSipSock::sendToReal(const char *buf, int iLen, ADDR *address){
             if(iLen>0)tivi_slog("sent[%d]-tcp\n[%.*s]",r,min(iLen,10),buf);
             if(r<0){
                puts("[tcp recreate]");
-               iFlagRecreate=1;
+               iFlagRecreate|=2;
+               iFlagRecreate&=~4;
             }
             return r;
          }
+         else return -5;
       }
-      else return -1;
+      else return -4;
    }
 
    if(iType==eTLS){
       if(tls){
-         if(!tls->isConected() && iLen>0){checkCert(address);tls->_connect(address);}
+         if(!tls->isConected() && iLen>0){checkCert(address);tmp_log("tls-conn");tls->_connect(address);}
          if(tls->isConected()){
             int r=0;
             if(iLen<20){
@@ -612,15 +619,17 @@ int CTSipSock::sendToReal(const char *buf, int iLen, ADDR *address){
                if(iLen>0)tivi_slog("sent[%d]-tls\n[%.*s]",r,min(iLen,10),buf);
                
                if(r<0){
-                  puts("f-recr");
-                  iFlagRecreate=1;//ok
+                  tmp_log("f-recr");
+                  iFlagRecreate|=2;//ok
+                  iFlagRecreate&=~4;
                }
             }
             return r;
 
          }
+         else return -5;
       }
-      else return -1;
+      else return -3;
    }
 
    return T_UNKNOWN_SOCK_RET;
@@ -769,7 +778,8 @@ int CTSipSock::recvFrom(char *buf, int iLen, ADDR *address){
          printf("[rec-tcp-err %d]",rec);
          if(rec==0){
             puts("[recFrom2 recreate]");
-           iFlagRecreate=1;
+            iFlagRecreate|=2;
+            iFlagRecreate&=~4;
             Sleep(30);
             address->clear();
             return rec;
@@ -780,8 +790,6 @@ int CTSipSock::recvFrom(char *buf, int iLen, ADDR *address){
 
       *address=tcp->getAddrConnected();
       
-      if(rec>0)tivi_slog("rec-tcp\n[%.*s]",min(20,rec),buf);
-
       return rec;
    }
    if(iType==eTLS){
@@ -795,8 +803,9 @@ int CTSipSock::recvFrom(char *buf, int iLen, ADDR *address){
       rec=recFrom2(&cbTcp,buf,iLen,&tmpBuf[0],sizeof(tmpBuf),&iBytesInNextTmpBuf);
       if(rec<=0){
          if(tls->peerClosed()==1){
-            puts("[tls->peerClosed() recreate]");
-            iFlagRecreate=1;
+            tmp_log("[tls->peerClosed() recreate]");
+            iFlagRecreate|=2;
+            iFlagRecreate&=~4;
             return rec;
          }
       }
@@ -806,7 +815,7 @@ int CTSipSock::recvFrom(char *buf, int iLen, ADDR *address){
       }
 
       *address=tls->getAddrConnected();
-      if(rec>0)tivi_slog("rec-tls\n[%.*s]",min(20,rec),buf);
+
       return rec;
    }
 

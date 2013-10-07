@@ -28,8 +28,6 @@ ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
-//#include "main.h"
-//#include "sip.h"
 //#define DReo
 #include <stdio.h>
 #include <string.h>
@@ -38,6 +36,8 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include "sdp.h"
 #include "../utils/utils.h"
+
+static int getMediaParams(SDP *psdp, char *buf);
 
 int findMediaId(SDP *sdp, int eType, int n)//TOD
 {
@@ -73,7 +73,7 @@ int hasAttrib(SDP &sdp, const char *attr, int iType){
    return 0;
 }
 
-int findCrLf(char *buf, int &inc)
+static int findCrLf(char *buf, int &inc)
 {
    char *pStart=buf;
    inc=0;
@@ -89,13 +89,14 @@ int findCrLf(char *buf, int &inc)
    return -1;
 }
 
-int findip(char *p,int &inc)
+static int findip(char *p,int &inc)
 {
    int ip=0;
    int ipLen=0;
    inc=0;
    while(*p)
    {
+      //this code is used also in server
 #if  !defined(_WIN32) && !defined(__SYMBIAN32__) //if not arm
       if(*(unsigned int *)p==*(unsigned int *)"IN I" &&
          *(unsigned int *)(p+3)==*(unsigned int *)"IP4 ")
@@ -131,7 +132,7 @@ int findip(char *p,int &inc)
    return ip;
 }
 
-int  getMediaParams(SDP *psdp, char *buf);
+
 int parseSDP(SDP *psdp, char *buf, int iLen)
 {
    
@@ -146,7 +147,8 @@ int parseSDP(SDP *psdp, char *buf, int iLen)
 #define T_MAX_SDP_SIZE 1000
 #define T_MIN_SDP_SIZE (sizeof(STR_MIN_SDP)-1)
    
-   if(iLen<T_MIN_SDP_SIZE || iLen>T_MAX_SDP_SIZE){
+   psdp->iParsed=0;
+   if(iLen<T_MIN_SDP_SIZE || iLen>T_MAX_SDP_SIZE || !buf){
       return -1;
    }
    
@@ -159,7 +161,7 @@ int parseSDP(SDP *psdp, char *buf, int iLen)
    buf+=inc;
    
    while(*buf)
-   {
+   {//isascii
       if(!(
            *(buf-2)=='\r' &&
            *(buf-1)=='\n' &&
@@ -169,7 +171,9 @@ int parseSDP(SDP *psdp, char *buf, int iLen)
          buf++;
          continue;
       }
-      // buf++;
+      if(!islower(*buf))return -1;
+      //isascii
+      
       switch(*buf)
       {
          case 'a':
@@ -255,7 +259,7 @@ int parseSDP(SDP *psdp, char *buf, int iLen)
    psdp->iParsed=1;//TODO remove
    return 0;
 }
-int  getMediaParams(SDP *psdp, char *buf)
+static int getMediaParams(SDP *psdp, char *buf)
 {
    int ok=0;
    while(*buf)
@@ -348,99 +352,3 @@ int  getMediaParams(SDP *psdp, char *buf)
    
    return 0;
 }
-#if 0
-
-
-
-
-int  getCodecs(SDP *psdp, char *buf);
-int parseSDP(SDP *psdp, char *buf)
-{
-   int not_ok=0;
-   int inc=0;
-   not_ok=findCrLf(buf,inc);
-   if(not_ok<0)return -not_ok;
-   
-   buf+=inc;
-   
-   while(*buf)
-   {
-      if(!(
-           *(buf-2)=='\r' &&
-           *(buf-1)=='\n' &&
-           *(buf+1)=='='
-           ))
-      {
-         buf++;
-         continue;
-      }
-      // buf++;
-      switch(*buf)
-      {
-         case 'o':
-            buf+=2;
-            psdp->ipOriginAudio=findip(buf,inc);
-            buf+=inc;
-            break;
-         case 'c':
-            buf+=2;
-            psdp->ipConnectAudio=findip(buf,inc);
-            //if(inc==0)
-            buf+=inc;
-            break;
-         case 'm':
-            buf+=2;
-            return getCodecs(psdp,buf);
-            //case 'a':buf+=2; //a=x-ssrc
-         default:
-            not_ok=findCrLf(buf,inc);
-            if(not_ok<0)return not_ok;
-            buf+=inc;
-            
-      }
-   }
-   return 0;
-}
-int  getCodecs(SDP *psdp, char *buf)
-{
-   int ok=0;
-   while(*buf)
-   {
-      if(strncmp(buf,"audio",5))
-      {
-         buf++;
-         continue;
-      }
-      break;
-   }
-   //buf+=6;
-   while(*buf>32 && *buf!=0)buf++;
-   if(*buf==0)return -1;
-   
-   while(*buf<=32 && *buf!=0)buf++;
-   if(*buf==0)return -1;
-   
-   psdp->port=atoi(buf);
-   
-   while(*buf>32 && *buf!=0)buf++;
-   if(*buf==0)return -1;
-   
-   while((*buf<'0' || *buf>'9') && *buf!=0)buf++;
-   if(*buf==0)return -1;
-   
-   while(!ok)
-   {
-      
-      psdp->codec[psdp->codecCount].uiID=atoi(buf);
-      psdp->codecCount++;
-      buf++;
-      
-      while(*buf>32 && *buf!=0)buf++;
-      if(*buf==0)return -1;
-      if(*buf=='\r')return 0;
-   }
-   
-   return 0;
-}
-
-#endif //0

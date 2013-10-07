@@ -145,6 +145,14 @@ typedef struct {
       return iNetworkIsMobile?iPayloadSizeSend3G:iPayloadSizeSend;
    }
    
+   char *getCodecs(){
+      if(szACodecs3G[0] && iNetworkIsMobile)
+      {
+         return &szACodecs3G[0];
+      }
+      return &szACodecs[0];
+   }
+   
    struct{
       //unsigned int uiTryReRegAT;//??? rem
       t_ph_tick uiRegUntil;
@@ -360,6 +368,7 @@ return &cfg->STR_CVG_ADD V_ID;\
       
       T_C_ITEMB(iCanAttachDetachVideo,0);//reinvite audio video
       
+      T_C_ITEMB(bCreatedByUser,0);
       
       
       

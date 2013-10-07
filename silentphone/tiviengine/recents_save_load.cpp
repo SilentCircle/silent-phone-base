@@ -147,6 +147,11 @@ void saveRecetnsFN(CTList *list, const char *tag, int iIsRecents, const char *fn
    
    fclose(f);
    
+   if(iIsRecents){
+      void setFileBackgroundReadable(const char *fn);
+      setFileBackgroundReadable(fn);
+   }
+   
    printf("[save-ab %dms]",getTickCount()-ui);
    //CTRecentsItem
       

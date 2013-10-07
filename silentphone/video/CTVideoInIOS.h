@@ -33,6 +33,55 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include "../baseclasses/CTBase.h"
 
+template<int TMaxCnt>
+class CTIdCheck{ //TODO fix name, create file, use for audioIn
+   int idArray[TMaxCnt];
+public:
+   
+   CTIdCheck(){
+      memset(idArray,0,sizeof(idArray));
+   }
+   
+   int add(void *id)
+   {
+      if(!id){
+         return 0;
+      }
+      for(int i=0;i<TMaxCnt;i++){
+         if(idArray[i]==(int)id)return 0;//TODO test new
+      }
+      
+      for(int i=0;i<TMaxCnt;i++){
+         if(!idArray[i])
+         {
+            idArray[i]=(int)id;
+            return 0;
+         }
+      }
+      return -1;
+   }
+   
+   int rem(void *id)
+   {
+      for(int i=0;i<TMaxCnt;i++){
+         if(idArray[i]==(int)id)
+         {
+            idArray[i]=0;
+            return 0;
+         }
+      }
+      return -1;
+   }
+   
+   inline int isEmpty()
+   {
+      for(int i=0;i<TMaxCnt;i++)
+         if(idArray[i]){return 1;}
+      return 0;
+   }
+};
+
+
 
 class CTVideoInIOS: public CTVideoInBase{
    void *ptr;
@@ -40,6 +89,9 @@ class CTVideoInIOS: public CTVideoInBase{
    unsigned char *buf;
    int iStarted,iEnding;
    int iVideoFrameEveryMs;
+   
+   CTIdCheck<12> idArray;
+   
 public:
    CTVideoCallBack *cb;
    CTVideoInIOS(){iEnding=0;iVideoFrameEveryMs=80;buf=NULL;iStarted=0;w=h=0;cb=NULL;ptr=NULL;}
@@ -53,11 +105,12 @@ public:
    }
 
    
+   int start(void *pData);
+   void stop(void *pData);
+   void setXY(int x, int y);   
+
    unsigned int onNewVideoData(int *d, unsigned char *yuv, int nw, int nh);
    void sendBuf(unsigned int uiPos);
-   int start();
-   void stop();
-   void setXY(int x, int y);   
   
    
    void setVideoEveryMS(int i){iVideoFrameEveryMs=i;}

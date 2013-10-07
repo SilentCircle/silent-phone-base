@@ -143,7 +143,7 @@ inline void loadNearMB(MB_4 *v, MB_4 *mbx[]){
    if(i &&  v[-1].iIsBi)mbx[PREV_BI_MB]=v-1;
    if(j &&  v[-xc].iIsBi)mbx[UP_BI_MB]=v-xc;
 
-   //-----------ERR---------- TODO ---i+i < xc  ???? i+1<xc
+   //-----------ERR---------- TODO --wrong---i+i < xc  ???? i+1<xc
    //TODO inc vers
    if(i+i<xc && j &&  v[1-xc].iIsBi)mbx[NEXT_BI_MB]=v+1-xc;
 //--??   if(i+1<xc && j &&  v[1-xc].iIsBi)mbx[NEXT_BI_MB]=v+1-xc;

@@ -1,14 +1,14 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <archive type="com.apple.InterfaceBuilder3.CocoaTouch.XIB" version="8.00">
 	<data>
-		<int key="IBDocument.SystemTarget">1536</int>
+		<int key="IBDocument.SystemTarget">1552</int>
 		<string key="IBDocument.SystemVersion">11G63</string>
-		<string key="IBDocument.InterfaceBuilderVersion">2844</string>
+		<string key="IBDocument.InterfaceBuilderVersion">3084</string>
 		<string key="IBDocument.AppKitVersion">1138.51</string>
 		<string key="IBDocument.HIToolboxVersion">569.00</string>
 		<object class="NSMutableDictionary" key="IBDocument.PluginVersions">
 			<string key="NS.key.0">com.apple.InterfaceBuilder.IBCocoaTouchPlugin</string>
-			<string key="NS.object.0">1930</string>
+			<string key="NS.object.0">2083</string>
 		</object>
 		<array key="IBDocument.IntegratedClassDependencies">
 			<string>IBProxyObject</string>
@@ -45,7 +45,6 @@
 								<int key="NSvFlags">292</int>
 								<string key="NSFrame">{{62, 9}, {207, 21}}</string>
 								<reference key="NSSuperview" ref="114480499"/>
-								<reference key="NSWindow"/>
 								<reference key="NSNextKeyView" ref="142800671"/>
 								<string key="NSReuseIdentifierKey">_NS:9</string>
 								<bool key="IBUIOpaque">NO</bool>
@@ -81,7 +80,6 @@
 								<int key="NSvFlags">292</int>
 								<string key="NSFrame">{{62, 28}, {207, 21}}</string>
 								<reference key="NSSuperview" ref="114480499"/>
-								<reference key="NSWindow"/>
 								<string key="NSReuseIdentifierKey">_NS:9</string>
 								<bool key="IBUIOpaque">NO</bool>
 								<bool key="IBUIClipsSubviews">YES</bool>
@@ -112,7 +110,6 @@
 								<int key="NSvFlags">256</int>
 								<string key="NSFrame">{{6, 9}, {53, 40}}</string>
 								<reference key="NSSuperview" ref="114480499"/>
-								<reference key="NSWindow"/>
 								<reference key="NSNextKeyView" ref="371235854"/>
 								<bool key="IBUIOpaque">NO</bool>
 								<bool key="IBUIClipsSubviews">YES</bool>
@@ -127,7 +124,6 @@
 						</array>
 						<string key="NSFrameSize">{320, 57}</string>
 						<reference key="NSSuperview" ref="378616925"/>
-						<reference key="NSWindow"/>
 						<reference key="NSNextKeyView" ref="329133405"/>
 						<string key="NSReuseIdentifierKey">_NS:11</string>
 						<object class="NSColor" key="IBUIBackgroundColor">
@@ -143,7 +139,6 @@
 				</array>
 				<string key="NSFrameSize">{320, 58}</string>
 				<reference key="NSSuperview"/>
-				<reference key="NSWindow"/>
 				<reference key="NSNextKeyView" ref="114480499"/>
 				<string key="NSReuseIdentifierKey">_NS:9</string>
 				<string key="targetRuntimeIdentifier">IBCocoaTouchFramework</string>
@@ -225,455 +220,7 @@
 			<nil key="sourceID"/>
 			<int key="maxID">6</int>
 		</object>
-		<object class="IBClassDescriber" key="IBDocument.Classes">
-			<array class="NSMutableArray" key="referencedPartialClassDescriptions">
-				<object class="IBPartialClassDescription">
-					<string key="className">AppDelegate</string>
-					<string key="superclassName">NSObject</string>
-					<dictionary class="NSMutableDictionary" key="actions">
-						<string key="chooseCallType">id</string>
-						<string key="clearEdit">id</string>
-						<string key="endCallBt">id</string>
-						<string key="hideKeypad:">id</string>
-						<string key="switchAddCall:">id</string>
-						<string key="switchCalls:">id</string>
-						<string key="switchMute:">id</string>
-						<string key="switchSpkr:">id</string>
-						<string key="switchToVideo:">id</string>
-						<string key="switchView:">id</string>
-					</dictionary>
-					<dictionary class="NSMutableDictionary" key="actionInfosByName">
-						<object class="IBActionInfo" key="chooseCallType">
-							<string key="name">chooseCallType</string>
-							<string key="candidateClassName">id</string>
-						</object>
-						<object class="IBActionInfo" key="clearEdit">
-							<string key="name">clearEdit</string>
-							<string key="candidateClassName">id</string>
-						</object>
-						<object class="IBActionInfo" key="endCallBt">
-							<string key="name">endCallBt</string>
-							<string key="candidateClassName">id</string>
-						</object>
-						<object class="IBActionInfo" key="hideKeypad:">
-							<string key="name">hideKeypad:</string>
-							<string key="candidateClassName">id</string>
-						</object>
-						<object class="IBActionInfo" key="switchAddCall:">
-							<string key="name">switchAddCall:</string>
-							<string key="candidateClassName">id</string>
-						</object>
-						<object class="IBActionInfo" key="switchCalls:">
-							<string key="name">switchCalls:</string>
-							<string key="candidateClassName">id</string>
-						</object>
-						<object class="IBActionInfo" key="switchMute:">
-							<string key="name">switchMute:</string>
-							<string key="candidateClassName">id</string>
-						</object>
-						<object class="IBActionInfo" key="switchSpkr:">
-							<string key="name">switchSpkr:</string>
-							<string key="candidateClassName">id</string>
-						</object>
-						<object class="IBActionInfo" key="switchToVideo:">
-							<string key="name">switchToVideo:</string>
-							<string key="candidateClassName">id</string>
-						</object>
-						<object class="IBActionInfo" key="switchView:">
-							<string key="name">switchView:</string>
-							<string key="candidateClassName">id</string>
-						</object>
-					</dictionary>
-					<dictionary class="NSMutableDictionary" key="outlets">
-						<string key="answer">UIButton</string>
-						<string key="backToCallBT">UIButton</string>
-						<string key="btAntena">UIButton</string>
-						<string key="btChangePN">UIButton</string>
-						<string key="btHideKeypad">UIButton</string>
-						<string key="btSAS">UIButton</string>
-						<string key="callScreenFlag">UIImageView</string>
-						<string key="cfgBT">UIButton</string>
-						<string key="countryID">UILabel</string>
-						<string key="curService">UIButton</string>
-						<string key="curServiceLB">UILabel</string>
-						<string key="dialPadBTView">UIView</string>
-						<string key="dialPadView">UIView</string>
-						<string key="endCallBT">UIButton</string>
-						<string key="fPadView">UIView</string>
-						<string key="infoPanel">UIView</string>
-						<string key="ivBubble">UIImageView</string>
-						<string key="keyPadInCall">UIView</string>
-						<string key="keypaditem">UITabBarItem</string>
-						<string key="lbDst">UILabel</string>
-						<string key="lbDstName">UILabel</string>
-						<string key="lbNRFieldName">UILabel</string>
-						<string key="lbSecure">UILabel</string>
-						<string key="lbSecureSmall">UILabel</string>
-						<string key="lbWarning">UILabel</string>
-						<string key="log">UITextView</string>
-						<string key="muteBT">UIButton</string>
-						<string key="navigationController">UINavigationController</string>
-						<string key="nr">UITextField</string>
-						<string key="nrflag">UIImageView</string>
-						<string key="peerPB_Img">UIImageView</string>
-						<string key="pickerButton">UIButton</string>
-						<string key="recentsController">RecentsViewController</string>
-						<string key="second">UINavigationController</string>
-						<string key="settings_ctrl">SettingsController</string>
-						<string key="settings_nav_ctrl">UINavigationController</string>
-						<string key="switchSpktBt">UIButton</string>
-						<string key="uiCallInfo">UILabel</string>
-						<string key="uiCallVC">UIViewController</string>
-						<string key="uiDur">UILabel</string>
-						<string key="uiMainTabBarController">UITabBarController</string>
-						<string key="uiMediaInfo">UILabel</string>
-						<string key="uiServ">UILabel</string>
-						<string key="uiTabBar">UITabBar</string>
-						<string key="uiZRTP_peer">UILabel</string>
-						<string key="userCell">UITableViewCell</string>
-						<string key="verifySAS">UIButton</string>
-						<string key="videoBT">UIButton</string>
-						<string key="view6pad">UIView</string>
-						<string key="viewCSMiddle">UIView</string>
-						<string key="window">UIWindow</string>
-						<string key="zrtpPanel">UIView</string>
-					</dictionary>
-					<dictionary class="NSMutableDictionary" key="toOneOutletInfosByName">
-						<object class="IBToOneOutletInfo" key="answer">
-							<string key="name">answer</string>
-							<string key="candidateClassName">UIButton</string>
-						</object>
-						<object class="IBToOneOutletInfo" key="backToCallBT">
-							<string key="name">backToCallBT</string>
-							<string key="candidateClassName">UIButton</string>
-						</object>
-						<object class="IBToOneOutletInfo" key="btAntena">
-							<string key="name">btAntena</string>
-							<string key="candidateClassName">UIButton</string>
-						</object>
-						<object class="IBToOneOutletInfo" key="btChangePN">
-							<string key="name">btChangePN</string>
-							<string key="candidateClassName">UIButton</string>
-						</object>
-						<object class="IBToOneOutletInfo" key="btHideKeypad">
-							<string key="name">btHideKeypad</string>
-							<string key="candidateClassName">UIButton</string>
-						</object>
-						<object class="IBToOneOutletInfo" key="btSAS">
-							<string key="name">btSAS</string>
-							<string key="candidateClassName">UIButton</string>
-						</object>
-						<object class="IBToOneOutletInfo" key="callScreenFlag">
-							<string key="name">callScreenFlag</string>
-							<string key="candidateClassName">UIImageView</string>
-						</object>
-						<object class="IBToOneOutletInfo" key="cfgBT">
-							<string key="name">cfgBT</string>
-							<string key="candidateClassName">UIButton</string>
-						</object>
-						<object class="IBToOneOutletInfo" key="countryID">
-							<string key="name">countryID</string>
-							<string key="candidateClassName">UILabel</string>
-						</object>
-						<object class="IBToOneOutletInfo" key="curService">
-							<string key="name">curService</string>
-							<string key="candidateClassName">UIButton</string>
-						</object>
-						<object class="IBToOneOutletInfo" key="curServiceLB">
-							<string key="name">curServiceLB</string>
-							<string key="candidateClassName">UILabel</string>
-						</object>
-						<object class="IBToOneOutletInfo" key="dialPadBTView">
-							<string key="name">dialPadBTView</string>
-							<string key="candidateClassName">UIView</string>
-						</object>
-						<object class="IBToOneOutletInfo" key="dialPadView">
-							<string key="name">dialPadView</string>
-							<string key="candidateClassName">UIView</string>
-						</object>
-						<object class="IBToOneOutletInfo" key="endCallBT">
-							<string key="name">endCallBT</string>
-							<string key="candidateClassName">UIButton</string>
-						</object>
-						<object class="IBToOneOutletInfo" key="fPadView">
-							<string key="name">fPadView</string>
-							<string key="candidateClassName">UIView</string>
-						</object>
-						<object class="IBToOneOutletInfo" key="infoPanel">
-							<string key="name">infoPanel</string>
-							<string key="candidateClassName">UIView</string>
-						</object>
-						<object class="IBToOneOutletInfo" key="ivBubble">
-							<string key="name">ivBubble</string>
-							<string key="candidateClassName">UIImageView</string>
-						</object>
-						<object class="IBToOneOutletInfo" key="keyPadInCall">
-							<string key="name">keyPadInCall</string>
-							<string key="candidateClassName">UIView</string>
-						</object>
-						<object class="IBToOneOutletInfo" key="keypaditem">
-							<string key="name">keypaditem</string>
-							<string key="candidateClassName">UITabBarItem</string>
-						</object>
-						<object class="IBToOneOutletInfo" key="lbDst">
-							<string key="name">lbDst</string>
-							<string key="candidateClassName">UILabel</string>
-						</object>
-						<object class="IBToOneOutletInfo" key="lbDstName">
-							<string key="name">lbDstName</string>
-							<string key="candidateClassName">UILabel</string>
-						</object>
-						<object class="IBToOneOutletInfo" key="lbNRFieldName">
-							<string key="name">lbNRFieldName</string>
-							<string key="candidateClassName">UILabel</string>
-						</object>
-						<object class="IBToOneOutletInfo" key="lbSecure">
-							<string key="name">lbSecure</string>
-							<string key="candidateClassName">UILabel</string>
-						</object>
-						<object class="IBToOneOutletInfo" key="lbSecureSmall">
-							<string key="name">lbSecureSmall</string>
-							<string key="candidateClassName">UILabel</string>
-						</object>
-						<object class="IBToOneOutletInfo" key="lbWarning">
-							<string key="name">lbWarning</string>
-							<string key="candidateClassName">UILabel</string>
-						</object>
-						<object class="IBToOneOutletInfo" key="log">
-							<string key="name">log</string>
-							<string key="candidateClassName">UITextView</string>
-						</object>
-						<object class="IBToOneOutletInfo" key="muteBT">
-							<string key="name">muteBT</string>
-							<string key="candidateClassName">UIButton</string>
-						</object>
-						<object class="IBToOneOutletInfo" key="navigationController">
-							<string key="name">navigationController</string>
-							<string key="candidateClassName">UINavigationController</string>
-						</object>
-						<object class="IBToOneOutletInfo" key="nr">
-							<string key="name">nr</string>
-							<string key="candidateClassName">UITextField</string>
-						</object>
-						<object class="IBToOneOutletInfo" key="nrflag">
-							<string key="name">nrflag</string>
-							<string key="candidateClassName">UIImageView</string>
-						</object>
-						<object class="IBToOneOutletInfo" key="peerPB_Img">
-							<string key="name">peerPB_Img</string>
-							<string key="candidateClassName">UIImageView</string>
-						</object>
-						<object class="IBToOneOutletInfo" key="pickerButton">
-							<string key="name">pickerButton</string>
-							<string key="candidateClassName">UIButton</string>
-						</object>
-						<object class="IBToOneOutletInfo" key="recentsController">
-							<string key="name">recentsController</string>
-							<string key="candidateClassName">RecentsViewController</string>
-						</object>
-						<object class="IBToOneOutletInfo" key="second">
-							<string key="name">second</string>
-							<string key="candidateClassName">UINavigationController</string>
-						</object>
-						<object class="IBToOneOutletInfo" key="settings_ctrl">
-							<string key="name">settings_ctrl</string>
-							<string key="candidateClassName">SettingsController</string>
-						</object>
-						<object class="IBToOneOutletInfo" key="settings_nav_ctrl">
-							<string key="name">settings_nav_ctrl</string>
-							<string key="candidateClassName">UINavigationController</string>
-						</object>
-						<object class="IBToOneOutletInfo" key="switchSpktBt">
-							<string key="name">switchSpktBt</string>
-							<string key="candidateClassName">UIButton</string>
-						</object>
-						<object class="IBToOneOutletInfo" key="uiCallInfo">
-							<string key="name">uiCallInfo</string>
-							<string key="candidateClassName">UILabel</string>
-						</object>
-						<object class="IBToOneOutletInfo" key="uiCallVC">
-							<string key="name">uiCallVC</string>
-							<string key="candidateClassName">UIViewController</string>
-						</object>
-						<object class="IBToOneOutletInfo" key="uiDur">
-							<string key="name">uiDur</string>
-							<string key="candidateClassName">UILabel</string>
-						</object>
-						<object class="IBToOneOutletInfo" key="uiMainTabBarController">
-							<string key="name">uiMainTabBarController</string>
-							<string key="candidateClassName">UITabBarController</string>
-						</object>
-						<object class="IBToOneOutletInfo" key="uiMediaInfo">
-							<string key="name">uiMediaInfo</string>
-							<string key="candidateClassName">UILabel</string>
-						</object>
-						<object class="IBToOneOutletInfo" key="uiServ">
-							<string key="name">uiServ</string>
-							<string key="candidateClassName">UILabel</string>
-						</object>
-						<object class="IBToOneOutletInfo" key="uiTabBar">
-							<string key="name">uiTabBar</string>
-							<string key="candidateClassName">UITabBar</string>
-						</object>
-						<object class="IBToOneOutletInfo" key="uiZRTP_peer">
-							<string key="name">uiZRTP_peer</string>
-							<string key="candidateClassName">UILabel</string>
-						</object>
-						<object class="IBToOneOutletInfo" key="userCell">
-							<string key="name">userCell</string>
-							<string key="candidateClassName">UITableViewCell</string>
-						</object>
-						<object class="IBToOneOutletInfo" key="verifySAS">
-							<string key="name">verifySAS</string>
-							<string key="candidateClassName">UIButton</string>
-						</object>
-						<object class="IBToOneOutletInfo" key="videoBT">
-							<string key="name">videoBT</string>
-							<string key="candidateClassName">UIButton</string>
-						</object>
-						<object class="IBToOneOutletInfo" key="view6pad">
-							<string key="name">view6pad</string>
-							<string key="candidateClassName">UIView</string>
-						</object>
-						<object class="IBToOneOutletInfo" key="viewCSMiddle">
-							<string key="name">viewCSMiddle</string>
-							<string key="candidateClassName">UIView</string>
-						</object>
-						<object class="IBToOneOutletInfo" key="window">
-							<string key="name">window</string>
-							<string key="candidateClassName">UIWindow</string>
-						</object>
-						<object class="IBToOneOutletInfo" key="zrtpPanel">
-							<string key="name">zrtpPanel</string>
-							<string key="candidateClassName">UIView</string>
-						</object>
-					</dictionary>
-					<object class="IBClassDescriptionSource" key="sourceIdentifier">
-						<string key="majorKey">IBProjectSource</string>
-						<string key="minorKey">./Classes/AppDelegate.h</string>
-					</object>
-				</object>
-				<object class="IBPartialClassDescription">
-					<string key="className">Favorites</string>
-					<string key="superclassName">UITableViewController</string>
-					<dictionary class="NSMutableDictionary" key="outlets">
-						<string key="appDelegate">AppDelegate</string>
-						<string key="favCell">UITableViewCell</string>
-						<string key="tw">UITableView</string>
-					</dictionary>
-					<dictionary class="NSMutableDictionary" key="toOneOutletInfosByName">
-						<object class="IBToOneOutletInfo" key="appDelegate">
-							<string key="name">appDelegate</string>
-							<string key="candidateClassName">AppDelegate</string>
-						</object>
-						<object class="IBToOneOutletInfo" key="favCell">
-							<string key="name">favCell</string>
-							<string key="candidateClassName">UITableViewCell</string>
-						</object>
-						<object class="IBToOneOutletInfo" key="tw">
-							<string key="name">tw</string>
-							<string key="candidateClassName">UITableView</string>
-						</object>
-					</dictionary>
-					<object class="IBClassDescriptionSource" key="sourceIdentifier">
-						<string key="majorKey">IBProjectSource</string>
-						<string key="minorKey">./Classes/Favorites.h</string>
-					</object>
-				</object>
-				<object class="IBPartialClassDescription">
-					<string key="className">RecentsViewController</string>
-					<string key="superclassName">UITableViewController</string>
-					<dictionary class="NSMutableDictionary" key="outlets">
-						<string key="appDelegate">AppDelegate</string>
-						<string key="clearAll">UIBarButtonItem</string>
-						<string key="editBt">UIBarButtonItem</string>
-						<string key="recentTableViewCell">UIRecentCell</string>
-						<string key="tw_test">UITableView</string>
-						<string key="uiTB">UIToolbar</string>
-						<string key="uiTabBarItem">UITabBarItem</string>
-					</dictionary>
-					<dictionary class="NSMutableDictionary" key="toOneOutletInfosByName">
-						<object class="IBToOneOutletInfo" key="appDelegate">
-							<string key="name">appDelegate</string>
-							<string key="candidateClassName">AppDelegate</string>
-						</object>
-						<object class="IBToOneOutletInfo" key="clearAll">
-							<string key="name">clearAll</string>
-							<string key="candidateClassName">UIBarButtonItem</string>
-						</object>
-						<object class="IBToOneOutletInfo" key="editBt">
-							<string key="name">editBt</string>
-							<string key="candidateClassName">UIBarButtonItem</string>
-						</object>
-						<object class="IBToOneOutletInfo" key="recentTableViewCell">
-							<string key="name">recentTableViewCell</string>
-							<string key="candidateClassName">UIRecentCell</string>
-						</object>
-						<object class="IBToOneOutletInfo" key="tw_test">
-							<string key="name">tw_test</string>
-							<string key="candidateClassName">UITableView</string>
-						</object>
-						<object class="IBToOneOutletInfo" key="uiTB">
-							<string key="name">uiTB</string>
-							<string key="candidateClassName">UIToolbar</string>
-						</object>
-						<object class="IBToOneOutletInfo" key="uiTabBarItem">
-							<string key="name">uiTabBarItem</string>
-							<string key="candidateClassName">UITabBarItem</string>
-						</object>
-					</dictionary>
-					<object class="IBClassDescriptionSource" key="sourceIdentifier">
-						<string key="majorKey">IBProjectSource</string>
-						<string key="minorKey">./Classes/RecentsViewController.h</string>
-					</object>
-				</object>
-				<object class="IBPartialClassDescription">
-					<string key="className">SettingsController</string>
-					<string key="superclassName">UITableViewController</string>
-					<object class="IBClassDescriptionSource" key="sourceIdentifier">
-						<string key="majorKey">IBProjectSource</string>
-						<string key="minorKey">./Classes/SettingsController.h</string>
-					</object>
-				</object>
-				<object class="IBPartialClassDescription">
-					<string key="className">UIRecentCell</string>
-					<string key="superclassName">UITableViewCell</string>
-					<dictionary class="NSMutableDictionary" key="outlets">
-						<string key="imgRT">UIImageView</string>
-						<string key="lbDate">UILabel</string>
-						<string key="lbDur">UILabel</string>
-						<string key="lbFromNr">UILabel</string>
-						<string key="lbFromUN">UILabel</string>
-					</dictionary>
-					<dictionary class="NSMutableDictionary" key="toOneOutletInfosByName">
-						<object class="IBToOneOutletInfo" key="imgRT">
-							<string key="name">imgRT</string>
-							<string key="candidateClassName">UIImageView</string>
-						</object>
-						<object class="IBToOneOutletInfo" key="lbDate">
-							<string key="name">lbDate</string>
-							<string key="candidateClassName">UILabel</string>
-						</object>
-						<object class="IBToOneOutletInfo" key="lbDur">
-							<string key="name">lbDur</string>
-							<string key="candidateClassName">UILabel</string>
-						</object>
-						<object class="IBToOneOutletInfo" key="lbFromNr">
-							<string key="name">lbFromNr</string>
-							<string key="candidateClassName">UILabel</string>
-						</object>
-						<object class="IBToOneOutletInfo" key="lbFromUN">
-							<string key="name">lbFromUN</string>
-							<string key="candidateClassName">UILabel</string>
-						</object>
-					</dictionary>
-					<object class="IBClassDescriptionSource" key="sourceIdentifier">
-						<string key="majorKey">IBProjectSource</string>
-						<string key="minorKey">./Classes/UIRecentCell.h</string>
-					</object>
-				</object>
-			</array>
-		</object>
+		<object class="IBClassDescriber" key="IBDocument.Classes"/>
 		<int key="IBDocument.localizationMode">0</int>
 		<string key="IBDocument.TargetRuntimeIdentifier">IBCocoaTouchFramework</string>
 		<bool key="IBDocument.PluginDeclaredDependenciesTrackSystemTargetVersion">YES</bool>
@@ -682,6 +229,6 @@
 			<string key="NS.key.0">ico_user.png</string>
 			<string key="NS.object.0">{63, 63}</string>
 		</object>
-		<string key="IBCocoaTouchPluginVersion">1930</string>
+		<string key="IBCocoaTouchPluginVersion">2083</string>
 	</data>
 </archive>

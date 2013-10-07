@@ -74,7 +74,7 @@ protected:
    CTSockBase():cbRecv(NULL,NULL),cbPrevOkRecv(NULL,NULL),iBytesSent(0){}
    
 public:
-   int iBytesSent;
+   long long iBytesSent;
    void tryRestoreCB(const CTSockRecvCB &cur,  const CTSockRecvCB *prev){
       if(cur.fnc==cbRecv.fnc && cur.pCBRetdata==cbRecv.pCBRetdata && prev && prev->iRestorable)
          cbRecv=*prev;
@@ -861,12 +861,20 @@ public:
       }
       int ret;
       do{
-
-         ret=recvfrom(sock,buf,iLen,0,(struct sockaddr *)&sa, (socklen_t*)&recSize);
-         
-        // printf("[rec udp %x:%d]",sa.sin_addr.s_addr,sa.sin_port);
-         
-         if(iNeedClose)return -1;
+         int iIsBack=0;
+#ifdef __APPLE__
+         int isInBackGround();
+         iIsBack = isInBackGround();
+#endif
+         if(iErrCnt>100 && iIsBack && 1){//ios kills app if it read_broken_socket in background
+            ret=-2;
+            Sleep(10);
+         }
+         else{
+            
+            ret=recvfrom(sock,buf,iLen,0,(struct sockaddr *)&sa, (socklen_t*)&recSize);
+            if(iNeedClose)return -1;
+         }
          
      //    printf("[rtp=%d]",ret);   
 
@@ -892,9 +900,11 @@ public:
             iErrCnt++;
             int iBi=iIsBinded;
             address->clear();
-            if((iErrCnt&15)==15)printf("[port=%d ip=%x iErrCnt=%d]",htons(sa.sin_port),sa.sin_addr.s_addr,iErrCnt);
+            if((iErrCnt&15)==15)
+               printf("[port=%d ip=%x iErrCnt=%d ret=%d iIsBack=%d]",
+                      htons(sa.sin_port),sa.sin_addr.s_addr,iErrCnt,ret,iIsBack);
 #ifdef __APPLE__
-            int isInBackGround();
+
             if(iBi && !iSuspended && iErrCnt>10 && !isInBackGround()){
                iErrCnt=0;
                
@@ -907,7 +917,9 @@ public:
                puts("rebind");
                Bind(&addr,1);
                iSuspended=0;
-               
+            }
+            else{
+               if((iErrCnt&3)==3)Sleep(200);
             }
 #endif
          }

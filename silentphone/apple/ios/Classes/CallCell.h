@@ -51,27 +51,24 @@ public:
    CTCall(){iUserDataLoaded=0;img=nil;reset();}
    
    void reset(){
-      //should be 
+
       if(img && (iUserDataLoaded==2 || iUserDataLoaded==4)){
         // 
          iUserDataLoaded=0;
          int rc=[img retainCount];
-         //?? vajadzeetu buut iImgRetainCnt+1
          printf("[%p rc=%d %d]",img,rc,iImgRetainCnt);void freemem_to_log();freemem_to_log();
-         for(int i=0;i<iImgRetainCnt;i++)
+         while(iImgRetainCnt>0){
+            iImgRetainCnt--;
             [img release];
-         img=nil;
-         iImgRetainCnt=0;
+         }
          printf("[rel img ok]");freemem_to_log();
       }
       img=nil;
-
 
       nameFromAB.reset();
       zrtpWarning.reset();
       zrtpPEER.reset();
       iIsNameFromSipChecked=0;
-      img=NULL;
       memset(bufDialed,0,sizeof(bufDialed));
       memset(bufServName,0,sizeof(bufServName));
       memset(bufPeer,0,sizeof(bufPeer));
@@ -103,6 +100,10 @@ public:
       
       iShowEnroll=iShowWarningForNSec=iShowVerifySas=0;
       
+      iZRTPPopupsShowed=0;
+      iZRTPShowPopup=0;
+      iIsZRTPError=0;
+      iReplaceSecMessage[0]=iReplaceSecMessage[1]=0;
 
    }
    
@@ -110,6 +111,14 @@ public:
    CTEditBuf<128> zrtpWarning;
    CTEditBuf<128> zrtpPEER;
    CTEditBuf<128> nameFromAB;//or from sip
+
+   int sipDispalyNameEquals(CTEditBase &e){
+      char bufRet3[128];
+      int l=getCallInfo(iCallId,"peername", bufRet3,127);
+      if(l<=0 || l>127)return 0;
+      bufRet3[l]=0;
+      return e==bufRet3;
+   }
    
    int findSipName(){
       if(iIsNameFromSipChecked || nameFromAB.getLen())return 0;
@@ -133,17 +142,81 @@ public:
          NSLog(@"Err call !iInUse");
          return ;
       }
+      int ml=sizeof(this->bufPeer)-1;
+      
       if(!p){p="Err";iLen=3;}
-      if(iLen==0)strlen(p);
+      if(iLen==0)iLen=strnlen(p, ml);
       if(p && strncmp(p,"sip:",4)==0){p+=4;iLen-=4;}
       else if(p && strncmp(p,"sips:",5)==0){p+=5;iLen-=5;}
       
-      safeStrCpy(&this->bufPeer[0],p,min(iLen,(sizeof(this->bufPeer)-1)));
-      
+      safeStrCpy(&this->bufPeer[0], p, min(iLen, ml));
    }
    
-   int iShowEnroll,iShowVerifySas,iShowWarningForNSec;
+   int setSecurityLines(UILabel *lb, UILabel *lbDesc, int iIsVideo=0){
+      
+      char *pSM = iIsVideo? &bufSecureMsgV[0] : &bufSecureMsg[0];
+      
+      char bufTmp[64];
+      strncpy(bufTmp, pSM, 63);
+      bufTmp[63]=0;
+      pSM=&bufTmp[0];
+      
+      
+      const char *pNotSecureSDES = "Not SECURE SDES without TLS";
+      const char *pNotSecure_no_c_e = "Not SECURE no crypto enabled";
+      
+      int iSecDisabled = strcmp(pSM, pNotSecure_no_c_e)==0;
+      int iSecureViaSDES = !iSecDisabled && strcmp(pSM,"SECURE SDES")==0;
+
+      if(iSecureViaSDES)strcpy(pSM, "SECURE to server");
+      
+      
+      if(iSecureViaSDES){
+         const char* sendEngMsg(void *pEng, const char *p);
+         const char *p=sendEngMsg(pEng,".isTLS");
+         if(!(p && p[0]=='1')){
+            strcpy(pSM,pNotSecureSDES);
+         }
+      }
+      
+      char bufTmpS[64]="";
+      int iSecureInGreen=0;
+      
+#define NOT_SECURE "Not SECURE"
+#define NOT_SECURE_L (sizeof(NOT_SECURE)-1)
+      
+#define T_SECURE "SECURE"
+#define T_SECURE_L (sizeof(T_SECURE)-1)
+      
+      if(strncmp(pSM,T_SECURE,T_SECURE_L)==0){
+         int  isSilentCircleSecure(int cid, void *pEng);
+         iSecureInGreen=!iSecureViaSDES && isSilentCircleSecure(iCallId, pEng);
+         int l=strlen(pSM);
+         if(l>T_SECURE_L && !iSecureInGreen){
+            strcpy(bufTmpS,&pSM[T_SECURE_L]);
+         }
+         if(lbDesc)bufTmp[T_SECURE_L]=0;//if we have only one label - dont zero terminate
+         if(iSecureInGreen){
+            bufTmpS[0]=0;
+         }
+      }
+      else if(strncmp(pSM, NOT_SECURE, NOT_SECURE_L)==0){
+         strcpy(bufTmpS,&pSM[NOT_SECURE_L]);
+         if(lbDesc)bufTmp[NOT_SECURE_L]=0;//if we have only one label - dont zero terminate
+      }
+      if (lbDesc)
+         [lbDesc setText:[NSString stringWithUTF8String:bufTmpS]];
+      
+      [lb setText:[NSString stringWithUTF8String:bufTmp]];
+      
+      UIColor *col = iSecureInGreen ? [UIColor greenColor]:(iSecureViaSDES ? [UIColor yellowColor]: [UIColor whiteColor] );
+      [lb setTextColor:col];
+      
+      return iSecureInGreen;
+   }
    
+   
+   int iShowEnroll,iShowVerifySas,iShowWarningForNSec;
    
    char bufDialed[128];
    char bufPeer[128];
@@ -166,13 +239,14 @@ public:
    int iIsOnHold;
    int iMuted;
    
+   int iIsVideo;
+   
    int iShowVideoSrcWhenAudioIsSecure;
    
    int iIsInConferece;
    
    int iSipHasErrorMessage;
    
-   // int iReleased;
    int iRecentsUpdated;
    int iUserDataLoaded;
    
@@ -184,10 +258,12 @@ public:
    
    int iImgRetainCnt;
    
+   int iZRTPPopupsShowed,iZRTPShowPopup,iIsZRTPError;
+   int iReplaceSecMessage[2];//audio,video
    
    CallCell *cell;///tmp
 };
-#define T_MAX_CALLS 16
+#define T_MAX_CALLS 21
 
 unsigned int getTickCount();
 
@@ -201,10 +277,12 @@ public:
       //warn if probl deteced
    }
    
+   
    CTCalls(){
+      for(int i=0;i<T_MAX_CALLS;i++)calls[i].reset();
    }
    ~CTCalls(){
-      for(int i=0;i<T_MAX_CALLS;i++)calls[i].reset();
+      
    }
    void lock(){
       int n=0;
@@ -217,6 +295,19 @@ public:
       if(iLocked<0){
          NSLog(@"c m err");
       }
+   }
+   
+   void relCallsNotInUse(){
+      lock();
+      unsigned int ui=getTickCount();
+      
+      for(int i=0;i<T_MAX_CALLS;i++){
+         int d=(int)(ui-calls[i].uiRelAt);
+         if(d>5000 && calls[i].iInUse && calls[i].uiRelAt){
+            calls[i].reset();
+         }
+      }
+      unLock();
    }
    
    void init(){
@@ -264,16 +355,23 @@ public:
          if(isCallType(&calls[i],iType))n++;
       }
       return n;
-   }   
+   }
+   int videoCallsActive(CTCall *c=NULL){
+      int isVideoCall(int iCallID);
+      int n=0;
+      for(int i=0;i<T_MAX_CALLS;i++){
+         if(c!=&calls[i] && calls[i].iInUse && !calls[i].iEnded && !calls[i].uiRelAt && isVideoCall(calls[n].iCallId))n++;
+      }
+      
+      return n;
+   }
   
-   
    int getCallCnt(){
       int n=0;
       for(int i=0;i<T_MAX_CALLS;i++){
          if(calls[i].iInUse && !calls[i].iEnded && !calls[i].uiRelAt)n++;
       }
       if(!n)curCall=NULL;
-     // if(n && !curCall)curCall=getLastCall();
       return n;
    }
    CTCall* getLastCall(){
@@ -286,15 +384,11 @@ public:
    }
    CTCall *getEmptyCall(int iIsMainThread){
       lock();
-    //  if(iCurrentCallID>=)
       unsigned int ui=getTickCount();
       int rc=0;
-    //  void freemem_to_log();
-     // freemem_to_log();
-      
-      //if(iIsMainThread){
+
       for(int i=0;i<T_MAX_CALLS;i++){
-         int d=((int)calls[i].uiRelAt-(int)ui);//loops ui>0xffff fffa
+         int d=(int)(ui-calls[i].uiRelAt);//loops ui>0xffff fffa
          if(d<0)d=-d;
          if(calls[i].iInUse && calls[i].uiRelAt && d>10000){
             if(iIsMainThread)calls[i].reset();
@@ -304,7 +398,6 @@ public:
          }
       }
    
-      //freemem_to_log();
       if(iCurrentCallID>=T_MAX_CALLS)iCurrentCallID=T_MAX_CALLS;
       
       for(int i=iCurrentCallID;i<T_MAX_CALLS;i++){
@@ -342,26 +435,22 @@ public:
    
    
    CTCall *findCallById(int iCallId){
-      //curCall->reset();
+
       if(!iCallId)return NULL;
       
       int i;
       for(i=iCurrentCallID;i<T_MAX_CALLS;i++){
          if(calls[i].iInUse && iCallId==calls[i].iCallId && !calls[i].iEnded){
-       //--     NSLog(@"found call [Aidx=%d]",i);
             return &calls[i];
          }
       }
       for(i=0;i<iCurrentCallID;i++){
          if(calls[i].iInUse && iCallId==calls[i].iCallId && !calls[i].iEnded){
-       //--     NSLog(@"found call [Bidx=%d]",i);
             return &calls[i];
          }
       }
       for(i=0;i<T_MAX_CALLS;i++){
-         //   NSLog(@"i=%d,%d %d",i,iCallId,calls[i].iCallId);
          if(calls[i].iInUse && iCallId==calls[i].iCallId){
-          //--  NSLog(@"found call [Cidx=%d]",i);
             return &calls[i];
          }
       }

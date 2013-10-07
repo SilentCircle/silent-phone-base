@@ -80,7 +80,8 @@ int parseRTP(RTP_PACKET_P *recPacket, char *p)
    c>>=4;
    recPacket->hdrLen=12+recPacket->csrcCount*4;
    recPacket->data.s=buf+recPacket->hdrLen;
-   recPacket->data.len=recPacket->allPack.len-recPacket->hdrLen;
+   recPacket->data.len=recPacket->allPack.len-(int)recPacket->hdrLen;
+   if(recPacket->data.len<0)return -1;
    
    recPacket->padding=c&1;
    c>>=1;

@@ -32,7 +32,6 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define _C_T_ZRTP_H
 
 
-//#ifdef __linux__
 //#include "CTZrtpV.h"//comment uncoment this, enable disable Victor libzrtp
 
 #ifndef _C_T_ZRTP_V_H
@@ -65,6 +64,8 @@ class CTZRTP: public CtZrtpSession , public CtZrtpCb{
    int iWasZRTPSecure;
    
    char sdesStrings[2][128];
+   
+   int iDisabledSent[2];
    
    void reset();
    
@@ -119,13 +120,14 @@ public:
    
    CTZrtpCb *zrtpcb;
    
+   int iAuthFailCnt;
    
    int uiZRTPStartTime;
    int iZRTPNegSpeed;
    
    
    void *getZRTP_glob(){return pZrtpGlobals;}
-   enum {ePacketOk=0,ePacketError=-10000,eDropPacket,eIsProtocol};
+   enum {ePacketOk=0,ePacketError=-10000,eDropPacket,eAuthFailPacket,eIsProtocol};
    
    void start(unsigned int uiSSRC, streamName streamNm);
    
@@ -152,7 +154,7 @@ public:
    
    
    int iCanUseZRTP;
-   void *pRet[2];
+   void *pRet[2];//Victors zrtp 
    void *pSes;
    
    int iIsStarted[2];
@@ -162,7 +164,7 @@ public:
    CTZRTP(void *pZrtpGlobalsN);
    ~CTZRTP(); 
    int setDstHash(char *p, int iLen, int iIsVideo);
-   int getSignalingHelloHash(char *helloHash, int iIsVideo);
+   int getSignalingHelloHash(char *helloHash, int iIsVideo, int index);
    
    bool t_createSdes(char *cryptoString, size_t *maxLen, streamName streamNm);//will save SDES string
    void clearSdesString();//must be called when peer SDP is received
@@ -173,15 +175,13 @@ public:
    int encrypt(char *p, int &iLen, int iIsVideo);
    int decrypt(char *p, int &iLen, int iIsVideo);
    
-   inline int isVideo(CtZrtpSession::streamName streamNm){return streamNm != CtZrtpSession::AudioStream;}
+   inline int isVideo(CtZrtpSession::streamName streamNm){return streamNm == CtZrtpSession::VideoStream;}
 
    int isSecure(int iIsVideo);
    
    int getStatus(int iIsVideo);
-
- //  int isSdesActive(streamName streamNm){return 0;}
    
-   int getInfoX(const char *key, char *p, int iMax);
+   int getInfoX(const char *key, char *p, int iMax, int iIsVideo=0);
    
    void enrollAccepted(const char *mitm_name);
    
@@ -198,12 +198,13 @@ inline const char *CTZRTP::getZRTP_msg(int s){
       case CTZRTP::eSecure:msg="SECURE";break;//end-to-end
       case CTZRTP::eError:msg="ZRTP Error";break;
       case CTZRTP::eSecureMitm:
-         if(!bufSecurePBXMsg[0])msg="SECURE Between you and server";
+         if(!bufSecurePBXMsg[0])msg="SECURE between you and server";
          else msg=&bufSecurePBXMsg[0];
          break;
          
       case CTZRTP::eSecureMitmVia:msg="SECURE via PBX";break;
       case CTZRTP::eSecureSdes:msg="SECURE SDES";break;
+      case CTZRTP::eSecurityDisabled:msg="Not SECURE no crypto enabled";break;
    };
    return msg;
 }

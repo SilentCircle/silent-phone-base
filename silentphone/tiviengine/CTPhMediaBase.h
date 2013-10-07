@@ -147,21 +147,27 @@ typedef struct{
    int iWaitS;//move it to spSes
    
    int iIsOnHold;
+   int iIsInConference;
    
 }CALL_STAT;
 
 
-
+class CRTPX;
 
 class CTSesMediaBase: public CTMakeSdpBase{
    
 public:
-   
+   /*
+    inline int rtpHasPX(){return iRtpSource==0 || iRtpSource=='PX';}
+    inline int rtpIsPC(){return iRtpSource=='PC' || iRtpSource=='TIVI';}
+    inline int rtpIsMob(){return iRtpSource=='MOB';}
+    */
+   enum{eSourceUnknown, eSourcePX, eSourcePC, eSourceTivi, eSourceMob};
    
    int iIsActive;
    int iStarted;
    int iSdpSent;
-   int iRtpSource;//rtppx,mob,pc 'PX','MOB','PC'
+   int iRTPSource;//rtppx,mob,pc 'PX','MOB','PC'
    
    
    unsigned int uiIPOrig,uiIPConn;
@@ -169,28 +175,27 @@ public:
    int iCantDecodePrevPack;
    int iPacketsDecoded;
    
-   CSessionsBase &cbEng;//TODO make CSessionsBase *pEngSB;
+   CSessionsBase *cbEng;//must never be NULL
    
    
    
-   CTSesMediaBase(CSessionsBase &cbEng):cbEng(cbEng){
+   CTSesMediaBase(CSessionsBase &cbEng):cbEng(&cbEng){
       iSdpSent=0;
       pCallStatus=NULL;
       iPacketReceived=0;iIsActive=0;
 
       uiIPOrig=uiIPConn=0;
-      iRtpSource=0;
+      iRTPSource=0;
       pzrtp=NULL;;
       cAO=NULL;
 
    }
-
+ 
    void clear()
    {
-      
       pzrtp=NULL;
       pMediaIDS=NULL;
-      iRtpSource=0;
+      iRTPSource=0;
       iStarted=0;
       iSdpSent=0;
       iPacketReceived=0;
@@ -209,8 +214,7 @@ public:
    virtual int getInfo(const char *key, char *p, int iMax)=0;
 
    virtual  int isSesActive(){return 0;}
-   virtual unsigned int getSSRC(){return 0;}
-   virtual int onSdp(char *pSdp, int iLen)=0;
+   virtual int onSdp(char *pSdp, int iLen, int iIsReq, int iForceMedia)=0;
    virtual int onSend(char *p, int iLen, int iType, void* pMediaParam, int iIsVoiceDetected){return -1;};//
 
    virtual int onStart()=0;
@@ -220,9 +224,12 @@ public:
    virtual void onRecMsg(int id){};//bye ,180 ring,cancel
    virtual void onTimer(){}
 
-   inline int rtpHasPX(){return iRtpSource==0 || iRtpSource=='PX';}
-   inline int rtpIsPC(){return iRtpSource=='PC' || iRtpSource=='TIVI';}
-   inline int rtpIsMob(){return iRtpSource=='MOB';}
+   inline int rtpHasPX(){return iRTPSource==eSourceUnknown || iRTPSource==eSourcePX;}
+   inline int rtpIsPC(){return iRTPSource==eSourcePC || iRTPSource==eSourceTivi;}
+   inline int rtpIsMob(){return iRTPSource==eSourceMob;}
+   
+   int addNonMediaAttribs(char *p, int iMaxLen, int iIsVideo,
+                           CRTPX *rtp, ADDR *addrPubl, ADDR *addrPriv, int iAddIce);
    
    
    void setBaseData(CTZRTP *z, CALL_STAT *cs, CTMediaIDS *m){
@@ -237,6 +244,7 @@ protected:
    CTMediaIDS *pMediaIDS;
    CTZRTP *pzrtp;
    CALL_STAT *pCallStatus;
+   int iSdpParsed;//--//
 };
 //
 class CTSock;
@@ -255,10 +263,24 @@ public:
    
 };
 
+class CTMediaListItem;
+
 class CTMediaMngrBase{
 public:
    virtual CTAudioOutBase *getAO(int iRate)=0;
    virtual void relAO(CTAudioOutBase *p)=0;
+   
+   virtual int VOInUse()=0;
+   
+   virtual CTVideoOutBase *getVO()=0;
+   virtual void relVO(CTVideoOutBase *p)=0;
+   
+   virtual CTVideoInBase &getVI()=0;
+   virtual CTAudioInBase &getAI()=0;
+   
+   virtual CTMediaListItem *getMediaListItem(int iVideo)=0;
+   virtual void relMediaListItem(CTMediaListItem *i, int iIsVideo)=0;
+   
    //TODO getVO, relVO, CTAudioInBase
 };
 

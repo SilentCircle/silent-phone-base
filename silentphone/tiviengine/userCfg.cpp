@@ -30,6 +30,10 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #if  1
 
+#ifdef _WIN32
+#define snprintf _snprintf
+#endif
+
 void tivi_log1(const char *p, int val);
 
 #include <stdlib.h>
@@ -113,7 +117,7 @@ static int _fillCfg(char *dest, int iMaxSize, STR_XML *src)
 //dest is char always array
 #define fillCfg(dest, src) _fillCfg(dest, sizeof(dest), src)
 
-void FindXMLVal(NODE * node, int level,int cfgFlag, PHONE_CFG &cfg)
+void FindXMLVal(NODE *node, int level, int cfgFlag, PHONE_CFG &cfg)
 {
    NODE *tmpNode;
    tmpNode = node;
@@ -121,31 +125,26 @@ void FindXMLVal(NODE * node, int level,int cfgFlag, PHONE_CFG &cfg)
    // brothers
    while(tmpNode){
       // opentag
-      //offsetN(level);
-      //printf("<%.*s", tmpNode->name.len, tmpNode->name.s);
-      //DEBUG(0,"open")
-      //DEBUG(tmpNode->name.len,tmpNode->name.s);
+
       int tmpFlag=cfgFlag;
-      if CMP_XML(tmpNode->name,"USER",4) 
-         cfgFlag|=CFG_F_USER;else
-      if CMP_XML(tmpNode->name,"SIP",3)  cfgFlag|=CFG_F_SIP;else
-      if CMP_XML(tmpNode->name,"PHONE",5)cfgFlag|=CFG_F_PHONE;else
-      if CMP_XML(tmpNode->name,"AUDIO",5)cfgFlag|=CFG_F_AUDIO;else
+      if CMP_XML(tmpNode->name,"USER",4)  cfgFlag|=CFG_F_USER;else
+      if CMP_XML(tmpNode->name,"SIP",3)   cfgFlag|=CFG_F_SIP;else
+      if CMP_XML(tmpNode->name,"PHONE",5) cfgFlag|=CFG_F_PHONE;else
+      if CMP_XML(tmpNode->name,"AUDIO",5) cfgFlag|=CFG_F_AUDIO;else
       if CMP_XML(tmpNode->name,"CODECS",6)cfgFlag|=CFG_F_CODECS;else
-      if CMP_XML(tmpNode->name,"VIDEO",5)cfgFlag|=CFG_F_VIDEO;else
-      if CMP_XML(tmpNode->name,"AUTO",4)cfgFlag|=CFG_F_AUTO;else
+      if CMP_XML(tmpNode->name,"VIDEO",5) cfgFlag|=CFG_F_VIDEO;else
+      if CMP_XML(tmpNode->name,"AUTO",4)  cfgFlag|=CFG_F_AUTO;else
       if CMP_XML(tmpNode->name,"SNDDEV",6)cfgFlag|=CFG_F_SNDDEV;else
       if CMP_XML(tmpNode->name,"VOLUME",6)cfgFlag|=CFG_F_VOLUME;else
       if CMP_XML(tmpNode->name,"REGISTRAR",9)cfgFlag|=CFG_F_REG;else
-      if CMP_XML(tmpNode->name,"CHAT",4)cfgFlag|=CFG_F_CHAT;else
-      if CMP_XML(tmpNode->name,"ZRTP",4)cfgFlag|=CFG_F_ZRTP;else
-      if CMP_XML(tmpNode->name,"GUI",3)cfgFlag|=CFG_F_GUI;else
-      if CMP_XML(tmpNode->name,"MELODY",6) cfgFlag|=CFG_F_MELODY;else
-      if CMP_XML(tmpNode->name,"SDP",3) cfgFlag|=CFG_F_SDP;
+      if CMP_XML(tmpNode->name,"CHAT",4)  cfgFlag|=CFG_F_CHAT;else
+      if CMP_XML(tmpNode->name,"ZRTP",4)  cfgFlag|=CFG_F_ZRTP;else
+      if CMP_XML(tmpNode->name,"GUI",3)   cfgFlag|=CFG_F_GUI;else
+      if CMP_XML(tmpNode->name,"MELODY",6)cfgFlag|=CFG_F_MELODY;else
+      if CMP_XML(tmpNode->name,"SDP",3)   cfgFlag|=CFG_F_SDP;
       if ((cfgFlag==(CFG_F_SDP|CFG_F_AUDIO|CFG_F_TRUE))&&CMP_XML(tmpNode->name,"CODEC",5))
          cfgFlag|=CFG_F_CODEC;
 
-//tivi_log("xml %d",cfgFlag);
 
       if (tmpNode->nV){
          nameValue *tmpNV;
@@ -165,6 +164,10 @@ void FindXMLVal(NODE * node, int level,int cfgFlag, PHONE_CFG &cfg)
                else if (CMP_XML(tmpNV->name,"DISABLED",8))
                {
                      cfg.iAccountIsDisabled=atoi(tmpNV->value.s);
+               }
+               else if (CMP_XML(tmpNV->name,"CREATEDBYUSER",13))
+               {
+                  cfg.bCreatedByUser=atoi(tmpNV->value.s);
                }
                break;
             case CFG_F_USER|CFG_F_TRUE:
@@ -219,9 +222,7 @@ void FindXMLVal(NODE * node, int level,int cfgFlag, PHONE_CFG &cfg)
                {  
                   cfg.aMicCfg.iVolume=atoi(tmpNV->value.s);
 
-               }else
-
-               if (CMP_XML(tmpNV->name,"OUTPUT",6))
+               }else if (CMP_XML(tmpNV->name,"OUTPUT",6))
                {  
                   cfg.aPlayCfg.iVolume=atoi(tmpNV->value.s);
                }
@@ -336,11 +337,11 @@ void FindXMLVal(NODE * node, int level,int cfgFlag, PHONE_CFG &cfg)
             case CFG_F_PHONE|CFG_F_TRUE|CFG_F_CHAT:
                if (CMP_XML(tmpNV->name,"ALERTONMSG",10))
                {
-                  cfg.iBeepAtMsg=tmpNV->value.s[0]-0x30;
+                  cfg.iBeepAtMsg=tmpNV->value.s[0]-'0';
                }
                else if (CMP_XML(tmpNV->name,"SHOWTIME",8))
                {
-                  cfg.iInsertTimeInMsg=tmpNV->value.s[0]-0x30;
+                  cfg.iInsertTimeInMsg=tmpNV->value.s[0]-'0';
                }
                else if (CMP_XML(tmpNV->name,"MSGBELOWNICK",12))
                {
@@ -435,10 +436,6 @@ void FindXMLVal(NODE * node, int level,int cfgFlag, PHONE_CFG &cfg)
             FindXMLVal(tmpNode->child, level+1,cfgFlag,cfg);
          }
       }
-//      DEBUG(tmpNode->name.len,tmpNode->name.s);
-  //    DEBUG(0,"Close")
-
-      //  printf("</%.*s>\n", tmpNode->name.len, tmpNode->name.s);   
 
       cfgFlag=tmpFlag;
 
@@ -483,7 +480,8 @@ void guiSaveUserCfg(PHONE_CFG *p, short *fn)
    
    char *pServ=p->tmpServ[0]?&p->tmpServ[0]:&p->str32GWaddr.strVal[0]; 
    
-   fprintf(f,"<cfg vers=\"3\" disabled=\"%d\">"T_CRLF ,p->iAccountIsDisabled);
+   fprintf(f,"<cfg vers=\"3\" disabled=\"%d\" CreatedByUser=\"%d\">"T_CRLF
+           ,p->iAccountIsDisabled,p->bCreatedByUser);
    if(p->iCfgHideNumberField) p->user.nr[0]=0;
    
    fprintf(f,"   <user loginname=\"%s\" ", p->user.un);
@@ -661,6 +659,29 @@ void setOwnerAccessOnly(const short *fn){
   
 }
 
+void setFileAttributes(const char *fn, int iProtect);
+int isBackgroundReadable(const char *fn);
+void log_file_protection_prop(const char *fn);
+
+void setFileBackgroundReadable(const char *fn){
+   
+   if(!isBackgroundReadable(fn)){
+      setFileAttributes(fn,0);
+      
+      log_file_protection_prop(fn);
+   }
+}
+
+void setFileBackgroundReadable(CTEditBase &b){
+   
+   char buf[1024];
+   int l=sizeof(buf)-1;
+   
+   const char *fn=b.getTextUtf8(buf, &l);
+   
+   setFileBackgroundReadable(fn);
+}
+
 int saveCfg(void *cfg, int iIndex)
 {
    if(((PHONE_CFG*)cfg)->iDontReadSaveCfg)return 0;
@@ -675,6 +696,10 @@ int saveCfg(void *cfg, int iIndex)
    guiSaveUserCfg((PHONE_CFG*)cfg,b.getText());
 
    setOwnerAccessOnly(b.getText());
+   
+   setFileBackgroundReadable(b);
+   
+
 
    return 0;
 }
@@ -689,7 +714,8 @@ void remIds(char *pDst, int iMaxSize, char *pRem){
    int iResLen=0;
    for(i=0;i<l1;i++){
       
-      if(!hasThisInt(&ids2[0],l2,ids1[i]))iResLen+=snprintf(pDst+iResLen,iMaxSize-iResLen,"%d,",ids1[i]);
+      if(!hasThisInt(&ids2[0],l2,ids1[i]))
+         iResLen+=snprintf(pDst+iResLen,iMaxSize-iResLen,"%d,",ids1[i]);
    }
    if(iResLen)iResLen--;
    pDst[iResLen]=0;
@@ -717,6 +743,7 @@ static int getCfgLoc(PHONE_CFG *cfg,int iCheckImei, int iIndex)
 
       CTEditBase b(1024);
       setCfgFN(b,iIndex);
+      setFileBackgroundReadable(b);
 
       cfg->setDefaults();
       cfg->bufStun[0]=0;
@@ -739,6 +766,10 @@ static int getCfgLoc(PHONE_CFG *cfg,int iCheckImei, int iIndex)
 
       cfg->iPlainPasswordDetected=0;
       FindXMLVal(node,0,0,*cfg);
+#ifdef _WIN32
+      cfg->iSDES_On=1;//we have only SC accounts on win32.
+      cfg->iZRTP_On=1;
+#endif
       
       if(cfg->iPlainPasswordDetected && isAESKeySet())
          guiSaveUserCfg(cfg,b.getText());

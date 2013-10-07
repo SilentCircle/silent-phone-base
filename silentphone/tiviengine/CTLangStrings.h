@@ -68,11 +68,14 @@ public:
 
 class CTLangStrings : public CTStringsBase{
 public:
-   CTLangStrings():list(0){}
+   CTLangStrings():list(0){iZRTPInitOk=0;}
    ~CTLangStrings(){}
 
 
    int loadLang(CTEditBase *langFile);
+   void initZRTPMsgs();
+   int iZRTPInitOk;
+   
    void constrEng();
    void constrLatv();
    void constrJap();
@@ -90,12 +93,12 @@ void setTextById(char *id, int idLen, CTEditBase &val){
 */
 
    #define T_LABEL(_A) CTEditBase _A
-   int setGetTextById(char *id, int idLen, CTEditBase &val, int iSet);
+   int setGetTextById(const char *id, int idLen, CTEditBase &val, int iSet);
 #else
 
 #define T_LABEL(_A) if(idLen+1==sizeof(#_A) && strncmp(id,#_A,idLen)==0) {if(iSet) _A.setText(val);else val.setText(_A);ret=1;break;}
 
-int CTLangStrings::setGetTextById(char *id, int idLen, CTEditBase &val, int iSet){
+int CTLangStrings::setGetTextById(const char *id, int idLen, CTEditBase &val, int iSet){
    int ret=0;
    do{
 #endif
@@ -116,6 +119,11 @@ int CTLangStrings::setGetTextById(char *id, int idLen, CTEditBase &val, int iSet
    T_LABEL(lCannotDeliv);
    T_LABEL(lCannotReg);
    T_LABEL(lCannotCon);
+      
+   T_LABEL(lCouldNotReachServer);
+   T_LABEL(lRemoteOutOfReach);
+      
+      
    T_LABEL(lReason);
    T_LABEL(lNoConn);
    T_LABEL(lRegist);
@@ -178,17 +186,54 @@ int CTLangStrings::setGetTextById(char *id, int idLen, CTEditBase &val, int iSet
    
    T_LABEL(lKeyInvalidUnlimited);
    T_LABEL(lKeyInvalidActive);
+   
+      T_LABEL(zrtp_common_cmp);
+      T_LABEL(zrtp_common_cls);
+      T_LABEL(zrtp_common_upd);
+      T_LABEL(zrtp_common_app);
+      
+      T_LABEL(zrtp_s2_c004_explanation);
+      T_LABEL(zrtp_s2_c005_explanation);
+      T_LABEL(zrtp_s2_c006_explanation);
+      T_LABEL(zrtp_s2_c007_explanation);
+      T_LABEL(zrtp_s2_c008_explanation);
+      T_LABEL(zrtp_s2_c050_explanation);
+      
+      T_LABEL(zrtp_s3_c001_explanation);
+      T_LABEL(zrtp_s3_c002_explanation);
+      T_LABEL(zrtp_s3_c003_explanation);
+      T_LABEL(zrtp_s3_c004_explanation);
+      T_LABEL(zrtp_s3_c005_explanation);
+      T_LABEL(zrtp_s3_c006_explanation);
+      T_LABEL(zrtp_s3_c007_explanation);
+      T_LABEL(zrtp_s3_c008_explanation);
+      
+      T_LABEL(zrtp_s4_c016_explanation);
+      T_LABEL(zrtp_s4_c020_explanation);
+      T_LABEL(zrtp_s4_c048_explanation);
+      T_LABEL(zrtp_s4_c081_explanation);
+      T_LABEL(zrtp_s4_c082_explanation);
+      T_LABEL(zrtp_s4_c083_explanation);
+      T_LABEL(zrtp_s4_c084_explanation);
+      T_LABEL(zrtp_s4_c085_explanation);
+      T_LABEL(zrtp_s4_c097_explanation);
+      T_LABEL(zrtp_s4_c098_explanation);
+      T_LABEL(zrtp_s4_c099_explanation);
+      T_LABEL(zrtp_s4_c112_explanation);
+      T_LABEL(zrtp_s4_c144_explanation);
+      
+
 
 #ifdef T_LOAD_STRINGS
       }while(0);
    if(ret==0 && iSet){
-      CListItemLangVal *it= new CListItemLangVal(id,  idLen);
+      CListItemLangVal *it= new CListItemLangVal((char*)id,  idLen);
       it->e.setText(val);
       list.addToRoot(it);
       ret=1;
    }
    else if(ret==0 && !iSet){
-      CListItemLangVal *it =(CListItemLangVal*)list.findItem(id,  idLen);
+      CListItemLangVal *it =(CListItemLangVal*)list.findItem((char*)id,  idLen);
       if(it){
          val.setText(it->e);
          return 1;

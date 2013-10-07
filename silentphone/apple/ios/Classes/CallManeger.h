@@ -37,12 +37,12 @@ class CTCall;
 
 @interface CallManeger : UITableViewController{
    int iCallTypeOfs;
-   int iRows;
+   int iRows;//old
    int iIgnoreSelected;
    
    int iCallsOffset[3];
 
-   CTCall *callsPtr[16];
+   CTCall *callsPtr[16];//old
 
    CTCalls *calls; 
    CTCall *selected;

@@ -90,7 +90,9 @@ public:
    int endCall(int SesId, int iReasonCode = 0);
    int reInvite(int SesId, const char *media);
    int hold(int iPutOnHold, int SesId);
-   int isDstOnline(const char *dst, int *resp);
+   
+   int isDstOnline(const char *dst, int *resp, CTEditBase *retMsg=NULL);
+   void removeRetMsg(int SesId);
 
    int sendMsg(int ises, char *uri, const char *szCType, CTStrBase *e)
    {
@@ -99,7 +101,7 @@ public:
    
    int canPlayRingtone();
    
-   int sendSipKA();
+   int sendSipKA(int iForce=0, int *respCode=NULL);
    
    int sendSipMsg(int ises, const char *szMeth, char * uri, const char *szCType,  CTStrBase *e,char *pSipParams=0, int iSipParamLen=0);
    int addRegister(char * uri=NULL);
@@ -152,7 +154,7 @@ public:
    int closeEngine();
    
 protected:
-   int recMsg(SIP_MSG *sMsg);
+   int recMsg(SIP_MSG *sMsg, int rec, ADDR &addr);
    int checkAddr(ADDR *addr,int iIsRegResp);
 
    void restoreServ();

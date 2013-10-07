@@ -69,6 +69,9 @@ NSString *abMultiValueIdentifier2Phone(ABMultiValueRef phoneNumbers, ABMultiValu
    if(xx && !picker)return;
    xx=1;
    picker = [[ABPeoplePickerNavigationController alloc] init];
+   picker.navigationController.toolbar.barStyle=UIBarStyleBlack;
+   //picker.navigationBar.tintColor = [UIColor blackColor];
+   picker.navigationBar.barStyle=UIBarStyleBlack;
    
    picker.peoplePickerDelegate=self;
    
@@ -84,7 +87,6 @@ NSString *abMultiValueIdentifier2Phone(ABMultiValueRef phoneNumbers, ABMultiValu
    
    [picker setHidesBottomBarWhenPushed:YES];
    
-
    [picker.view setAutoresizesSubviews:YES];
 
    [c_view addSubview:picker.view];
@@ -101,7 +103,9 @@ NSString *abMultiValueIdentifier2Phone(ABMultiValueRef phoneNumbers, ABMultiValu
 - (void)viewDidAppear:(BOOL)animated{
    
    [super viewDidAppear:animated];
-   picker.view.frame=CGRectMake(0,0,picker.view.frame.size.width,480-20-48);
+   float h = [UIScreen mainScreen].bounds.size.height;
+   picker.view.frame=CGRectMake(0,0,picker.view.frame.size.width,h-20-48);
+   picker.navigationController.toolbar.barStyle=UIBarStyleBlack;
 }
 
 - (void)viewDidUnload
@@ -156,16 +160,12 @@ NSString *abMultiValueIdentifier2Phone(ABMultiValueRef phoneNumbers, ABMultiValu
       return NO;
    }
    if(phone){
-      //[nr setText:phone];
-      [appDelegate callTo:'c' dst:[phone UTF8String]];
-      
-      //--[peoplePicker popViewControllerAnimated:NO];
-      //--[[self tabBarController]setSelectedIndex:3];
+      const char *nr = [phone UTF8String];
+      [appDelegate callToCheckUS:'c' dst:nr eng:NULL];
       
       CFRelease(phone);
    }
    CFRelease(phoneNumbers);
-   //if(phone)CFRelease(phone);
    
    return NO;
 }

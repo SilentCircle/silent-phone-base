@@ -50,9 +50,18 @@ int checkProv(const char *pUserCode, void (*cb)(void *p, int ok, const char *pMs
     return self;
 }
 
+-(void)testBackgroundReset{
+
+   CGFloat screenHeight = [UIScreen mainScreen].bounds.size.height;
+   if ([UIScreen mainScreen].scale == 2.f && screenHeight == 568.0f) {
+      [uiBackgr setImage: [UIImage imageNamed:@"Default-568h.png"]];
+   }
+}
+
 - (void)viewDidLoad
 {
    [super viewDidLoad];
+   [self testBackgroundReset];
    tfToken.delegate=self;
    [btSignIn setEnabled:NO];
    
@@ -75,9 +84,26 @@ int checkProv(const char *pUserCode, void (*cb)(void *p, int ok, const char *pMs
 
 - (BOOL)textField:(UITextField *)textField shouldChangeCharactersInRange:(NSRange)range replacementString:(NSString *)string{
    
+   NSString *nextString = [textField.text stringByReplacingCharactersInRange:range withString:string];
+   
+   if(nextString.length>16)return NO;
+   
+   NSCharacterSet *nonLettersNumbers = [[NSCharacterSet characterSetWithCharactersInString:@"ABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890"] invertedSet];
+  
+   
+   if ([nextString stringByTrimmingCharactersInSet:nonLettersNumbers].length != nextString.length) {
+      
+      if([nextString.uppercaseString stringByTrimmingCharactersInSet:nonLettersNumbers].length != nextString.length)
+         return NO;
+      
+      [textField setText: nextString.uppercaseString];
+      return NO;
+   } 
+   
    [btSignIn setEnabled:(textField.text.length>range.length || string.length)];
    return YES;
 }
+
 - (BOOL)textFieldShouldReturn:(UITextField *)textField {
    [self onSignInPress];
    return YES;
@@ -124,7 +150,7 @@ int checkProv(const char *pUserCode, void (*cb)(void *p, int ok, const char *pMs
 }
 
 -(IBAction)onBtPress{
-   const char *p=[tfToken.text UTF8String];
+ //  const char *p=[tfToken.text UTF8String];
   //    [self provOk];
 }
 

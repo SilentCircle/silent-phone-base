@@ -72,7 +72,7 @@ int CTG722::encodeFrame(short *pIn,unsigned  char *pOut)
       if(!estate)return 0;
    }
 
- //--  for(int i=0;i<iCodecFrameSizeDec/2;i++)pIn[i]>>=1;
+ //  for(int i=0;i<iCodecFrameSizeDec/2;i++)pIn[i]>>=1;
    int r=g722_encode((g722_encode_state_t*)estate,pOut,pIn,iCodecFrameSizeDec/2);
 //printf(" re=%d %d\n",r,iCodecFrameSizeEnc);
 //iCodecFrameSizeEnc=r;

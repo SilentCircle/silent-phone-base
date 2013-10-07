@@ -45,6 +45,7 @@ class CTCall;
    IBOutlet UIBarButtonItem *btDeclineEnd;   
    IBOutlet UIBarButtonItem *btAccept;
    IBOutlet UIButton *btBack;
+   IBOutlet UILabel *lbVolumeWarning;
    
    IBOutlet UIToolbar *toolBar;
    

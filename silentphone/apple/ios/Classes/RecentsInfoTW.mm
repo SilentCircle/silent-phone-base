@@ -221,7 +221,7 @@ NSString *toNSFromRI(CTEditBase *b, CTRecentsItem *i){
    }
    
    lbService.text=translateServ(&i->lbServ);
-   if(!im && !i->name.getLen()){
+   if(!im && (!i->name.getLen() || i->iABChecked==1)){
       im=[UIImage imageNamed: @"ico_user_plus.png"];
    }
    

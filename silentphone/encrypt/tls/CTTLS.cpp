@@ -1,7 +1,6 @@
 //
 // /FORCE:MULTIPLE --- sha2 polarssl and libzrtp
 //warning LNK4088: image being generated due to /FORCE option; image may not run
-
 #include "CTTLS.h"
 
 #define T_ENABLE_TLS
@@ -11,13 +10,12 @@
 
 #ifdef T_ENABLE_TLS
 
-
-#include "../../../libs/polarssl-1.1.1/include/polarssl/config.h"
-#include "../../../libs/polarssl-1.1.1/include/polarssl/net.h"
-#include "../../../libs/polarssl-1.1.1/include/polarssl/ssl.h"
-#include "../../../libs/polarssl-1.1.1/include/polarssl/entropy.h"
-#include "../../../libs/polarssl-1.1.1/include/polarssl/ctr_drbg.h"
-#include "../../../libs/polarssl-1.1.1/include/polarssl/error.h"
+#include <polarssl/config.h>
+#include <polarssl/net.h>
+#include <polarssl/ssl.h>
+#include <polarssl/entropy.h>
+#include <polarssl/ctr_drbg.h>
+#include <polarssl/error.h>
 
 #define DEBUG_LEVEL 2
 
@@ -32,6 +30,18 @@ void *prepareTcpSocketForBg(int s){return (void*)1;}
 #ifdef _WIN32
 #define snprintf _snprintf
 #endif
+
+class CTAutoIntUnlock{
+   int *iV;
+public:
+   CTAutoIntUnlock(int *iV):iV(iV){
+      *iV=1;
+   }
+   ~CTAutoIntUnlock(){
+      *iV=0;
+   }
+};
+
 
 
 void tivi_slog(const char* format, ...);
@@ -74,9 +84,9 @@ CTTLS::CTTLS(CTSockCB &c):addrConnected(){
    iWaitForRead=0;
    iCertFailed=0;
    iEntropyInicialized=0;
-
- 	
+   iCallingConnect=0;
 }
+
 void CTTLS::initEntropy(){
    if(iEntropyInicialized)return;
    iEntropyInicialized=1;
@@ -94,7 +104,6 @@ void CTTLS::initEntropy(){
 		tivi_slog( " failed\n  ! ctr_drbg_init returned %d", ret );
 	}
    printf("[init tls entrpoy sp=%d ms]\n",getTickCount()-ui);
-
 }
 
 CTTLS::~CTTLS(){
@@ -103,13 +112,13 @@ CTTLS::~CTTLS(){
 	delete (T_SSL*)pSSL;
 	if(cert)delete cert;
 }
+
 int CTTLS::createSock(){
    iPeerClosed=0;
-	//int net_connect( int *fd, const char *host, int port );
 	return 0;
 }
-int CTTLS::closeSocket(){
 
+int CTTLS::closeSocket(){
    
 	if((!iConnected && iPeerClosed==0)  || iClosed){
       if(iNeedCallCloseSocket && pSSL && ((T_SSL*)pSSL)->sock){
@@ -153,6 +162,13 @@ void CTTLS::setCert(char *p, int iLen, char *pCertBufHost){
    strncpy(bufCertHost,pCertBufHost,l);
    bufCertHost[l]=0;
 }
+
+static int iLastTLSSOCK_TEST;
+void test_close_last_sock(){
+   closesocket(iLastTLSSOCK_TEST);
+}
+
+
 /*
 int ctr_drbg_randomx( void *p_rng,
                     unsigned char *output, size_t output_len ){
@@ -169,6 +185,8 @@ int CTTLS::_connect(ADDR *address){
 	ssl_context *ssl=&((T_SSL*)pSSL)->ssl;
    x509_cert *ca=&((T_SSL*)pSSL)->cacert;
 
+   
+#if 0
 static int ssl_default_ciphersuitesz[] =
 {
 #if defined(POLARSSL_DHM_C)
@@ -206,6 +224,86 @@ static int ssl_default_ciphersuitesz[] =
 #endif
     0
 };
+#else
+   const int ssl_default_ciphersuitesz[] =
+   {
+#if defined(POLARSSL_DHM_C)
+#if defined(POLARSSL_AES_C)
+#if defined(POLARSSL_SHA2_C)
+      TLS_DHE_RSA_WITH_AES_256_CBC_SHA256,
+#endif /* POLARSSL_SHA2_C */
+#if defined(POLARSSL_GCM_C) && defined(POLARSSL_SHA4_C)
+      TLS_DHE_RSA_WITH_AES_256_GCM_SHA384,
+#endif
+      TLS_DHE_RSA_WITH_AES_256_CBC_SHA,
+#if defined(POLARSSL_SHA2_C)
+      TLS_DHE_RSA_WITH_AES_128_CBC_SHA256,
+#endif
+#if defined(POLARSSL_GCM_C) && defined(POLARSSL_SHA2_C)
+      TLS_DHE_RSA_WITH_AES_128_GCM_SHA256,
+#endif
+      TLS_DHE_RSA_WITH_AES_128_CBC_SHA,
+#endif
+#if defined(POLARSSL_CAMELLIA_C)
+#if defined(POLARSSL_SHA2_C)
+      TLS_DHE_RSA_WITH_CAMELLIA_256_CBC_SHA256,
+#endif /* POLARSSL_SHA2_C */
+      TLS_DHE_RSA_WITH_CAMELLIA_256_CBC_SHA,
+#if defined(POLARSSL_SHA2_C)
+      TLS_DHE_RSA_WITH_CAMELLIA_128_CBC_SHA256,
+#endif /* POLARSSL_SHA2_C */
+      TLS_DHE_RSA_WITH_CAMELLIA_128_CBC_SHA,
+#endif
+#if defined(POLARSSL_DES_C)
+      TLS_DHE_RSA_WITH_3DES_EDE_CBC_SHA,
+#endif
+#endif
+      
+      
+#if defined(POLARSSL_AES_C)
+#if defined(POLARSSL_SHA2_C)
+      TLS_RSA_WITH_AES_256_CBC_SHA256,
+#endif /* POLARSSL_SHA2_C */
+#if defined(POLARSSL_GCM_C) && defined(POLARSSL_SHA4_C)
+      TLS_RSA_WITH_AES_256_GCM_SHA384,
+#endif /* POLARSSL_SHA2_C */
+      TLS_RSA_WITH_AES_256_CBC_SHA,
+#endif
+#if defined(POLARSSL_CAMELLIA_C)
+#if defined(POLARSSL_SHA2_C)
+      TLS_RSA_WITH_CAMELLIA_256_CBC_SHA256,
+#endif /* POLARSSL_SHA2_C */
+      TLS_RSA_WITH_CAMELLIA_256_CBC_SHA,
+#endif
+#if defined(POLARSSL_AES_C)
+#if defined(POLARSSL_SHA2_C)
+      TLS_RSA_WITH_AES_128_CBC_SHA256,
+#endif /* POLARSSL_SHA2_C */
+#if defined(POLARSSL_GCM_C) && defined(POLARSSL_SHA2_C)
+      TLS_RSA_WITH_AES_128_GCM_SHA256,
+#endif /* POLARSSL_SHA2_C */
+      TLS_RSA_WITH_AES_128_CBC_SHA,
+#endif
+#if defined(POLARSSL_CAMELLIA_C)
+#if defined(POLARSSL_SHA2_C)
+      TLS_RSA_WITH_CAMELLIA_128_CBC_SHA256,
+#endif /* POLARSSL_SHA2_C */
+      TLS_RSA_WITH_CAMELLIA_128_CBC_SHA,
+#endif
+#if defined(POLARSSL_DES_C)
+      TLS_RSA_WITH_3DES_EDE_CBC_SHA,
+#endif
+#if defined(POLARSSL_ARC4_C)
+    //  TLS_RSA_WITH_RC4_128_SHA,
+     // TLS_RSA_WITH_RC4_128_MD5,
+#endif
+      0
+   };
+#endif
+   if(iCallingConnect)return 0;
+   
+   CTAutoIntUnlock _a(&iCallingConnect);
+   
    if(!iClosed){
       puts("destr tls");
       closeSocket();
@@ -236,6 +334,8 @@ static int ssl_default_ciphersuitesz[] =
       puts(&bufX[0]);
 		if(net_connect(&(((T_SSL*)pSSL)->sock),&bufX[0],address->getPort()+iIncPort))
          break;
+      
+      iLastTLSSOCK_TEST=(((T_SSL*)pSSL)->sock);
       iNeedCallCloseSocket=1;
 #ifndef _WIN32
       int on=1;
@@ -268,7 +368,7 @@ static int ssl_default_ciphersuitesz[] =
 
 		ssl_set_ciphersuites( ssl, ssl_default_ciphersuitesz );
 		//ssl_set_session( ssl, 1, 600, &((T_SSL*)pSSL)->ssn );//will  timeout after 600, and will be resumed
-		ssl_set_session( ssl, 1, 0, &((T_SSL*)pSSL)->ssn );//will never timeout, and will be resumed
+	//	ssl_set_session( ssl, 1, 0, &((T_SSL*)pSSL)->ssn );//will never timeout, and will be resumed
 
 
       iCertFailed=0;
@@ -283,6 +383,7 @@ static int ssl_default_ciphersuitesz[] =
       
       iClosed=0;
 		iConnected=1;
+      addrConnected=*address;
 	}while(0);
 	
 	
@@ -295,7 +396,6 @@ void CTTLS::failedCert(const  char *err, const char *descr, int fatal){
    if(fatal){
       if(errMsg)errMsg(pRet,err);
       iCertFailed=1;
-      //TODO callbackFNC
    }
 
 }
@@ -311,10 +411,16 @@ int CTTLS::getInfo(const char *key, char *p, int iMax){
    }else {
       const char *pdst = ssl_get_ciphersuite( ssl );
       if(pdst && strlen(pdst)>4){
-         //strcpy(p,pdst+4);
-         int b = ssl->dhm_ctx.len ? ssl->dhm_ctx.len : (ssl->peer_cert ? ssl->peer_cert->rsa.len : 0);
+         int b = ssl->dhm_P.n ?
+                 (ssl->dhm_P.n * 8)  :
+         (ssl->rsa_key && ssl->rsa_key_len ? ssl->rsa_key_len( ssl->rsa_key ) : 0);
+         
          b*=8;
-         return snprintf(p, iMax,"%dbits  %s", b, pdst+4);
+         
+         char *stripText(char *dst, int iMax, const char *src, const char *cmp);
+         
+         int l = snprintf(p, iMax,"%dbits ", b);
+         stripText(p+l, iMax-l-1, pdst+4, "-WITH");
       }
    }
    return strlen(p);
@@ -381,8 +487,9 @@ int CTTLS::checkCert(){
 
 int CTTLS::_send(const char *buf, int iLen){
 	ssl_context *ssl=&((T_SSL*)pSSL)->ssl;
-   if(!iConnected || iClosed)return -1;
-   if(iCertFailed){Sleep(30);return -1;}
+   if(!iConnected)return -1001;
+   if(iClosed)return -1002;
+   if(iCertFailed){Sleep(30);return -1003;}
 
 	int ret=0;
    int iShouldDisconnect=0;
@@ -402,11 +509,14 @@ int CTTLS::_send(const char *buf, int iLen){
             Sleep(20);
       }
 	}
+   void tmp_log(const char *p);
+   char d[64];sprintf(d, "[ssl-send=%p %.*s l=%d ret=%d]",ssl, 7,buf, iLen, ret);tmp_log(d);
+   
    if(ret<0){
       if(ret==POLARSSL_ERR_NET_CONN_RESET || ret==POLARSSL_ERR_NET_SEND_FAILED){
          iShouldDisconnect=1;
       }
-      if(iShouldDisconnect){addrConnected.clear();iConnected=0;}
+      if(iShouldDisconnect){addrConnected.clear();iConnected=0; tmp_log("tls_send err clear connaddr");}
       error_strerror(ret,&bufErr[0],sizeof(bufErr)-1);
       tivi_slog(" send[%s]%d",&bufErr[0],iShouldDisconnect);
    }
@@ -417,28 +527,25 @@ int CTTLS::_send(const char *buf, int iLen){
 
 	return ret;
 }
-int CTTLS::_recv(char *buf, int iLen){
+int CTTLS::_recv(char *buf, int iMaxSize){
 	
 	int ret=0;
 	ssl_context *ssl=&((T_SSL*)pSSL)->ssl;
    if(iCertFailed){Sleep(30);return 0;}
-   if(!iConnected){Sleep(iPrevReadRet==100000?30:15);iPrevReadRet=100000;return -1;}
+   if(!isConected()){Sleep(iPrevReadRet==100000?30:15);iPrevReadRet=100000;return -1;}
 
 	while(!iClosed){
     //  puts("read sock");
       iWaitForRead=0; 
-	   ret = ssl_read( ssl, (unsigned char *)buf, iLen );
+	   ret = ssl_read( ssl, (unsigned char *)buf, iMaxSize );
+   //   void wakeCallback(int iLock);wakeCallback(1);
       
       
-      //POLARSSL_ERR_SSL_CONN_EOF
-//      if(ret>0)printf("[read sock %d]",ret);;
-      //TODO if ret==-80 recreate sock
       if(!iConnected)break;
 
       if( ret == POLARSSL_ERR_NET_WANT_READ || ret == POLARSSL_ERR_NET_WANT_WRITE ){
          
          Sleep(ret == POLARSSL_ERR_NET_WANT_WRITE?50:5);
-
          if(iPrevReadRet==ret)Sleep(15);
          iPrevReadRet=ret;
          continue;
@@ -456,28 +563,25 @@ int CTTLS::_recv(char *buf, int iLen){
             break;
         }
       
-      /*
-      if(ret==0 &&  ((T_SSL*)pSSL)->voipBCKGR){
-         puts("EOF");
-         Sleep(30);
-         continue;
-      }
-*/
-
+ 
         if( ret == 0 )
         {
-       //    puts("EOF");
-           Sleep(20);
-          //  printf( "\n\nEOF\n" );
+            Sleep(20);
             break;
         }
       break;
    };
    if(iPeerClosed==2 || ret==POLARSSL_ERR_NET_CONN_RESET || ret==POLARSSL_ERR_NET_RECV_FAILED){
+      char b[64];sprintf(b, "tls_recv err clear connaddr ret=%d pc=%d",ret, iPeerClosed);
+      tmp_log(b);
       iPeerClosed=1;
       this->addrConnected.clear();
       iConnected=0;
      
+   }
+   else{
+      void tmp_log(const char *p);
+      char d[64];sprintf(d, "[ssl-recv=%p %.*s max=%d ret=%d]",ssl, 12,buf, iMaxSize, ret);tmp_log(d);
    }
 
    if(ret<0){
@@ -506,10 +610,10 @@ void CTTLS::reCreate(){}
 int CTTLS::createSock(){return 0;}
 int CTTLS::closeSocket(){return 0;}
 int CTTLS::_connect(ADDR *address){return 0;}
-int CTTLS::_send(char *buf, int iLen){return 0;}
+int CTTLS::_send(const char *buf, int iLen){return 0;}
 int CTTLS::_recv(char *buf, int iLen){return 0;}
 void CTTLS::setCert(char *p, int iLen, char *host){}
-void CTTLS::failedCert(char *err, char *descr, int fatal){}
+void CTTLS::failedCert(const char *err, const char *descr, int fatal){}
 int CTTLS::checkCert(){return 0;}
 #endif
 

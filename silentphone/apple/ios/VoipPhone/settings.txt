@@ -4,11 +4,11 @@ iPayloadSizeSend: 20
 iPayloadSizeSend3G: 40
 iIsTiViServFlag: 0
 iUseVAD: 0
-szApiShortName: FS-devel
-hdr: FS-devel
+szApiShortName: SilentCircle
+hdr: SilentCircle
 acodecs: 9,3,0,8
 acodecs3g: 3,9,0,8
-gw: fs-devel.silentcircle.org
+gw: sip.silentcircle.org
 iSkipXMLCfgServAddr: 0
 iZRTP_On: 1
 szSipTransport: TLS

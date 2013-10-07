@@ -138,17 +138,21 @@ typedef struct{
 
 #define ADD_CHAR(D,L,C) {D[L]=C;L++;}
 
-#define ADD_STR(a,b,c) {memcpy((a)+(b),(c),sizeof((c))-1);(b)+=sizeof((c))-1;(a)[(b)]=0;}
+#define ADD_STR(a,b,c) {memcpy((a)+(b),(c),sizeof((c)));(b)+=sizeof((c))-1;}
+
 #define ADD_L_STR(a,b,c,d) {memcpy((a)+(b),(c),(d));(b)+=(d);(a)[(b)]=0;}
+
 #define ADD_DSTRCRLF(a,b,c) \
    {memcpy((a)+(b),(c).strVal,(c).uiLen);\
    (b)+=(c).uiLen+2;\
    (a)[(b)-2]=13;(a)[(b)-1]=10;(a)[(b)]=0;}
+
 #define ADD_DSTR(a,b,c) \
    {memcpy((a)+(b),(c).strVal,(c).uiLen);\
    (b)+=(c).uiLen;\
       (a)[(b)]=0;}
-#define ADD_CRLF(a,b) {(b)+=2;(a)[(b)-2]=13;(a)[(b)-1]=10;(a)[(b)]=0;}
+
+#define ADD_CRLF(a,b) {(a)[(b)]=13;(a)[(b)+1]=10;(b)+=2;(a)[(b)]=0;}
 
 //#define DEBUG_NEEDED
 

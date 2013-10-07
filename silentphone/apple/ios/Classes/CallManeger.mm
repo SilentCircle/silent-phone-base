@@ -41,6 +41,148 @@ void setFlagShowningCallManeger(int f){
 
 NSString *toNSFromTB(CTStrBase *b);
 
+template <class T, int iMax>
+class CTArray{
+   int iCnt;
+public:
+   
+   T _t[iMax];
+   
+   CTArray(){reset();}
+   
+   void reset(){iCnt=0;memset(_t,0,sizeof(_t));}
+   
+   int count(){return iCnt;}
+   
+   int add(T *c){
+      if(iCnt>=iMax)return -1;
+      memcpy(&_t[iCnt],c, sizeof(T));
+      iCnt++;
+      return 0;
+   }
+   
+   T *get(int index){
+      if(index<0 || index>iCnt)return NULL;
+      return &_t[index];
+   }
+   
+   void swap(int t1, int t2){
+      T _s = _t[t1];
+      memcpy(&_t[t1], &_t[t2], sizeof(T));
+      memcpy(&_t[t2], &_s, sizeof(T));
+   }
+   
+   int insert(int pos, T *c){
+      if(iCnt>=iMax || pos>=iMax || pos<0)return -1;
+      int move=iCnt-pos;
+      if(move>0)memmove(&_t[pos+1],&_t[pos],sizeof(T)*move);
+      memcpy(&_t[pos], c, sizeof(T));
+      iCnt++;
+      return 0;
+   }
+   int remove(int pos){
+      if(pos>=iMax || pos<0)return -1;
+      int move=iCnt-pos;
+      if(move>0)memmove(&_t[pos],&_t[pos+1],sizeof(T)*move);
+      iCnt--;
+      return 0;
+   }
+   
+   inline int add(T c){return add(&c);}
+   inline int insert(int pos, T c){return insert(pos,&c);}
+   
+   int move(int from, int to){
+      
+      if(from==to)return 0;
+      
+      T *p=get(from);
+      if(!p)return -1;
+      
+      T t=*p;
+      int e = remove(from);
+      if(!e)e = insert(to, &t);
+      
+      return e;
+   }
+   
+};
+/*
+ int main(int argc, char *argv[]){
+ 
+ CTArray<int,7> a;
+ a.add(0);a.add(1);a.add(2);a.add(3);a.add(4);a.add(5);
+ // a.insert(2,4);
+ a.remove(3);
+ //a.swap(2,4);
+ 
+ for(int i=0;i<a.count();i++)printf("index=%d\n",a.get(i));
+ 
+ return 0;
+ }
+ */
+
+typedef struct {
+   enum{eNull, eLabel, eCall, eDescr};
+   int eType;
+   //union{
+   const char *descr;
+   const char *label;
+   CTCall *c;
+   NSString *imgName;
+   int iIsConf;
+   //};
+}CM_CELL;
+
+
+class CTCMA: public CTArray<CM_CELL,12>{
+public:
+   CTCMA():CTArray(){}
+
+   CTCall *getCall(int idx){
+      CM_CELL *t=get(idx);
+      if(!t)return NULL;
+      if(t->eType!=CM_CELL::eCall)return NULL;
+      return t->c;
+   }
+   int addDescr(const char *l, NSString *img=NULL){
+      if(!l)return -1;
+      CM_CELL t; memset(&t, 0, sizeof(t));
+      t.eType=t.eDescr;
+      t.descr=l;
+      t.imgName=img;
+      return add(&t);
+   }
+   
+   int addLabel(const char *l, NSString *img=NULL, int iIsConf=0){
+      if(!l)return -1;
+      CM_CELL t; memset(&t, 0, sizeof(t));
+      t.eType=t.eLabel;
+      t.label=l;
+      t.imgName=img;
+      t.iIsConf=iIsConf;
+      return add(&t);
+   }
+   
+   int addCall(CTCall *c){
+      if(!c)return -1;
+      CM_CELL t; memset(&t, 0, sizeof(t));
+      t.eType=t.eCall;
+      t.c=c;
+      return add(&t);
+   }
+   
+   int getH(int idx){
+      CM_CELL *t=get(idx);
+      if(!t)return 2;
+      switch(t->eType){
+         case CM_CELL::eCall:return 96;
+         case CM_CELL::eLabel:return idx==0 && t->iIsConf?47:31;
+         case CM_CELL::eDescr:return 26;
+      }
+      
+      return 2;
+   }
+};
 
 
 @interface CallManeger ()
@@ -50,18 +192,47 @@ NSString *toNSFromTB(CTStrBase *b);
 @implementation CallManeger
 @synthesize callCell;
 
+CTCMA cm_calls;
+
 -(void)updateCD{
    if(!calls)return;
    iIgnoreSelected=0;
-   iCallTypeOfs=0;
-   iCallsOffset[CTCalls::eConfCall]=0;
-   iCallsOffset[CTCalls::ePrivateCall]=calls->getCallCnt(CTCalls::eConfCall)+iCallsOffset[CTCalls::eConfCall]+1;
-   iCallsOffset[CTCalls::eStartupCall]=calls->getCallCnt(CTCalls::ePrivateCall)+iCallsOffset[CTCalls::ePrivateCall]+1;
    
-   int iCnt=calls->getCallCnt()+2;
-   if(calls->getCallCnt(CTCalls::eStartupCall))iCnt++;
-   iRows=iCnt;
-   NSLog(@"e c=%d, pr=%d, na=%d",iCallsOffset[0],iCallsOffset[1],iCallsOffset[2]);
+   int cc=calls->getCallCnt(CTCalls::eConfCall);
+   int cp=calls->getCallCnt(CTCalls::ePrivateCall);
+   int cs=calls->getCallCnt(CTCalls::eStartupCall);
+   /*
+    drag_call_into_conf.png
+    private_panel.png
+    conf_panel.png
+    drag_kick_out.png
+    out_in_panel.png
+    */
+
+   
+   cm_calls.reset();
+
+   int i;
+   iCallsOffset[CTCalls::eConfCall]=0;
+   
+   if(cc || cp){
+      cm_calls.addLabel("CONFERENCE", @"conf_panel.png",1);
+      for(i=0;i<cc;i++) cm_calls.addCall(calls->getCall(CTCalls::eConfCall,i));
+      if(cp)cm_calls.addDescr("Drag call into conference", @"drag.png");
+   }
+   if(1){
+      cm_calls.addLabel("PRIVATE", @"private_panel.png");
+      iCallsOffset[CTCalls::ePrivateCall]=cm_calls.count();
+      if(cc) cm_calls.addDescr("Drag here to remove from conference", @"drag.png");
+      for(i=0;i<cp;i++) cm_calls.addCall(calls->getCall(CTCalls::ePrivateCall,i));
+   }
+   iCallsOffset[CTCalls::eStartupCall]=cm_calls.count();
+   if(cs){
+      cm_calls.addLabel("INCOMING, OUTGOING", @"out_in_panel.png");
+      for(i=0;i<cs;i++) cm_calls.addCall(calls->getCall(CTCalls::eStartupCall,i));
+   }
+   
+   NSLog(@"e c=%d, pr=%d, na=%d",cc,cp,cs);
 }
 
 -(void)setCallArray:(CTCalls*)_calls{
@@ -82,7 +253,7 @@ NSString *toNSFromTB(CTStrBase *b);
 +(int)isVisibleOrShowningNow{
    return iIsVisibleOrShowningNow;
 }
-
+/*
 -(CTCall*)findCallByIDX:(int) idx{
    if(idx>iCallsOffset[CTCalls::eStartupCall]){
       return calls->getCall(CTCalls::eStartupCall, idx-iCallsOffset[CTCalls::eStartupCall]-1);
@@ -95,7 +266,7 @@ NSString *toNSFromTB(CTStrBase *b);
    }
    return 0;
 }
-
+*/
 
 - (id)initWithStyle:(UITableViewStyle)style
 {
@@ -151,6 +322,7 @@ NSString *toNSFromTB(CTStrBase *b);
 - (void)viewDidLoad
 {
    [super viewDidLoad];
+   //tw.backgroundColor = [UIColor colorWithPatternImage:[UIImage imageNamed:@"bg_main.png"]];
    
 }
 
@@ -177,32 +349,49 @@ NSString *toNSFromTB(CTStrBase *b);
 
 - (NSInteger)tableView:(UITableView *)tableView numberOfRowsInSection:(NSInteger)section
 {
-   return iRows;
+   return cm_calls.count();
 }
 
-
-
-
 - (CGFloat)tableView:(UITableView *)tableView heightForRowAtIndexPath:(NSIndexPath *)indexPath{
-   int v=indexPath.row;
-   if(v==iCallsOffset[0])return 32;
-   if(v==iCallsOffset[1])return 32;
-   if(v==iCallsOffset[2])return 32;
-   
-   return 96;
+   return cm_calls.getH(indexPath.row);
 }
 
 
 -(void)tableView:(UITableView *)tableView willDisplayCell:(UITableViewCell *)cell forRowAtIndexPath:(NSIndexPath *)indexPath{
-   int v=indexPath.row;
-   CTCall *c=(CTCall *)callsPtr[v];
-   if(!c)return;
-   CallCell *cc=(CallCell*)cell;
-   if(!c || !tableView || (int)tableView==1)return;
-   int a=c->iActive && !c->iIsOnHold;
-   if(!a && c==calls->curCall)a=1;
    
+   int v = indexPath.row;
+   CTCall *c = cm_calls.getCall(v);
+   if(!c){/*puts("!c");*/return;}
+   /*
+   if(1)
+   {
+      for (UIControl *control in cell.subviews)
+      {
+         if ([control isMemberOfClass:NSClassFromString(@"UITableViewCellReorderControl")] && [control.subviews count] > 0)
+         {
+            for (UIControl *someObj in control.subviews)
+            {
+               if ([someObj isMemberOfClass:[UIImageView class]])
+               {
+                  UIImage *img = [UIImage imageNamed:@"ico_user_plus.png"];
+                  int h = cm_calls.getH(indexPath.row);
+                  ((UIImageView*)someObj).frame = CGRectMake(0.0, 0.0, 43.0, h);//43.0
+                  ((UIImageView*)someObj).image = img;
+               }
+            }
+         }
+      }
+   }
+   */
+
+   CallCell *cc = (CallCell*)cell;
+   if(!c || !tableView || (int)tableView==1){puts("!c || !tw");return;}
+   int a=c->iActive && !c->iIsOnHold;
+//   puts(a?"selected":"not selected");
+
    cell.highlighted=!!a;
+   cell.selected = !!a;
+   [cell setHighlighted:!!a];
 #if 1
    cc.uiBacgrImg.highlighted=!!a;
    [cc.uiBacgrImg setHighlighted:!!a];
@@ -210,56 +399,120 @@ NSString *toNSFromTB(CTStrBase *b);
    
 }
 
+
 - (UITableViewCell *)tableView:(UITableView *)tableView cellForRowAtIndexPath:(NSIndexPath *)indexPath
 {
-   static NSString *CellIdentifierSP = @"CellSP";
+   static NSString *CellIdentifierLabelConf = @"CellLabelConf";
+   static NSString *CellIdentifierLabel = @"CellLabel";
    static NSString *CellIdentifierCC = @"CallCell";
+   static NSString *CellIdentifierCDescr = @"CellDescr";
    
    int v=indexPath.row;
-   UITableViewCell *cell;// = [tableView dequeueReusableCellWithIdentifier:CellIdentifierSP];
+   UITableViewCell *cell = NULL;// = [tableView dequeueReusableCellWithIdentifier:CellIdentifierSP];
    
-   // getConfCall
    NSString *ns=NULL;
    
-   if(v==iCallsOffset[0]){
-      ns=@"Conference";
-      iCallTypeOfs=0;
-   }
-   else if(v==iCallsOffset[1]){
-      ns=@"Private";
-      iCallTypeOfs=0;
-   }
-   else if(v==iCallsOffset[2]){
-      ns=@"Incoming, Outgoing";
-      iCallTypeOfs=0;
-   }
-   int iType=-1;
-   if(!ns){
-      if(v>iCallsOffset[2])
-         iType=2;
-      else if(v>iCallsOffset[1])
-         iType=1;
-      else iType=0;
+   CM_CELL *cmc = cm_calls.get(v);
+   CTCall *c = cm_calls.getCall(v);
+   
+   if(cmc && !c){
+      const char *p = cmc->eType == cmc->eDescr ? cmc->descr : cmc->label;
+      if(p) ns = [NSString stringWithUTF8String: p];
    }
    
-   
-   if(ns){
-      UITableViewCell *xcell = [tableView dequeueReusableCellWithIdentifier:CellIdentifierSP];
+   if(cmc && cmc->eType == cmc->eDescr){
+      
+      UILabel *lbDescr;
+      
+      UITableViewCell *xcell = [tableView dequeueReusableCellWithIdentifier:CellIdentifierCDescr];
       if (xcell == nil)
       {
-         xcell = [[[UITableViewCell alloc] initWithStyle:UITableViewCellStyleSubtitle reuseIdentifier:CellIdentifierSP] autorelease];
+         
+         
+         xcell = [[[UITableViewCell alloc] initWithStyle:UITableViewCellStyleSubtitle reuseIdentifier:CellIdentifierCDescr] autorelease];
+         cell=xcell;
+         
+         CGRect f = cell.frame;
+         CGFloat h = cm_calls.getH(v);
+         CGFloat tOfs=5.0;
+         
+         lbDescr = [[[UILabel alloc] initWithFrame:
+                     CGRectMake( 20.0, tOfs, f.size.width-40.0, h+8 )] autorelease];
+
+         
+         lbDescr.tag = 55;
+         lbDescr.font = [UIFont systemFontOfSize: 14];
+         lbDescr.textAlignment = UITextAlignmentCenter;
+         lbDescr.textColor = [UIColor colorWithRed:.6 green:.6 blue:.6 alpha:1.0];
+         lbDescr.autoresizingMask = UIViewAutoresizingFlexibleLeftMargin | UIViewAutoresizingFlexibleHeight;
+         lbDescr.backgroundColor = [UIColor clearColor];
+         [cell.contentView addSubview: lbDescr];
+      
       }
-      cell=xcell;
+      else{
+         cell=xcell;
+         lbDescr = (UILabel*)[cell.contentView viewWithTag:55];
+      }
+      [lbDescr setText:ns];
+      
+   }
+   if(cmc && cmc->eType == cmc->eLabel){
+      
+      UILabel *lb;
+      CGFloat tOfs=cmc->iIsConf?-4.0:5.0;
+      
+      UITableViewCell *xcell;
+      
+      NSString *nsCI = cmc->iIsConf ? CellIdentifierLabelConf : CellIdentifierLabel;
+      
+      xcell = [tableView dequeueReusableCellWithIdentifier:nsCI];
+      if (xcell == nil)
+      {
+         xcell = [[[UITableViewCell alloc] initWithStyle:UITableViewCellStyleSubtitle reuseIdentifier:nsCI] autorelease];
+         
+         cell=xcell;
+         CGRect f = cell.frame;
+         
+         CGFloat ofs = 37.0;
+         CGFloat h = cm_calls.getH(v);
+         
+         
+         lb = [[[UILabel alloc] initWithFrame:
+                CGRectMake( ofs , tOfs, f.size.width - ofs * 2, h )] autorelease];
+         
+         lb.tag = 55;
+         lb.font = [UIFont boldSystemFontOfSize: 18];
+         lb.textAlignment = UITextAlignmentLeft;
+         lb.textColor = [UIColor whiteColor];
+         lb.backgroundColor = [UIColor clearColor];
+         lb.autoresizingMask = UIViewAutoresizingFlexibleLeftMargin | UIViewAutoresizingFlexibleHeight;
+         [cell.contentView addSubview: lb];
+
+      }
+      else
+      {
+         cell=xcell;
+         lb = (UILabel*)[cell.contentView viewWithTag:55];
+      }
+      [lb setText:ns];
+      
+   }
+   if(!c || ns || !cmc){
+      
+      if(!cmc)return cell;
+      cell.selectionStyle = UITableViewCellSelectionStyleNone;
       cell.showsReorderControl=NO;
       
       cell.tag=0;
-      callsPtr[v]=0;
-      
-      /*
-       cell.backgroundView = [ [[UIImageView alloc] initWithImage:[ [UIImage imageNamed:@"cell_normal.png"] stretchableImageWithLeftCapWidth:0.0 topCapHeight:5.0] ]autorelease];
-       
-       cell.tableView.backgroundColor = [UIColor colorWithPatternImage:[UIImage imageNamed:@"cell_normal.PNG"]];
-       */
+      if(ns){
+         cell.accessibilityLabel=ns;
+      }
+
+      if(cmc->imgName){
+         ns=NULL;
+         cell.backgroundView = [[[UIImageView alloc] initWithImage: [UIImage imageNamed:cmc->imgName] ]autorelease];
+      }
+      ns=NULL;
    }
    else {
 #if 1
@@ -272,9 +525,12 @@ NSString *toNSFromTB(CTStrBase *b);
          self.callCell = nil;
       }
       cell=(UITableViewCell*)xcell;
-      cell.showsReorderControl=iType!=CTCalls::eStartupCall;
       
-      CTCall *c=[self findCallByIDX:v];
+      int bIsStartup = CTCalls::isCallType(c,CTCalls::eStartupCall);
+      
+      cell.showsReorderControl = bIsStartup ? NO : YES;
+      
+
       if(c){
          if(selected && c->iIsInConferece && !c->iIsOnHold && !c->iEnded){iIgnoreSelected=1;}
          if(!selected && !c->iIsOnHold && !c->iEnded)selected=c;
@@ -283,21 +539,17 @@ NSString *toNSFromTB(CTStrBase *b);
          UIImageView *iv=(UIImageView*)[xcell viewWithTag:505];
          if(iv){
             int isVideoCall(int iCallID);
-            int iHide=iType!=CTCalls::eStartupCall;
-            if(!iHide)iHide=!isVideoCall(c->iCallId);
+            int iHide=!isVideoCall(c->iCallId);
             [iv setHidden:!!iHide];
          }
          
+         int a=!bIsStartup && !c->iIsOnHold;
          
-         int a=iType!=CTCalls::eStartupCall && !c->iIsOnHold;
-         callsPtr[v]=c;
-         cell.tag=(int)c;
-         iCallTypeOfs++;
-         
+         [xcell setHighlighted:!!a];
          [xcell.uiBacgrImg setHighlighted:!!a];
-         xcell.highlighted=!!a;
+         xcell.selected = !!a;
          
-         if(iType==CTCalls::eStartupCall){
+         if(bIsStartup){
             xcell.lbZRTP.text=@"";
             [xcell.sas setHidden:YES];
             [xcell.uiAnswerBt setHidden:!c->mustShowAnswerBT()];
@@ -305,11 +557,11 @@ NSString *toNSFromTB(CTStrBase *b);
          }
          else {
             [xcell.uiAnswerBt setHidden:YES];
-            [xcell.sas setHidden:NO];
-            [xcell.sas setTitle:[NSString stringWithUTF8String:&c->bufSAS[0]] forState:UIControlStateNormal];
-            xcell.lbZRTP.text=[NSString stringWithUTF8String:&c->bufSecureMsg[0]];
+            [xcell.sas setHidden:YES];
+            //[xcell.sas setHidden:NO];
+            //[xcell.sas setTitle:[NSString stringWithUTF8String:&c->bufSAS[0]] forState:UIControlStateNormal];
             
-            
+            c->setSecurityLines(xcell.lbZRTP, NULL);
          }
          
          AppDelegate *d=(AppDelegate*)appDelegate;
@@ -319,7 +571,6 @@ NSString *toNSFromTB(CTStrBase *b);
          [xcell.uiImg setImage:nil];
          if(c->img){
             c->iImgRetainCnt++;
-            
             [xcell.uiImg setImage:[c->img retain]];
          }
          else{
@@ -348,12 +599,13 @@ NSString *toNSFromTB(CTStrBase *b);
 }
 -(IBAction)onAnswerPress:(id)sender{
    UIButton *b=(UIButton *)sender;
-   CTCall *c=[self findCallByIDX:b.tag];
+   CTCall *c=cm_calls.getCall(b.tag);
+   
    if(!c || !c->cell || c->cell.cTCall!=c)return;
    
    
    if(c->iCallId==0){
-      NSLog(@"TODO endCall err 0");
+      NSLog(@"onAnswerPress err 0");
       return;
    }
    dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), ^{
@@ -367,18 +619,15 @@ NSString *toNSFromTB(CTStrBase *b);
       });
    });
    
-   NSLog(@"TODO answer %@", toNSFromTB(&c->nameFromAB));
-   
-   
 }
 -(IBAction)onEndCallPress:(id)sender{
    UIButton *b=(UIButton *)sender;
-   CTCall *c=[self findCallByIDX:b.tag];
+   CTCall *c=cm_calls.getCall(b.tag);
    if(!c || !c->cell || c->cell.cTCall!=c)return;
    
    
    if(c->iCallId==0){
-      NSLog(@"TODO endCall err 0");
+      NSLog(@"onEndCallPress err 0");
       return;
    }
    int cc=calls->getCallCnt();
@@ -393,83 +642,83 @@ NSString *toNSFromTB(CTStrBase *b);
       selected=0;
       iIgnoreSelected=0;
    }
-   
-   NSLog(@"TODO endCall %@", toNSFromTB(&c->nameFromAB));
-   
 }
-
-
 
 - (BOOL)tableView:(UITableView *)tableView shouldIndentWhileEditingRowAtIndexPath:(NSIndexPath *)indexPath {
    return NO;
 }
+
 - (BOOL)tableView:(UITableView *)tableView canEditRowAtIndexPath:(NSIndexPath *)indexPath{
    return YES;
 }
 
-
 - (void)tableView:(UITableView *)tableView commitEditingStyle:(UITableViewCellEditingStyle)editingStyle forRowAtIndexPath:(NSIndexPath *)indexPath {
+
    [tableView deleteRowsAtIndexPaths:[NSArray arrayWithObject:indexPath] withRowAnimation:UITableViewRowAnimationFade];
 }
 
 - (void)tableView:(UITableView *)tableView moveRowAtIndexPath:(NSIndexPath *)fromIndexPath toIndexPath:(NSIndexPath *)toIndexPath
 {
-   if(fromIndexPath.row==toIndexPath.row)return;
-   CTCall *fr=callsPtr[fromIndexPath.row];
-   if(toIndexPath.row>fromIndexPath.row){
-      for(int i=fromIndexPath.row;i<toIndexPath.row;i++){
-         callsPtr[i]=callsPtr[i+1];
-      }
-      callsPtr[toIndexPath.row]=fr;
-   }
-   else{
-      for(int i=fromIndexPath.row;i>toIndexPath.row;i--){
-         callsPtr[i]=callsPtr[i-1];
-      }
-      callsPtr[toIndexPath.row]=fr;
-   }
+   puts("moveRowAtIndexPath");
+   if(fromIndexPath.row==toIndexPath.row){[self redraw];return;}
+   CTCall *c=cm_calls.getCall(fromIndexPath.row);
+   if(!c){puts("moveRowAtIndexPath !c");return;}
    
-   CTCall *c=fr;
+
+   cm_calls.move(fromIndexPath.row, toIndexPath.row);
    
-   int privPos=0;
-   for(int i=1;i<16;i++){
-      if(callsPtr[i]==0){
-         privPos=i;
-         iCallsOffset[CTCalls::ePrivateCall]=i;
-         break;
-      }
-   }
+  // c=cm_calls.getCall(toIndexPath.row);
+
+   int iPrevV=c->iIsInConferece;
+
+   c->iIsInConferece=toIndexPath.row < iCallsOffset[CTCalls::ePrivateCall];
    
-   if(c){
-      int iPrevV=c->iIsInConferece;
-      c->iIsInConferece=toIndexPath.row<privPos;
+   if(iPrevV!=c->iIsInConferece){
+      AppDelegate *d=(AppDelegate*)appDelegate;
+      [d confCallN:c add:c->iIsInConferece];
+      [d unholdAndPutOthersOnHold:c];
       [self redraw];
-      
-      if(iPrevV!=c->iIsInConferece){
-         AppDelegate *d=(AppDelegate*)appDelegate;
-         [d confCallN:c add:c->iIsInConferece];
-         [d unholdAndPutOthersOnHold:c];
-      }
    }
+
 }
 
 - (NSIndexPath *)tableView:(UITableView *)tableView targetIndexPathForMoveFromRowAtIndexPath:(NSIndexPath *)sourceIndexPath toProposedIndexPath:(NSIndexPath *)proposedDestinationIndexPath{
    
-   int sc=iCallsOffset[CTCalls::eStartupCall];
+   puts("targetIndexPathForMoveFromRowAtIndexPath");
+   CTCall *c=cm_calls.getCall(sourceIndexPath.row);
+   if(!c)return sourceIndexPath;
    
-   if(proposedDestinationIndexPath.row==0 || proposedDestinationIndexPath.row>=sc){
-      int s=proposedDestinationIndexPath.section;
-      if(proposedDestinationIndexPath.row>=sc){
-         
-         return [NSIndexPath indexPathForRow:(sc-1) inSection:s];
-      }
-      if(proposedDestinationIndexPath.row==0 ){
-         //proposedDestinationIndexPath.row=1;
-         return [NSIndexPath indexPathForRow:1 inSection:s];
-         //return proposedDestinationIndexPath;
-      }
-      return sourceIndexPath;
+  // return proposedDestinationIndexPath;//
+   
+   int s=proposedDestinationIndexPath.section;
+   
+   int sc=iCallsOffset[CTCalls::eStartupCall];
+   int sp=iCallsOffset[CTCalls::ePrivateCall];
+   
+   int bIsPriv = CTCalls::isCallType(c, CTCalls::ePrivateCall);
+
+   if(bIsPriv && proposedDestinationIndexPath.row==0 )
+      return [NSIndexPath indexPathForRow:1 inSection:s];
+   
+   if(bIsPriv){
+      if(proposedDestinationIndexPath.row>=sp)
+         return sourceIndexPath;
+      
+      if(proposedDestinationIndexPath.row<sp && sp>2)
+         return [NSIndexPath indexPathForRow:(sp-2) inSection:s];
    }
+   else{
+      if(proposedDestinationIndexPath.row<sp)
+         return sourceIndexPath;
+      
+      if(proposedDestinationIndexPath.row>=sc)
+         return [NSIndexPath indexPathForRow:(sc-1) inSection:s];
+      
+      if(proposedDestinationIndexPath.row>sp)
+         return [NSIndexPath indexPathForRow:(sp+1) inSection:s];
+      
+   }
+
    return proposedDestinationIndexPath;
 }
 
@@ -484,7 +733,7 @@ NSString *toNSFromTB(CTStrBase *b);
 - (BOOL)tableView:(UITableView *)tableView canMoveRowAtIndexPath:(NSIndexPath *)indexPath
 {
    int v=indexPath.row;
-   return v<iCallsOffset[CTCalls::eStartupCall] && [self findCallByIDX:indexPath.row]?YES:NO;
+   return v<iCallsOffset[CTCalls::eStartupCall] && cm_calls.getCall(indexPath.row)?YES:NO;
 }
 
 
@@ -493,12 +742,12 @@ NSString *toNSFromTB(CTStrBase *b);
 - (void)tableView:(UITableView *)tableView didSelectRowAtIndexPath:(NSIndexPath *)indexPath
 {
    
-   CTCall *c=callsPtr[indexPath.row];//[self findCallByIDX:indexPath.row];
+   CTCall *c=cm_calls.getCall(indexPath.row);//[self findCallByIDX:indexPath.row];
    if(!c){
       
       return ;
    }
-   if(c!=[self findCallByIDX:indexPath.row])return;
+   //if(c!=[self findCallByIDX:indexPath.row])return;
    
    AppDelegate *d=(AppDelegate*)appDelegate;
    iIsVisibleOrShowningNow=0;
@@ -509,6 +758,5 @@ NSString *toNSFromTB(CTStrBase *b);
    [[self navigationController] popViewControllerAnimated:YES];
    
 }
-
 @end
 

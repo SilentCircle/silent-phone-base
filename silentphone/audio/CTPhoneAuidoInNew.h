@@ -55,11 +55,12 @@ public:
    
    ~CTDataBuf(){if(iCanDelete)delete buf;}
    
-   void set(char *p, int iNewLen, int iCanDelete){
-      if(this->iCanDelete)delete buf;
+   void set(char *p, int iNewLen, int _iCanDelete){
+      if(iCanDelete)delete buf;
       iPos=0;
       buf=p;
       iLen=iNewLen;
+      iCanDelete=_iCanDelete;
    }
    
    void reset(){iPos=0;}
@@ -156,7 +157,7 @@ public:
       iRecording=0;
       th.close();
       uiLastRecAt=0;
-#define DBG_ARR_SZ 250
+//#define DBG_ARR_SZ 250
 #ifdef DBG_ARR_SZ
       int iLen=0;
       char b[4000];
@@ -209,9 +210,11 @@ public:
 #endif
       
    }
+#ifdef DBG_ARR_SZ
    int posA,posB;
    unsigned int uiTC_Arr[DBG_ARR_SZ];
    unsigned int uiEncTimeArr[DBG_ARR_SZ];
+#endif
    
 private:
    static int th2fnc(void *p)

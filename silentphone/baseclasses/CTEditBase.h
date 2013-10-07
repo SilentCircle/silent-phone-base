@@ -104,25 +104,7 @@ public:
    CTEditBase(int iMaxLen);
 
    CTEditBase(const char *p=0,int iLen=0, int iIsUnicode=0);
-      /*
-      :iUpdateSize(64),iLen(iLen),pData(NULL),iMaxLen(0),iMaxLenIsLocked(0),iCannotRedraw(0)//TODO aisardziibu sheit
-   {
-      if (p)
-      {
-         setText(p,iLen,iIsUnicode);
-      }
-      else 
-         setText("",0);
-   }
-   */
 
-   /*
-   CTEditBase();
-   CTEditBase(char *p);
-   CTEditBase(char *p, int iLen);
-   CTEditBase(char *p, int iLen, int iIsUnicode);
-   */
-//   CTEditBase(char *p=NULL,int iLen=0, int iIsUnicode=0);
    virtual ~CTEditBase(){
       if(pData && !iMaxLenIsLocked)
       {
@@ -142,6 +124,14 @@ public:
 
    }
    void reset();
+   inline CTEditBase& setChar(int pos, int c)
+   {
+      if(pos>=0 && pos<iLen)
+         pData[pos]=c;
+      
+      return *this;
+      
+   }
    inline int getChar(int c)
    {
       if(c>=iLen)
@@ -153,9 +143,7 @@ public:
       short s=(short)c;
       addText((char *)&s,  1, 1);
    }
-   int operator ==(CTStrBase *b);
-   int operator ==(const char *p);
-   inline int operator !=(CTStrBase *b){return !(*this==b);}
+
    inline void insertChar(int iAtPos, int c)
    {
       short s=(short)c;
@@ -251,7 +239,7 @@ static void repalceCRLF(CTEditBase *e)
 
 class CTStringsBase{
 public:
-   virtual int setGetTextById(char *id, int idLen, CTEditBase &val, int iSet)=0;
+   virtual int setGetTextById(const char *id, int idLen, CTEditBase &val, int iSet)=0;
 };
 int getText(char *p, int iMaxLen, CTStrBase *ed);
 
@@ -260,6 +248,7 @@ template <int T>
 class CTEditBuf: public CTEditBase{
 public:
    CTEditBuf():CTEditBase(T,(short *)&buf){buf[0]=0;}
+   CTEditBuf(const char *p):CTEditBase(T,(short *)&buf){buf[0]=0;setText(p);}
    short buf[T];
 
 };

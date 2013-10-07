@@ -54,27 +54,28 @@ CTRecentsItem *getByIdxAndMarker(CTList *l, int idx, int iMarker){
 }
 
 
-void CTRecentsAdd::add(int iDir, char *p, int iDur, const char *serv){
+void CTRecentsAdd::add(int iDir,CTEditBase *nameFromABorSIP, char *p, int iDur, const char *serv){
    iThisDir=iDir;
    iThisDur=iDur;
    pThisPeer=p;
    pThisServ=serv;
+   pThisNameFromABorSIP = nameFromABorSIP;
 }
 
-CTRecentsAdd* CTRecentsAdd::addMissed(char *p, int iDur, const char *serv){
+CTRecentsAdd* CTRecentsAdd::addMissed(CTEditBase *nameFromABorSIP,char *p, int iDur, const char *serv){
    CTRecentsAdd *n=new CTRecentsAdd();
-   n->add(CTRecentsItem::eMissed,p,0,serv);
+   n->add(CTRecentsItem::eMissed,nameFromABorSIP,p,0,serv);
    
    return n;
 }
-CTRecentsAdd* CTRecentsAdd::addDialed(char *p, int iDur, const char *serv){
+CTRecentsAdd* CTRecentsAdd::addDialed(CTEditBase *nameFromABorSIP,char *p, int iDur, const char *serv){
    CTRecentsAdd *n=new CTRecentsAdd();
-   n->add(CTRecentsItem::eDialed,p,iDur,serv);
+   n->add(CTRecentsItem::eDialed,nameFromABorSIP,p,iDur,serv);
    return n;
 }
-CTRecentsAdd* CTRecentsAdd::addReceived(char *p, int iDur, const char *serv){
+CTRecentsAdd* CTRecentsAdd::addReceived(CTEditBase *nameFromABorSIP,char *p, int iDur, const char *serv){
    CTRecentsAdd *n=new CTRecentsAdd();
-   n->add(CTRecentsItem::eReceived,p,iDur,serv);
+   n->add(CTRecentsItem::eReceived,nameFromABorSIP,p,iDur,serv);
    return n;
 }
 
@@ -129,13 +130,31 @@ int setPersonName(ABRecordRef person, CTEditBase *name){
    last = (CFStringRef)ABRecordCopyValue(person, kABPersonLastNameProperty);
    NSString *f=(NSString*)first;
    NSString *l=(NSString*)last;
+//   NSLog(@"name[%@,%@]",f,l);
    //name->setLen(0);
    if(f){
-      name->setText([f UTF8String],[f length]);
+      name->setText([f UTF8String]);
       if(l)name->addChar(' ');
       CFRelease(first);
    }
-   if(l){name->addText([l UTF8String],[l length]);CFRelease(last);}
+   if(l){
+      //- (void)getCharacters:(unichar *)buffer range:(NSRange)aRange;
+#if 1
+      name->addText([l UTF8String]);//[l length]);
+#else
+      for(int i=0;i<[l length];i++){name->addChar([l characterAtIndex:i]);}
+#endif
+      CFRelease(last);
+   }
+   
+   if(name->getLen()<1){
+      CFStringRef cn = (CFStringRef)ABRecordCopyValue(person, kABPersonOrganizationProperty);
+      if(cn){
+         l=(NSString*)cn;
+         name->setText([l UTF8String]);
+         CFRelease(cn);
+      }
+   }
    
    return 0;
 }
@@ -191,7 +210,7 @@ public:
       if(s->nr.iLen==iOutLen){
          return memcmp(s->nr.buf, bufNR, iOutLen)==0;
       }
-      if(s->nr.iLen>iOutLen || s->nr.iLen<7 || iOutLen<7)return 0;
+      if((s->nr.iLen>iOutLen && (s->nr.iLen+1!=iOutLen)) || s->nr.iLen<7 || iOutLen<7)return 0;
       
       for(int i=0;i<s->nr.iLen;i++)
          if(isalpha(s->nr.buf[i]))
@@ -295,6 +314,8 @@ class CTContactFinder{
       
    }   
    unsigned int setupSearch(CTListItemIndexNR::_SEARCH &s, const char *nr, int iLen){
+     // printf("[search=(%.*s) ]",iLen,nr);
+
       s.nr.iLen=sizeof(s.nr.buf);
       s.crc = CTListItemIndexNR::getCRC(nr,iLen,s.nr.buf,&s.nr.iLen);
       return s.crc;
@@ -350,7 +371,25 @@ public:
    
    int findPerson(CTEditBase *e, const char *nr, int iLen){
       if(iHasChanges)reset();else load();
+      int i;
+      int iDigits=0;
+ 
       
+      char buf[128];
+      if(iLen>127)iLen=127;
+      
+      int iNewLen=0;
+      int iClean=1;
+      
+      //iDigits+=iClean && !!isdigit(nr[i]);
+      for(i=0;i<iLen;i++){
+         if(nr[i]=='@' || isalpha(nr[i]))iClean=0;
+         if(isdigit(nr[i]) || nr[i]=='+' || !iClean){buf[iNewLen]=nr[i];iNewLen++; }
+      }
+      buf[iNewLen]=0;iLen=iNewLen;nr=&buf[0];
+      
+
+
       unsigned int crc;
       
       CTListItemIndexNR *ret;
@@ -363,16 +402,12 @@ public:
       
       if(!ret){
          
-         int i;
-         int iDigits=0;
+         
          for(i=0;i<128;i++){
-            if(nr[i]==0){
- 
-               return -1;
-            }
+            
             iDigits+=isdigit(nr[i]);
             
-            if(nr[i]=='@'){
+            if(nr[i]=='@' || !nr[i]){
                printf("digits=%d \n",iDigits);
                
                if(iDigits==10){
@@ -382,19 +417,25 @@ public:
                   crc=setupSearch(s,&bufTmp[0],l);
                   ret=(CTListItemIndexNR*)lists[crc&eAnd].findItem(&s,sizeof(s));
                   if(ret)break;//found
+                  
                }
-
                
                crc=setupSearch(s,&nr[0],i);
                ret=(CTListItemIndexNR*)lists[crc&eAnd].findItem(&s,sizeof(s));
-
+               if(!ret && iDigits==11){
+                  crc=setupSearch(s,&nr[1+(nr[0]=='+')],10);
+                  ret=(CTListItemIndexNR*)lists[crc&eAnd].findItem(&s,sizeof(s));
+               }
+               
                break;
             }
+
          }
-         //tryToFindWOAt
-         
       }
-      
+      if(!ret && iLen>1 && nr[0]=='+'){
+         crc=setupSearch(s,&nr[1],iLen-1);
+         ret=(CTListItemIndexNR*)lists[crc&eAnd].findItem(&s,sizeof(s));
+      }
       if(!ret)return -2;
       setPersonName(ret->getPerson(),e);
       return ret->idx;
@@ -439,11 +480,7 @@ CTContactFinder contactFinder;
 - (void)viewWillAppear:(BOOL)animated{
    [super viewWillAppear: animated];
    
-   [UIApplication sharedApplication].applicationIconBadgeNumber=0;
-   int iv=[UIApplication sharedApplication].applicationIconBadgeNumber;
-   if(iv)
-     [uiTabBarItem setBadgeValue:[NSString stringWithFormat:@"%d",iv]];  
-   else [uiTabBarItem setBadgeValue:nil];
+   [self resetBadgeNumber:true];
    
    [self loadRecents];
 }
@@ -471,12 +508,12 @@ CTContactFinder contactFinder;
 {
    //saveRL();
    delete rl;
-   [self releaseAB];
    
 }
 -(void)saveRecents{
    //queve
    rl->save();
+   puts("saveRecents");
    
 }
 
@@ -486,7 +523,7 @@ CTContactFinder contactFinder;
    
    rl->load();
    
-   rl->add(r->iThisDir,r->pThisPeer,"my",r->pThisServ,r->iThisDur);
+   rl->add(r->iThisDir, r->pThisNameFromABorSIP,r->pThisPeer,"my",r->pThisServ,r->iThisDur);
    rl->countItemsGrouped();
    
    
@@ -494,8 +531,7 @@ CTContactFinder contactFinder;
       [UIApplication sharedApplication].applicationIconBadgeNumber ++;
       [self saveRecents];
 
-      int iv=[UIApplication sharedApplication].applicationIconBadgeNumber;
-      [uiTabBarItem setBadgeValue:[NSString stringWithFormat:@"%d",iv]];  
+      [self resetBadgeNumber:false];
    }
    
    [tw_test reloadSections: [NSIndexSet indexSetWithIndex:0] withRowAnimation:UITableViewRowAnimationFade];
@@ -519,18 +555,28 @@ CTContactFinder contactFinder;
 // Customize the number of rows in the table view.
 - (NSInteger)tableView:(UITableView *)tableView numberOfRowsInSection:(NSInteger)section 
 {
-   [self releaseAB ];
    int r=rl->countItemsGrouped();
    return r;
 }
 
-
+-(void)resetBadgeNumber:(bool)bResetToZero{
+   
+   if(bResetToZero){
+      [UIApplication sharedApplication].applicationIconBadgeNumber=0;
+   }
+   int iv=[UIApplication sharedApplication].applicationIconBadgeNumber;
+   if(iv)
+      [uiTabBarItem setBadgeValue:[NSString stringWithFormat:@"%d",iv]];
+   else [uiTabBarItem setBadgeValue:nil];
+}
 
 -(IBAction)segment_pressed:(id)sender{
    UISegmentedControl *sc=(UISegmentedControl *)sender;
    int c;
-   if(sc.selectedSegmentIndex==1)
+   if(sc.selectedSegmentIndex==1){
       c=rl->activateMissed();
+      [self resetBadgeNumber:true];
+   }
    else
       c=rl->activateAll();
    
@@ -578,12 +624,7 @@ CTContactFinder contactFinder;
    
    return UITableViewCellEditingStyleDelete;//Insert;
 }
--(void)releaseAB{
-   if(g_people)[g_people release];
-   if(g_addressBook)CFRelease(g_addressBook);
-   g_people=NULL;g_addressBook=NULL;
-   
-}
+
 
 
 - (void)navigationController:(UINavigationController *)navigationController willShowViewController:(UIViewController *)viewController animated:(BOOL)animated{
@@ -600,7 +641,7 @@ CTContactFinder contactFinder;
    
    if(!i)return;
    
-   if(!i->name.getLen()){
+   if(!i->name.getLen() || i->iABChecked==1){
       [self showUnknownPersonViewControllerNS:toNS(&i->peerAddr)];
       return;
    }
@@ -692,8 +733,8 @@ CTContactFinder contactFinder;
    CTRecentsItem *i=rl->getByIndex(indexPath.row);
 
    if(!i){
-      aCell.lbFromNr.text=@" ";
-      aCell.lbFromUN.text=@" ";
+      aCell.lbFromNr.text=@"err";
+      aCell.lbFromUN.text=@"err";
       aCell.lbDate.text=@"1.1.1";
       aCell.lbDur.text=@"0:01";
       return aCell;
@@ -707,6 +748,8 @@ CTContactFinder contactFinder;
       
       char buf[32];
       insertDateFriendly(&buf[0],(int)i->uiStartTime,0);
+      if(strncmp(buf,"Yesterday ",10)==0)
+         buf[9]=0;////@"05.04.2012";
       aCell.lbDate.text=[NSString stringWithUTF8String:&buf[0]];////@"05.04.2012";
       
       int iHideSipDomain=1;
@@ -755,30 +798,8 @@ CTContactFinder contactFinder;
    CTRecentsItem *i=rl->getByIndex(indexPath.row);
    
    [appDelegate callToR:i];
-   /*
-   if(i && i->peerAddr.getLen()>0){
-      char buf[128];
-      getText(&buf[0],127,&i->peerAddr);
-      
-      void *findEngByServ(CTEditBase *b);
-      void *eng = findEngByServ(&i->lbServ);
-      if(!eng && i->lbServ.getLen()){
-         UIAlertView *alert = [[UIAlertView alloc] initWithTitle:@"SIP account is disabled or deleted"
-                                                         message:nil
-                                                        delegate:nil
-                                               cancelButtonTitle:@"Ok"
-                                               otherButtonTitles:nil];
-         [alert show];
-         [alert release];
-         return;
-      }
-      
-      [appDelegate callToS:'c' dst:&buf[0] eng:eng];
-    //  [appDelegate setText:toNS(&i->peerAddr)];
-    //  [appDelegate chooseCallType];
-   }
-    */
 }
+
 -(IBAction)setTBEditing{
    static int iEdit=1;
    
@@ -884,9 +905,10 @@ CTContactFinder contactFinder;
    char buf[128];
    int l=127;
    peer->getTextUtf8(buf,&l);
+   printf("[search2 %s]",buf);
    
    int r=contactFinder.findPerson(name,&buf[0],l);
-   if(r<0)return r;
+
    return r;
    
 }
@@ -1122,7 +1144,7 @@ CTContactFinder contactFinder;
    if(phone){
       
       [self dismissModalViewControllerAnimated:NO];
-      [appDelegate callTo:'c' dst:[phone UTF8String]];
+      [appDelegate callToCheckUS:'c' dst:[phone UTF8String]  eng:NULL];
       
       [[self tabBarController]setSelectedIndex:3];
       

@@ -223,6 +223,7 @@ public:
    virtual int onSdpMedia(int SesId, const char *media)=0;
 
    virtual int canAccept(ADDR *addr, char *sz, int iLen, int iSesId, CTSesMediaBase **media)=0;
+   virtual CTSesMediaBase* tryGetMedia(const char *name)=0;
 
 
    CTMediaBase *mediaFinder;
@@ -302,11 +303,11 @@ typedef struct {
    int iKillCalled;
    int iIsSession;
    
-   int iIsInConference;
+ //  int iIsInConference; - moved to cs
    
-   int iMediaType;//from media base
+ //  int iMediaType;//from media base
    void setMBase(CTSesMediaBase *m){
-      iMediaType=m?m->getMediaType():0;
+   //   iMediaType=m?m->getMediaType():0;
       if(m){
          m->setBaseData(pMediaIDS?pMediaIDS->pzrtp:NULL,&cs,pMediaIDS);
       }
@@ -347,9 +348,11 @@ typedef struct {
    int iDoEndCall;
    int iCallingAccept;
    int iOnEndCalled;
+   int iOnIncmingCalled;
 
    int iDestIsNotInSameNet;
    int iRespReceived;
+   int iSendingReinvite;
    
    unsigned int uiSipCseq;
    
@@ -357,7 +360,11 @@ typedef struct {
    unsigned int uiSend480AfterTicks;//if not answered
    
 
+   int iStopReasonSet;
    int *ptrResp;//must be static //  static int v=0; ses->ptrResp=&v;
+   CTEditBase *retMsg;
+   
+   int iReceivedVideoSDP;
 
 }CSesBase;
 
@@ -535,6 +542,34 @@ public:
 
 };
 
+class CTReinviteMonitor{
+   t_ph_tick uiReinviteAt;
+   int iNewIP;
+   int iNewExtIP;
+public:
+   CTReinviteMonitor(){reset();}
+   void reset(){iNewIP=0;uiReinviteAt=0;}
+   void onNewIP(){iNewIP=1;}
+   void onNewExtIP(){iNewExtIP=1;}
+   void onOnline(t_ph_tick *now){
+      if((iNewIP|iNewExtIP) && now){
+         uiReinviteAt=*now+2*T_GT_SECOND;
+         iNewExtIP=iNewIP=0;
+      }
+   }
+   int mustReinvite(t_ph_tick *now){
+      t_ph_tick _now=*now;
+      if(!uiReinviteAt)return 0;
+      if(_now>=uiReinviteAt){
+         uiReinviteAt=0;
+         iNewIP=0;
+         iNewExtIP=0;
+         return 1;
+      }
+      return 0;
+   }
+};
+
 class CPhSesions :  public CSessionsBase{
    
    unsigned int uiRegistarationCallIdRandom[2];
@@ -549,11 +584,16 @@ protected:
    int iCanCheckStunIP;
    
    t_ph_tick uiNextRegTry;
+   
    int iRegTryParam;
    
    CTCheckNetwork port53Check;
 
    t_ph_tick uiSIPKeepaliveSentAt,uiSuspendRegistrationUntil,uiPrevCheckGWAt,uiCheckNetworkTypeAt;
+   
+   CTReinviteMonitor reinviteMonitor;
+   
+   void notifyIncomingCall(CSesBase *spSes);
    
 public:
    CTLangStrings &strings;
@@ -587,6 +627,7 @@ public:
    CSesBase *getRoot(){return pSessionArray;}
    
    CSesBase* isValidSes(CSesBase *ses){
+      if(!ses)return NULL;
       for(int i=0;i<iMaxSesions;i++)
       {
          if(&pSessionArray[i]==ses)return ses;
@@ -595,6 +636,7 @@ public:
    }
    
    CSesBase *findSessionByID(int id){
+      if(!id)return NULL;
       for(int i=0;i<iMaxSesions;i++)
       {
          if((int)&pSessionArray[i]==id)return &pSessionArray[i];
@@ -608,7 +650,6 @@ public:
    CTZRTP *findSessionZRTP(CSesBase *ses);
    
    void onDataSend(char *buf, int iLen, unsigned int uiPos,int iDataType, int iIsVoice);
-   int getCallType(int iCallID);
 
    STR_128 *getDstAddrBySSRC(unsigned int ssrc);
    STR_128 *getDstAddrByPACK(char *p, int iLen);
@@ -801,11 +842,12 @@ public:
           iActiveCallCnt--;
           spSes->clear(this);
        }
-
-
     }
+   
+   void setStopReason(CSesBase *spSes, int code, const char *msg, DSTR *dstr=NULL, CTEditBase *e=NULL);
+   
 
-   void onKillSes(CSesBase *ses, int iReason, SIP_MSG *sMsg, int meth);
+   void onKillSes(CSesBase *spSes, int iReason, SIP_MSG *sMsg, int meth);
    void handleSessions();
 
    int iSocketsPaused;
@@ -947,7 +989,10 @@ protected:
          spSes->sSendTo.stopRetransmit();
       }
 
-      int ret=-1;
+      int ret=-5;
+      ADDR aa;
+      ADDR *a=&spSes->dstConAddr;
+      
       if(hasNetworkConnect(ipBinded))
       {
          if(p_cfg.iDebug){
@@ -960,8 +1005,7 @@ protected:
       DSTR dstrPort;
    }maddr;
          */
-         ADDR aa;
-         ADDR *a=&spSes->dstConAddr;
+
          if(spSes->cs.iWaitS==200 && 
             spSes->sSIPMsg.hldRecRoute.uiCount 
             && spSes->sSIPMsg.hldRecRoute.x[spSes->sSIPMsg.hldRecRoute.uiCount-1].sipUri.maddr.iFound 
@@ -972,8 +1016,13 @@ protected:
                a=&aa;
 
          }
-         ret=sc.sendTo((char *)&spSes->sSendTo.data.rawData,spSes->sSendTo.data.offset,a);
+         ret=sc.sendTo((char *)&spSes->sSendTo.data.rawData[0],spSes->sSendTo.data.offset,a);
+       //  void tmp_log(const char *p);  tmp_log(spSes->sSendTo.data.rawData);
       }
+    //  char cc[64];sprintf(cc,"send-ret=%d ip=%x",ret,a->ip);
+     // void tmp_log(const char *p);
+     // tmp_log(cc);
+      
       iBytesSent+=spSes->sSendTo.data.offset;
 
       spSes->sSendTo.iIsTCPorTLS=sc.isTCP()|sc.isTLS();

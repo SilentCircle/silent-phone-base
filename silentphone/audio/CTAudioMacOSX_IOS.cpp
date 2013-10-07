@@ -38,11 +38,16 @@ enum {
    kAUVoiceIOProperty_MuteOutput                = 2104,
    kAUVoiceIOProperty_FarEndVersionInfo         = 2105
 };
-*/
  
+ UInt32 audioAGC = 1;//[[NSUserDefaults standardUserDefaults]boolForKey:VOICE_AGC];
+ status = AudioUnitSetProperty(kAudioUnit, kAUVoiceIOProperty_VoiceProcessingEnableAGC,
+                               kAudioUnitScope_Global, kInputBus, &audioAGC, sizeof(audioAGC));
+ 
+*/
+
 #include "../os/CTMutex.h"
 
-static CTMutex mutexDA; 
+static CTMutex mutexDA;
 static CTMutex mutexUA; 
 
 
@@ -724,8 +729,8 @@ rep:
    int r=isAudioDevConnected();
    if(!r)
       setAudioRouteRest(1,-1);
-   else
-      setAudioRouteRest(0,-1);
+  // else
+    //  setAudioRouteRest(0,-1);
 
    return 0;
 }
@@ -763,10 +768,45 @@ void CTMAudio::rel()
    if(aUnit)AudioComponentInstanceDispose (aUnit);
 }
 
+unsigned int getTickCount();
 
+class CTVibrateOnce{
+   int iDuplexPlaying;
+   int iShouldVibrate;
+   unsigned int uiT;
+public:
+   CTVibrateOnce(){uiT=0;iDuplexPlaying=0;iShouldVibrate=0;}
+   
+   void onPlay(){iDuplexPlaying=1;}
+   
+   void onStop(){
+      iDuplexPlaying=0;
+      if(iShouldVibrate){
+         iShouldVibrate=0;
+         int d=getTickCount()-uiT;
+         if(d<5000)
+            vibrate();
+      }
+   }
+   
+   void vibrate(){
+      dispatch_async(dispatch_get_main_queue(), ^(void) {
+         if(iDuplexPlaying){
+            iShouldVibrate=1;
+            uiT=getTickCount();
+         }
+         else{
+            iShouldVibrate=0;
+            AudioServicesPlaySystemSound (kSystemSoundID_Vibrate);
+         }
+      });
+   }
+
+};
+
+static CTVibrateOnce vOnce;
 
 #pragma mark CTMAudioDuplex class
-unsigned int getTickCount();
 
 
 class CTMAudioDuplex{
@@ -925,11 +965,6 @@ public:
             iIsFirstPacket=0;
          }
       }
-      /*
-       
-       for (UInt32 channel = 0; channel < ioData->mNumberBuffers; channel++)
-       memset (ioData->mBuffers[channel].mData, 0, ioData->mBuffers[0].mDataByteSize);
-       */
       return 0;
       
    }
@@ -974,6 +1009,7 @@ public:
 private:
    int start();
    void stop();
+   
    int iIsStoping;
    
    void stop_rel(){
@@ -986,7 +1022,9 @@ private:
       iIsStoping=1;
       
       stop();
-      rel(); 
+      rel();
+      
+      vOnce.onStop();
       
       iIsStoping=0;
    
@@ -1215,6 +1253,8 @@ int CTMAudioDuplex::start(){
 
 
    if(iActive)return 0;
+   
+   vOnce.onPlay();
    
    iActive=2;
    OSStatus err = noErr;
@@ -1823,6 +1863,29 @@ int getAOState(CFStringRef *state){
    return status==kAudioSessionNoError?0:status;
 }
 
+int isPlaybackVolumeMuted(){
+   Float32 volume = 1.0;
+   UInt32 dataSize = sizeof(Float32);
+   
+   AudioSessionGetProperty (
+                            kAudioSessionProperty_CurrentHardwareOutputVolume,
+                            &dataSize,
+                            &volume
+                            );
+   
+   printf("[volume %f]\n",volume);
+   return volume<.1;
+}
+
+int useRetroRingtone(){
+   void *findGlobalCfgKey(const char *key);
+   int *pR=(int*)findGlobalCfgKey("iRetroRingtone");
+   return (pR && *pR==1);
+}
+
+void vibrateOnce(){
+   vOnce.vibrate();
+}
 
 void* playDefaultRingTone(int iIsInBack){
    iRingIsInBackGround=iIsInBack;
@@ -1830,7 +1893,8 @@ void* playDefaultRingTone(int iIsInBack){
    iVibrateRepCount=0;
    if(iStopRingTone==0 || mySSID)return NULL;
 
-   if(1){
+   mySSID=0;
+   if(!iRingIsInBackGround){
 
       CFBundleRef mainBundle = CFBundleGetMainBundle ();
       
@@ -1838,10 +1902,13 @@ void* playDefaultRingTone(int iIsInBack){
       // is "tap.aif"
       
       //afconvert -f caff -d aac  -c 1 telephone-ring.wav ring.caf
+      
 
       CFURLRef myURLRef  = CFBundleCopyResourceURL (
                                                   mainBundle,
-                                                  CFSTR ("ring"),
+                                                    useRetroRingtone()?
+                                                    (CFSTR ("ring_retro")):
+                                                    (CFSTR ("ring")),
                                                   CFSTR ("caf"),
                                                   NULL
                                                   );
@@ -1859,14 +1926,17 @@ void* playDefaultRingTone(int iIsInBack){
 #if 1
       if(iRingIsInBackGround){//or silent
          puts("backRing");
-
+         
+         setAudioRouteRest(1,-1);
+   
          AudioServicesPlaySystemSound (kSystemSoundID_Vibrate);
          
          dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), ^{
             sleep(1);
             AudioServicesAddSystemSoundCompletion(kSystemSoundID_Vibrate,
                                                   NULL,NULL,
-                                                  audioServicesSystemSoundCompletionProc,
+                                                  audioServicesSystemSoundCompletionProcVibrate,
+                                                  //audioServicesSystemSoundCompletionProc,
                                                   NULL);
             AudioServicesPlaySystemSound (kSystemSoundID_Vibrate);
          });

@@ -73,7 +73,7 @@ public:
 
    };
    enum{EStunHdrLen =20};
-   enum{eMaxResendCnt=7};
+   enum{eMaxResendCnt=10};
    enum{eDefaultPort = 3478};
 
    CTStun(int ipBinded,CTSockCB &cb, const ADDR &a=ADDR() )
@@ -333,7 +333,7 @@ protected:
       
       // Sleep(1);
       //#define ST_RESEND_CNT 4
-#define ST_RETRANSMIT_MS 500
+#define ST_RETRANSMIT_MS 300
       iTimeStamp=0;
       if(iNextResend==0)
          iNextResend=ST_RETRANSMIT_MS;
@@ -364,6 +364,7 @@ protected:
                
                else 
                {
+                  printf("[stun_max_resend ss=%d]\n",iSendSeq);
                   setInActive();
                   break;
                }
@@ -378,6 +379,9 @@ protected:
          
          Sleep(20);//TODO
          iTimeStamp+=20;
+      }
+      if(iActive){
+          printf("[stun_iActive ss=%d t=%d]\n",iSendSeq,iTimeStamp<iMaxCheckTime);
       }
       setInActive();
       iActive=0;

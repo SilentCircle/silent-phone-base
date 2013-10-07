@@ -36,9 +36,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 class CTList;
 
-
-
-
+@class Reachability;
 @class CallManeger; 
 @class VideoViewController;
 
@@ -123,7 +121,7 @@ UIAlertViewDelegate,UIActionSheetDelegate,ProvResponce>
    IBOutlet UILabel *lbSecure;
    IBOutlet UILabel *lbSecureSmall;
    IBOutlet UILabel *uiZRTP_peer;
-   IBOutlet UILabel *lbWarning;
+ //  IBOutlet UILabel *lbWarning;
    IBOutlet UIImageView *ivBubble;
    
    int iCanShowMediaInfo;
@@ -131,6 +129,10 @@ UIAlertViewDelegate,UIActionSheetDelegate,ProvResponce>
    
    IBOutlet UIImageView *callScreenFlag;
    IBOutlet UIImageView *nrflag;
+   IBOutlet UIButton *nrflagBt;
+   
+   IBOutlet UIImageView *iwLed;
+   
    IBOutlet UILabel *countryID;
    
    unsigned int uiCanHideCountryCityAt;
@@ -146,13 +148,17 @@ UIAlertViewDelegate,UIActionSheetDelegate,ProvResponce>
    IBOutlet UILabel *lbDstName;
    
    IBOutlet UILabel *lbNRFieldName;
+   IBOutlet UILabel *lbVolumeWarning;
+   
+   UIAlertView *avZRTPWarning;
    
    
    IBOutlet UITableViewCell *userCell;
    
-   id objChatTab; 
+   id objLogTab;
    
    unsigned int uiNumberChangedAt;
+   int iMustSearch;
    
    
    int iPrevCallLouspkrMode;
@@ -167,6 +173,12 @@ UIAlertViewDelegate,UIActionSheetDelegate,ProvResponce>
    int iAudioUnderflow;
    
    int iCanShowSAS_verify;
+   
+   int iLogPlus;
+   
+   Reachability* internetReach;
+   
+   UILocalNotification *incomCallNotif;
    
 }
 
@@ -195,6 +207,7 @@ UIAlertViewDelegate,UIActionSheetDelegate,ProvResponce>
 -(int)setCurCallMT:(CTCall*)c;
 -(NSString*)loadUserData:(CTCall*)c;
 -(int)callTo:(int)ctype dst:(const char*)dst;
+-(int)callToCheckUS:(int)ctype dst:(const char*)dst  eng:(void*)eng;
 -(int)callToS:(int)ctype dst:(const char*)dst eng:(void*)eng;
 -(int)callToR:(CTRecentsItem*)i;
 

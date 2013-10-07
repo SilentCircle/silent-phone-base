@@ -31,17 +31,21 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "CTZrtp.h"
 
 #ifdef _WIN32
-#pragma comment(lib, "../../../libs/wern_zrtp_vs/Release/wern_zrtp.lib")
+#define snprintf _snprintf
+#endif
+
+#ifdef _WIN32
+
+#pragma comment(lib, "../../libs/wern_zrtp_vs/Release/wern_zrtp.lib")
 #endif
 
 #ifdef _C_T_ZRTP_V_H
 
-#ifdef __linux__
+
 void clearZrtpCachesG(void *pZrtpGlobals){}
 char *getEntropyFromZRTP_tmp(unsigned char *p, int iBytes){
    return (char*)p; 
 }
-#endif
 
 #else
 
@@ -49,12 +53,14 @@ char *getEntropyFromZRTP_tmp(unsigned char *p, int iBytes){
 #include <cryptcommon/ZrtpRandom.h>
 
 char * getFileStorePath();
+void log_file_protection_prop(const char *fn);
+void setFileBackgroundReadable(CTEditBase &b);
+void setFileBackgroundReadable(const char *fn);
 
 
 static int ig_InitCNT=0;
 static char bufPathCache[2048];
 static CTEditBase bufFNEntropy(2048);
-
 
 #define ZRTP_CACHE_FN "zids_sqlite.db"
 
@@ -83,11 +89,18 @@ void saveEntropy(){
    
    getEntropyFromZRTP_tmp(pSave,255);
    
-   if(bufFNEntropy.getLen()>1)
+   if(bufFNEntropy.getLen()>1){
       saveFileW(bufFNEntropy.getText(),pSave,256);
+      setFileBackgroundReadable(bufFNEntropy);
+   }
 }
 
+
+
 static void loadEntropy(){
+   static int iEntropyLoaded;
+   if(iEntropyLoaded)return;
+   iEntropyLoaded=1;
    
 #if defined(ANDROID_NDK) || defined(__APPLE__) || defined(_WIN32) || defined(__linux__)
    
@@ -100,7 +113,7 @@ static void loadEntropy(){
 #endif
    
    bufFNEntropy.addText("zrtpent.dat");
-
+   
    
    int iLen;
    char *loadFileW(const  short *fn, int &iLen);
@@ -115,6 +128,8 @@ static void loadEntropy(){
 
 
 //#include <sqlite3.h>
+
+
 
 void *initZrtpG()
 {
@@ -145,8 +160,9 @@ void *initZrtpG()
 
 
    loadEntropy();
-   
    CtZrtpSession::initCache(&bufPathCache[0]);
+   setFileBackgroundReadable(&bufPathCache[0]);
+   
    
    
    return (void*)1;
@@ -193,8 +209,11 @@ void CTZRTP::reset(){
    
    iWarnDetected=0;
    iWasZRTPSecure=0;
+   iAuthFailCnt=0;
    
    clearSdesString();
+   
+   iDisabledSent[0]=iDisabledSent[1]=0;
 
 }
 
@@ -237,20 +256,16 @@ int CTZRTP::setDstHash(char *p, int iLen, int iIsVideo){
    if(iLen>100)return -1;
    
    char bufTMP[128];strncpy(bufTMP,p,iLen);bufTMP[iLen]=0;p=&bufTMP[0];
-//   memset(bufTMP,'a',32);//test warning
+   //memset(bufTMP,'a',32);//test warning
    CtZrtpSession::setSignalingHelloHash((char*)p, TO_N);
-   printf("[ghh=%s]",p);
    //mutextTest.unLock();
    return 0;
 }
-int CTZRTP::getSignalingHelloHash(char *helloHash, int iIsVideo){
+int CTZRTP::getSignalingHelloHash(char *helloHash, int iIsVideo, int index){
    
 
- //  mutextTest.lock();
-   CtZrtpSession::getSignalingHelloHash(helloHash, TO_N);
-   printf("[ghh=%s]",helloHash);
-   //mutextTest.unLock();
-   return 64;
+   return CtZrtpSession::getSignalingHelloHash(helloHash, TO_N, index);
+
 }
 
 void CTZRTP::release_zrtp(){
@@ -299,6 +314,7 @@ int CTZRTP::isSecure(int iIsVideo){
 }
 
 int CTZRTP::getStatus(int iIsVideo){
+   if(!isZrtpEnabled() && !isSdesEnabled())return eSecurityDisabled;
    if(!iIsStarted[iIsVideo])return eNoPeer;
    return this->getCurrentState(TO_N);
 }
@@ -306,27 +322,33 @@ int CTZRTP::getStatus(int iIsVideo){
 
 int CTZRTP::encrypt(char *p, int &iLen, int iIsVideo){
    
-   int ret=0;
    
    if(!p || iLen<1)return -1;
    
    if(!iIsStarted[iIsVideo] && !isSdesActive(TO_N))return 0;
    if(iIsVideo && !isSecure(0))return 0;
    
+   size_t ret=0;
    
-  // mutextTest.lock();
-   
-   bool r=processOutoingRtp((uint8_t *)p, iLen, (size_t *)&ret, TO_N);
- // mutextTest.unLock();
+   bool r=processOutoingRtp((uint8_t *)p, iLen, &ret, TO_N);
+
    iLen=ret;
    return r?0:-1;
 }
 
 int CTZRTP::decrypt(char *p, int &iLen, int iIsVideo){
-   int ret=0;
+
  //  * @return 1: success, 0: not an error but drop packet, -1: SRTP authentication failed,
  //  *            -2: SRTP replay check failed
    if(!p || iLen<1)return eDropPacket;
+   
+   if(!isZrtpEnabled() && !isSdesEnabled()){
+      if(!iDisabledSent[iIsVideo]){
+         iDisabledSent[iIsVideo]=1;
+         zrtpcb->onNewZrtpStatus(this, NULL, iIsVideo);
+      }
+      return 0;
+   }
    
    if(!iIsStarted[iIsVideo] && !isSdesActive(TO_N))return 0;
    if((iIsVideo && !isSecure(0)))return ePacketOk;
@@ -336,31 +358,30 @@ int CTZRTP::decrypt(char *p, int &iLen, int iIsVideo){
       return 0;
    }
    */
-   
-  // if(iIsVideo){printf("[video stat=%d%d %d]",isSecure(0),isSecure(1),getStatus(1));}
- //  mutextTest.lock();
-   int r=processIncomingRtp((uint8_t *)p, iLen, (size_t *)&ret, TO_N);
+   size_t ret=0;
+   int r=processIncomingRtp((uint8_t *)p, iLen, &ret, TO_N);
    iLen=ret;
-   //mutextTest.unLock();
    
    if(r==0)return eIsProtocol;
    if(r>0)return ePacketOk;
    
    printf("[err processIncomingRtp()=%d]\n",r);
+   if(r==-1)return eAuthFailPacket;
+   iAuthFailCnt++;
    return eDropPacket;
 
 }
 
-int CTZRTP::getInfoX(const char *key, char *p, int iMax){
+int CTZRTP::getInfoX(const char *key, char *p, int iMax, int iIsVideo){
   // mutextTest.lock();
    if(iMax<1)return 0;
    
    if(strcmp(key,"nomitm")==0){
-      p[0]='0'+ (getStatus(0)==eSecure);
+      p[0]='0'+ (getStatus(iIsVideo)==eSecure);
       p[1]=0;
       return 1;
    }
-   int r=getInfo(key,(uint8_t*)p,(size_t)iMax);
+   int r=getInfo(key,(uint8_t*)p,(size_t)iMax, TO_N);
   // mutextTest.unLock();
    return r;
 }

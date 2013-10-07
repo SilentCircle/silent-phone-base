@@ -141,8 +141,8 @@ public:
    CTServVideoIn(){iFrameEveryMS=120;uiPosPrev=uiPos=0;cb=NULL;iStarted=0;buf=NULL;w=h=0;setXY(176,144);}
    ~CTServVideoIn(){delete buf;buf=NULL;}
    
-   virtual int start(){iStarted=1;return 0;}
-   virtual void stop(){iStarted=0;}
+   virtual int start(void *pData){iStarted=1;return 0;}
+   virtual void stop(void *pData){iStarted=0;}
    
    void setVideoEveryMS(int i){iFrameEveryMS*=7;iFrameEveryMS>>=3;}
    void setQWview(void *p){}

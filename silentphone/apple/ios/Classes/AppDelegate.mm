@@ -26,7 +26,6 @@ LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND
 ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-*/
 
 #include <string.h>
 #import "AppDelegate.h"
@@ -35,17 +34,18 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 
 #import "VideoViewController.h"
+#import "../../../utils/Reachability.h"
 
 #include "../../../os/CTMutex.h"
 #include "../../../tiviandroid/engcb.h"
 
+#define T_DISABLE_BLINK_WARN 1
 
 #define T_CREATE_CALL_MNGR
 //iSASConfirmClickCount
 #define T_SAS_NOVICE_LIMIT 2
 //#define T_TEST_MAX_JIT_BUF_SIZE
 
-static CTMutex mutexCallManeger;
 
 #define getAccountTitle(pS) sendEngMsg(pS,"title")
 
@@ -58,17 +58,31 @@ void* findCfgItemByServiceKey(void *ph, char *key, int &iSize, char **opt, int *
 NSString *toNSFromTB(CTStrBase *b);
 const char* sendEngMsg(void *pEng, const char *p);
 int getCallInfo(int iCallID, const char *key, char *p, int iMax);
+int getCallInfo(int iCallID, const char *key, int *v);
 void *getAccountByID(int id, int iIsEnabled);
 void* getAccountCfg(void *eng);
 void *getCurrentDOut();
-void *pCurService=NULL;
-void *pCurCfg=NULL;
+int getMediaInfo(int iCallID, const char *key, char *p, int iMax);
+
 int setCurrentDOut(int idx, const char *sz);
 void apple_log_x(const char *p);
 int findIntByServKey(void *pEng, const char *key, int *ret);
 int isVideoCall(int iCallID);
 char *iosLoadFile(const char *fn, int &iLen);
 void initCC(char *p, int iLen);
+int getReqTimeToLive();
+void translateZRTP_errMsg(CTEditBase &warn, CTEditBase *general, CTEditBase *descr);
+int isZRTPInfoVisible();
+int isPlaybackVolumeMuted();
+unsigned int getTickCount();
+int fixNR(const char *in, char *out, int iLenMax);
+void tivi_log1(const char *p, int val);
+
+
+static CTMutex mutexCallManeger;
+void *pCurService=NULL;
+void *pCurCfg=NULL;
+static int iCfgOn=0;
 
 
 const char* sendEngMsg(void *pEng, int iCallID, const char *p){
@@ -77,15 +91,15 @@ const char* sendEngMsg(void *pEng, int iCallID, const char *p){
    return sendEngMsg(pEng,msg);
 }
 
+int isSDESSecure(int iCallId, int iVideo){
+   int v=0;
+   if(getCallInfo(iCallId,iVideo?"media.video.zrtp.sec_state": "media.zrtp.sec_state", &v)==0 && v & 0x100)
+      return 1;
+   return 0;
+}
 
-static int iCfgOn=0;
-static int ig_isInBackground=1;
-unsigned int getTickCount();
 
-AppDelegate *glAppDelegate;
-AppDelegate *getDalagate(){return glAppDelegate;}
 
-int fixNR(const char *in, char *out, int iLenMax);
 
 NSString *checkNrPatterns(NSString *ns){
    
@@ -94,6 +108,23 @@ NSString *checkNrPatterns(NSString *ns){
       return [NSString stringWithUTF8String:&buf[0]];
    }
    return ns;
+}
+
+typedef struct{
+   NSString *ns;
+}T_Log;
+
+static void fnc_log(void *ret, const char *line, int iLen){
+   char buf[256];
+   
+   if(iLen>=sizeof(buf))iLen=sizeof(buf)-1;
+   memcpy(buf,line,iLen);
+   buf[iLen]=0;
+   
+   T_Log *l=(T_Log*)ret;
+   
+   NSString *ns=l->ns;
+   l->ns=[ns stringByAppendingString:[NSString stringWithUTF8String:buf]];
 }
 
 
@@ -152,24 +183,8 @@ NSString *checkNrPatterns(NSString *ns){
  return (state==UIApplicationStateActive); 
  }
  */
--(void)notifyIncomCall:(CTCall *)c{
-   if ([UIApplication sharedApplication].applicationState !=  UIApplicationStateActive) {
-      // Create a new notification
-      UILocalNotification* notif = [[[UILocalNotification alloc] init] autorelease];
-      if (notif) {
-         notif.repeatInterval = 0;
-         notif.alertBody =[NSString stringWithFormat: @"Incoming call from %s",c->bufPeer];
-         notif.alertAction = @"Answer";
-         notif.soundName = @"ring.caf";
-         // Specify custom data for the notification
-         //    NSDictionary *infoDict = [NSDictionary dictionaryWithObject:@"someValue" forKey:@"someKey"];
-         //  notif.userInfo = infoDict;
-         
-         [[UIApplication sharedApplication]  presentLocalNotificationNow:notif];
-      }
-   }
-}
 
+#pragma mark - Init
 
 -(void)makeDPButtons{
    static  int iInitOk=0;
@@ -337,8 +352,32 @@ NSString *checkNrPatterns(NSString *ns){
    
    [[answer superview]addSubview:btHideKeypad];
    
-   
    [btHideKeypad setHidden:YES];
+}
+
+-(void)init_or_reinitDTMF{
+   
+   void setDtmfEnable(int f);
+   
+   setDtmfEnable(UIAccessibilityIsVoiceOverRunning()?0:1);
+   
+   return;
+   
+   NSLog(@"Init dtmf");
+   dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), ^{
+      static int iX=0;
+      if(!iX){
+         iX=1;
+         const char *xr[]={"",":d ",":d"};//onforeground
+         z_main(0,3,xr);
+         iX=0;
+         
+      }
+   });
+}
+
+-(void)awakeFromNib{
+   [self initT];
 }
 
 -(void)initT {
@@ -346,13 +385,16 @@ NSString *checkNrPatterns(NSString *ns){
    static int iInit=1;
    if(!iInit)return;
    iInit=0;
+   
+   
+   
+   void t_init_log();
+   t_init_log();
 
    iOnMute=0;
    iVideoScrIsVisible=0;
    iExiting=0;
    iLoudSpkr=0;
-   
-   [self makeDPButtons];
    
    iAudioUnderflow=0;
    iSettingsIsVisble=0;
@@ -373,12 +415,7 @@ NSString *checkNrPatterns(NSString *ns){
    iIsClearBTDown=0;
    iIsInBackGround=1;
    iSecondsInBackGroud=0;
-   
-   nr.enablesReturnKeyAutomatically = NO;
-   uiCallInfo.lineBreakMode = UILineBreakModeWordWrap;
-   uiCallInfo.numberOfLines = 0;
-   
-   [backToCallBT setHidden:YES];
+   incomCallNotif=NULL;
    
    szLastDialed[0]=0;
    
@@ -388,22 +425,31 @@ NSString *checkNrPatterns(NSString *ns){
    
    setPhoneCB(&fncCBRet,self);
    
-   objChatTab=nil;
+   objLogTab=nil;
 
-   [self hideChatTab];
+   [self hideLogTab];
    
    [self checkProvValues];
-   [cfgBT setHidden:NO];
-
    
+   [cfgBT setHidden:YES];
+
    [uiMainTabBarController setSelectedIndex:3];
    
    nr.delegate=self;
+   nr.enablesReturnKeyAutomatically = NO;
+
+   uiCallInfo.lineBreakMode = UILineBreakModeWordWrap;
+   uiCallInfo.numberOfLines = 0;
    
-   CALayer *l=lbWarning.layer;
+   [backToCallBT setHidden:YES];
+   
+   CALayer *l;
+   
+   [lbVolumeWarning setHidden:YES];
+   l=lbVolumeWarning.layer;
    l.borderColor = [UIColor whiteColor].CGColor;
-   l.cornerRadius = 10.0;
-   l.borderWidth=3;
+   l.cornerRadius = 5;
+   l.borderWidth=2;
    
    
    [[NSNotificationCenter defaultCenter] addObserver:self
@@ -420,12 +466,61 @@ NSString *checkNrPatterns(NSString *ns){
                                             selector:@selector(batteryStateDidChange:)
                                                 name:UIDeviceBatteryStateDidChangeNotification object:nil];
    
+   [[NSNotificationCenter defaultCenter] addObserver: self selector: @selector(reachabilityChanged:)
+                                                name: kReachabilityChangedNotification object: nil];
+   
+	
+   internetReach = [[Reachability reachabilityForInternetConnection] retain];
+	[internetReach startNotifier];
+
+   
    [UIDevice currentDevice].batteryMonitoringEnabled = YES;
    
    iSASConfirmClickCount=(int*)findGlobalCfgKey("iSASConfirmClickCount");;
    backspaceBT.accessibilityTraits=UIAccessibilityTraitKeyboardKey;
    
 }
+
+#pragma mark - Network notifications
+
+- (void) reachabilityChanged: (NSNotification* )note
+{
+	Reachability* curReach = [note object];
+	NSParameterAssert([curReach isKindOfClass: [Reachability class]]);
+   
+   NetworkStatus netStatus = [curReach currentReachabilityStatus];
+   BOOL connectionRequired= [curReach connectionRequired];
+   NSString* statusString= @"";
+   int checkIPNow();
+   
+   switch (netStatus)
+   {
+      case NotReachable:
+      {
+         statusString = @"Access Not Available";
+         //Minor interface detail- connectionRequired may return yes, even when the host is unreachable.  We cover that up here...
+         connectionRequired= NO;
+         break;
+      }
+         
+      case ReachableViaWWAN:
+      {
+         statusString = @"Reachable WWAN";
+         break;
+      }
+      case ReachableViaWiFi:
+      {
+         statusString= @"Reachable WiFi";
+         break;
+      }
+   }
+
+   int net_ok = checkIPNow();
+   NSLog(@"Connection:(%@) net_ok=%d req=%d", statusString, net_ok, connectionRequired);
+
+}
+
+
 
 #pragma mark - Battery notifications
 
@@ -443,69 +538,45 @@ NSString *checkNrPatterns(NSString *ns){
    
    if(iVideoScrIsVisible)return;
    
+   int iKeepScreenOnIfBatOk=0;
+   findIntByServKey(NULL, "iKeepScreenOnIfBatOk", &iKeepScreenOnIfBatOk);
+   
    UIDeviceBatteryState bs = [UIDevice currentDevice].batteryState;
    float bl = [UIDevice currentDevice].batteryLevel;
    
    int on=0;
 
    if(bs==UIDeviceBatteryStateFull || bs==UIDeviceBatteryStateCharging){
-      if(bl>.8)on=1;
-     // if(bl<.3)on=0;
+      if(bl>=.5)on=1;
    }
    
-   
-   [[ UIApplication sharedApplication ] setIdleTimerDisabled: on ? YES : NO];
+   [[ UIApplication sharedApplication ] setIdleTimerDisabled: on && iKeepScreenOnIfBatOk==1? YES : NO];
 }
 
 -(void)showChatTab{
-   if(objChatTab){
+   if(objLogTab){
       NSMutableArray *newControllers = [NSMutableArray arrayWithArray: [uiMainTabBarController viewControllers]];
-      [newControllers addObject:objChatTab];
+      [newControllers addObject:objLogTab];
       [uiMainTabBarController setViewControllers: newControllers animated: NO];
-      [objChatTab release];
-      objChatTab=nil;
+      [objLogTab release];
+      objLogTab=nil;
       [self updateLogTab]; 
    }
    
 }
--(void)hideChatTab{
-#if 1
-   if(objChatTab)return;
+-(void)hideLogTab{
+   if(objLogTab)return;
    
    NSMutableArray *newControllers = [NSMutableArray arrayWithArray: [uiMainTabBarController viewControllers]];
-   objChatTab=[newControllers objectAtIndex:4];
-   [objChatTab retain];
+   objLogTab=[newControllers objectAtIndex:4];
+   [objLogTab retain];
    [newControllers removeObjectAtIndex:4];
    [uiMainTabBarController setViewControllers: newControllers animated: NO];
-#endif
 }
 
--(void)init_or_reinitDTMF{
-   
-   void setDtmfEnable(int f);
-   
-   setDtmfEnable(UIAccessibilityIsVoiceOverRunning()?0:1);
-   
-   
-   NSLog(@"Init dtmf");
-   dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), ^{
-      static int iX=0;
-      if(!iX){
-         iX=1;
-         const char *xr[]={"",":d ",":d"};//onforeground
-         z_main(0,3,xr);
-         iX=0;
-         
-      }
-   });
-}
 
--(void)awakeFromNib{
-   [self init_or_reinitDTMF];
-   [self initT];
 
-   
-}
+#pragma mark - UIApplication notifications
 
 - (void)application:(UIApplication *)app didReceiveLocalNotification:(UILocalNotification *)notif {
    // Handle the notificaton when the app is running
@@ -525,34 +596,10 @@ NSString *checkNrPatterns(NSString *ns){
    if(l>0 && iIs)
       [self setText:[NSString stringWithUTF8String:p+iIs]];
    
-   return YES;
-}
-
-
-- (BOOL)application:(UIApplication *)application didFinishLaunchingWithOptions:(NSDictionary *)launchOptions
-{
-    //--dbg--[UIApplication sharedApplication].applicationIconBadgeNumber=100;
-   [self tryWorkInBackground];
-   
-   UILocalNotification *localNotif = 
-           [launchOptions objectForKey:UIApplicationLaunchOptionsLocalNotificationKey];
-   
-   if (localNotif) {
-      NSLog(@"Recieved Notification %@",localNotif);
-   }
+   [uiMainTabBarController setSelectedIndex:3];
    
    return YES;
 }
-
--(CTCall *)getEmptyCall:(int)iIsMainThread{
-   
-   return calls.getEmptyCall(iIsMainThread);
-}
--(CTCall *)findCallById:(int)iCallId{
-   
-   return calls.findCallById(iCallId);
-}
-
 
 - (void)applicationWillResignActive:(UIApplication *)application
 {
@@ -560,150 +607,11 @@ NSString *checkNrPatterns(NSString *ns){
    // Sent when the application is about to move from active to inactive state. This can occur for certain types of temporary interruptions (such as an incoming phone call or SMS message) or when the user quits the application and it begins the transition to the background state.
    // Use this method to pause ongoing tasks, disable timers, and throttle down OpenGL ES frame rates. Games should use this method to pause the game.
 }
-#define TESTED_OK
 
-
-
-//TEST
-#if defined(TESTED_OK)
-
--(void) atBackgroundStart{
-   iSecondsInBackGroud=0;
-   
-   NSTimeInterval t;
-   for(int i=0;i<60 && iIsInBackGround;i++){
-      iSecondsInBackGroud++;
-      sleep(1);
-      if(i>6){
-         t=[[UIApplication sharedApplication] backgroundTimeRemaining];
-         if(t<20)break;
-      }
-   }
-   if(iIsInBackGround){
-      const char *xr[]={"",":onka"};//onforeground
-      z_main(0,2,xr);
-      
-      NSLog(@"rereg ");
-      for(int i=0;i<120 && iIsInBackGround;i++){
-         iSecondsInBackGroud++;
-         sleep(1);
-         if(i>2){
-            t=[[UIApplication sharedApplication] backgroundTimeRemaining];
-            if(t<10)break;
-         }
-         //TODO if all eng are online goto sleep 
-      }
-      
-   }
-
-   NSLog(@"going to sleep");
-   
-   if(iIsInBackGround && uiBackGrTaskID && uiBackGrTaskID!=UIBackgroundTaskInvalid)[[UIApplication sharedApplication] endBackgroundTask:uiBackGrTaskID];
-   uiBackGrTaskID=NULL;
-   
-   
-}
-
--(void) atBackgroundStartUDP{
-   iSecondsInBackGroud=0;
-   NSLog(@"ka start 1x");
-   NSTimeInterval t;
-   for(int i=0;i<90 && iIsInBackGround;i++){
-      iSecondsInBackGroud++;
-      sleep(1);
-      if(i>6){
-         t=[[UIApplication sharedApplication] backgroundTimeRemaining];
-         if(t<20)break;
-      }
-   }
-   if(iIsInBackGround){
-      const char *xr[]={"",":onka"};//onforeground
-      z_main(0,2,xr);
-      NSLog(@"rereg ");
-
-      for(int i=0;i<200 && iIsInBackGround;i++){
-         iSecondsInBackGroud++;
-         sleep(1);
-         if(i>4){
-            t=[[UIApplication sharedApplication] backgroundTimeRemaining];
-            if(t<10)break;
-         }
-      }
-      
-   }
-   
-   NSLog(@"ka 2 endx");
-   
-}
-
-
--(void) keepalive2{
-   
-   
-   NSTimeInterval t;
-   NSLog(@"KA waking up ");
-   int iUseBackgrStarter=0;///1 works , but audio thread is suspended
-   if(iUseBackgrStarter){
-      uiBackGrTaskID=[[UIApplication sharedApplication]  beginBackgroundTaskWithExpirationHandler:^{
-         //[self backGrWorker];
-         printf("-abc back-");
-         if(uiBackGrTaskID && uiBackGrTaskID!=UIBackgroundTaskInvalid)[[UIApplication sharedApplication] endBackgroundTask:uiBackGrTaskID];
-         printf("+abc back+");
-         uiBackGrTaskID=NULL;
-         
-      }];
-      printf("ka start bid=%d\n",uiBackGrTaskID);
-   }
-   sleep(1);
-   iSecondsInBackGroud+=1;
-   //TODO reset regeg timeout value
-   const char *xr[]={"",":onka"};//onforeground
-   z_main(0,2,xr);
-   NSLog(@" ,rereg ok");
-   
-   //works ok with i<5  
-   
-   for(int i=0;i<7 && iIsInBackGround;i++){
-      iSecondsInBackGroud++;
-      sleep(1);
-      if(i>3){
-         t=[[UIApplication sharedApplication] backgroundTimeRemaining];
-         if(t<2)break;
-      }
-   }
-
-   
-   NSLog(@"KA going to sleep bckgr=%ds rem=%fs\n", iSecondsInBackGroud,t);
-   
-   if(iUseBackgrStarter){
-      if(iIsInBackGround && uiBackGrTaskID && uiBackGrTaskID!=UIBackgroundTaskInvalid)[[UIApplication sharedApplication] endBackgroundTask:uiBackGrTaskID];
-      uiBackGrTaskID=NULL;
-      NSLog(@"ka stop backgr");
-   }
-}
 
 -(void)tryWorkInBackground{
    
    UIApplication *app=[UIApplication sharedApplication];
-   
-
-   int udp=0;
-   if(udp){
-      uiBackGrTaskID=[app beginBackgroundTaskWithExpirationHandler:^{
-         if(uiBackGrTaskID && uiBackGrTaskID!=UIBackgroundTaskInvalid)
-            [app endBackgroundTask:uiBackGrTaskID];
-         uiBackGrTaskID=NULL;
-         
-      }];
-      
-      dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_BACKGROUND, 0), ^{
-         printf("+-.abc back.-+");
-         [self atBackgroundStartUDP];
-         printf("+.abc back.+");
-         
-      });
-      return;//rm
-   }   
 
    iIsInBackGround=1;
    iSecondsInBackGroud=0;
@@ -718,6 +626,7 @@ NSString *checkNrPatterns(NSString *ns){
    [self performSelectorOnMainThread:@selector(keepalive2)    withObject:nil waitUntilDone:YES];
 #else
    uiBackGrTaskID=[[UIApplication sharedApplication]  beginBackgroundTaskWithExpirationHandler:^{
+      
       if(uiBackGrTaskID && uiBackGrTaskID!=UIBackgroundTaskInvalid)
          [[UIApplication sharedApplication] endBackgroundTask:uiBackGrTaskID];
       uiBackGrTaskID=NULL;
@@ -736,63 +645,64 @@ NSString *checkNrPatterns(NSString *ns){
 {
    
    NSLog(@"applicationDidEnterBackground");
-   
-   
-   {const char *xr[]={"",":d"};z_main(0,2,xr);}//stop dtmf player
 
-   [recentsController saveRecents];puts("saved");
+   [recentsController saveRecents];
    
-   
-   if(vvcToRelease && iVideoScrIsVisible) [vvcToRelease onGotoBackground];
-   
-   [self tryWorkInBackground];
+   if(!iExiting){
+      if(vvcToRelease && iVideoScrIsVisible) [vvcToRelease onGotoBackground];
+      {const char *xr[]={"",":d"};z_main(0,2,xr);}//stop dtmf player
+      [self tryWorkInBackground];
+   }
+   calls.relCallsNotInUse();
 }
 
-#endif
+
+
+
+- (BOOL)application:(UIApplication *)application didFinishLaunchingWithOptions:(NSDictionary *)launchOptions
+{
+   //--dbg--[UIApplication sharedApplication].applicationIconBadgeNumber=100;
+   
+   dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), ^{
+      {const char *xr[]={"",":reg"};z_main(0,2,xr);}
+      setPhoneCB(&fncCBRet,self);
+   });
+   
+   NSLog(@"didFinishLaunchingWithOptions %d", application.applicationState);
+   
+   if(UIApplicationStateBackground==application.applicationState)
+      [self tryWorkInBackground];
+   
+   return YES;
+}
+
 - (void)applicationWillEnterForeground:(UIApplication *)application
 {
-   ig_isInBackground=0;
-      
-   NSLog(@"applicationWillEnterForeground"); 
    
-   if(vvcToRelease && iVideoScrIsVisible) [vvcToRelease onGotoForeground];
-   
-   //--  if(!calls.getCallCnt())[self switchAR:1];
-   
-   if(!calls.getCallCnt()){
-      [self stopRingMT];
-   }
+   NSLog(@"applicationWillEnterForeground");
 
-   
-   // Called as part of the transition from the background to the inactive state; here you can undo many of the changes made on entering the background.
-}
--(void)loadCC{
-   static int iCLoaded=0;
-   if(iCLoaded)return ;
-   iCLoaded=1;
-   dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), ^{
-
-   int iLen=0;
-   char *p=iosLoadFile("Country.txt",iLen);
-   if(p){
-      initCC(p,iLen);
-      delete p;
-   }
-   });
-
-
-}
-
-- (void)applicationDidBecomeActive:(UIApplication *)application
-{
    if(iIsInBackGround){
       [[UIApplication sharedApplication] clearKeepAliveTimeout];
       
       if(uiBackGrTaskID && uiBackGrTaskID!=UIBackgroundTaskInvalid)[[UIApplication sharedApplication] endBackgroundTask:uiBackGrTaskID];
       uiBackGrTaskID=UIBackgroundTaskInvalid;
    }
-   ig_isInBackground=0;
    iIsInBackGround=0;
+   
+   if(vvcToRelease && iVideoScrIsVisible) [vvcToRelease onGotoForeground];
+   
+   if(!calls.getCallCnt()){
+      [self stopRingMT];
+   }
+   
+   
+   
+   // Called as part of the transition from the background to the inactive state; here you can undo many of the changes made on entering the background.
+}
+
+- (void)applicationDidBecomeActive:(UIApplication *)application
+{
+   NSLog(@"applicationDidBecomeActive %d", application.applicationState);
    setPhoneCB(&fncCBRet,self);
    iIsInBackGround=0;
    
@@ -800,11 +710,7 @@ NSString *checkNrPatterns(NSString *ns){
    
    [self checkBattery];
    
-   
-   //--
-   [UIApplication sharedApplication].applicationIconBadgeNumber = 0;
-
-   [self updateLogTab];//TODO call it when click on tab bar
+   [self makeDPButtons];
 
    [self loadCC];
    
@@ -813,31 +719,123 @@ NSString *checkNrPatterns(NSString *ns){
       z_main(0,3,xr);
    });
    
+   [self init_or_reinitDTMF];
+   
    int isProvisioned(int iCheckNow);
-   if(!isProvisioned(0)){
+   int provOk=isProvisioned(0);
+   
+   
+   if(!provOk){
       [self showProvScreen];
    }
    else{
       [self setAccountTitle:nil];
    }
-
+   [[UIApplication sharedApplication] cancelAllLocalNotifications];
    
+   [recentsController resetBadgeNumber:false];
 }
 
 - (void)applicationWillTerminate:(UIApplication *)application
 {
-   void t_onEndApp();
+   // Called when the application is about to terminate. Save data if appropriate. See also applicationDidEnterBackground:.
    iExiting=1;
+   
    NSLog(@"Terminating app");
+   
    if(iIsInBackGround){
       iIsInBackGround=0;
       [[UIApplication sharedApplication] clearKeepAliveTimeout];
       if(uiBackGrTaskID && uiBackGrTaskID!=UIBackgroundTaskInvalid)[[UIApplication sharedApplication] endBackgroundTask:uiBackGrTaskID];
    }
+   
+   void t_onEndApp();
    t_onEndApp();
+   
+   [internetReach stopNotifier];
+   [internetReach release];
+   
    NSLog(@"Terminated");
-   //
-   // Called when the application is about to terminate. Save data if appropriate. See also applicationDidEnterBackground:.
+}
+
+#pragma mark - backgroud
+
+-(void) atBackgroundStart{
+   iSecondsInBackGroud=0;
+   usleep(1000);
+   NSTimeInterval t;
+   for(int i=0;i<30 && iIsInBackGround;i++){
+      iSecondsInBackGroud++;
+      sleep(1);
+      if(i>6){
+         t=[[UIApplication sharedApplication] backgroundTimeRemaining];
+         if(t<20)break;
+      }
+   }
+   if(iIsInBackGround){
+      const char *xr[]={"",":onka"};//will rereg here
+      z_main(0,2,xr);
+      
+      NSLog(@"rereg ");
+      for(int i=0;i<120 && iIsInBackGround;i++){
+         iSecondsInBackGroud++;
+         sleep(1);
+         if(i>2){
+            if(i>10 && getReqTimeToLive()<1)break;
+            t=[[UIApplication sharedApplication] backgroundTimeRemaining];
+            if(t<10)break;
+         }
+         //TODO if all eng are online goto sleep
+      }
+   }
+   
+   NSLog(@"going to sleep");
+   
+   if(iIsInBackGround && uiBackGrTaskID && uiBackGrTaskID!=UIBackgroundTaskInvalid)[[UIApplication sharedApplication] endBackgroundTask:uiBackGrTaskID];
+   uiBackGrTaskID=NULL;
+   
+   
+}
+
+
+-(void) keepalive2{
+   
+   
+   NSTimeInterval t=0;
+   NSLog(@"KA waking up ");
+   
+   const char *xr[]={"",":onka"};//will rereg here
+   z_main(0,2,xr);
+   
+   NSLog(@" ,rereg ok");
+   
+   for(int i=0;i<7 && iIsInBackGround;i++){
+      iSecondsInBackGroud++;
+      sleep(1);
+      if(i>4){
+         if(getReqTimeToLive()<1)break;
+         t=[[UIApplication sharedApplication] backgroundTimeRemaining];
+         if(t<2)break;
+      }
+   }
+   
+   NSLog(@"KA going to sleep bckgr=%ds rem=%fs\n", iSecondsInBackGroud,t);
+}
+
+
+-(void)loadCC{
+   static int iCLoaded=0;
+   if(iCLoaded)return ;
+   iCLoaded=1;
+   dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), ^{
+      
+      int iLen=0;
+      char *p=iosLoadFile("Country.txt",iLen);
+      if(p){
+         initCC(p,iLen);
+         delete p;
+      }
+   });
 }
 
 - (void)dealloc
@@ -850,7 +848,6 @@ NSString *checkNrPatterns(NSString *ns){
    [lbSecure release];
    [uiZRTP_peer release];
    [uiDur release];
-   [lbWarning release];
    [fPadView release];
    [second release];
    if(callMngr)[callMngr release];
@@ -862,46 +859,13 @@ NSString *checkNrPatterns(NSString *ns){
 
 -(IBAction)showSettings{
    
-   if(0 && !iCfgOn){
-      char* findSZByServKey(void *pEng, const char *key);
-      
-      void *eng=getCurrentDOut();
-      char* p=findSZByServKey(eng, "nr");
-      char bufMsg[128];
-      if(p && p[0]){
-         sprintf(bufMsg, "My Number: %s",p);
-      }
-      else
-      {
-         p=findSZByServKey(eng, "un");
-         if(p && p[0])
-            sprintf(bufMsg, "My Username: %s",p);
-         else {
-            strcpy(bufMsg, "No Number and Username");
-         }
-      }
-                 
-      
-      
-      NSString *title= [NSString stringWithUTF8String:&bufMsg[0]];  
-      UIAlertView *alert = [[UIAlertView alloc] initWithTitle:title
-                                                      message:@""
-                                                     delegate:nil 
-                                            cancelButtonTitle:nil
-                                            otherButtonTitles:@"Ok",Nil];
-      [alert show];
-      [alert release];
-      return;
-   }
-   
-   
-   void loadSettings(CTList *l);
    static int iLoading=0;
    
    if(iLoading)return;
    iLoading=1;
    
    sList=new CTList();//
+   void loadSettings(CTList *l);
    loadSettings(sList);
    [settings_ctrl setList:sList];
    
@@ -915,20 +879,20 @@ NSString *checkNrPatterns(NSString *ns){
 
 -(IBAction)saveSettings{
    
-   void saveCfgFromList(CTList *l);
-   saveCfgFromList(sList);
+   void saveCfgFromList(CTList *l,AppDelegate *s);
+   saveCfgFromList(sList, self);
    sList=NULL;
    [self settingsDone];
+   
 }
+
 -(IBAction)settingsDone{
    [settings_nav_ctrl dismissModalViewControllerAnimated:YES];
    iSettingsIsVisble=0;
    [self performSelector:@selector(showCallScrMT) withObject:nil afterDelay:1.5];
    CTList *l=sList;
    if(l){l->removeAll();sList=NULL;}
-   //[self IfActiveCallShowMT];
 }
-
 
 -(void) setNewCurCallMT{
    int cc=calls.getCallCnt();
@@ -945,8 +909,10 @@ NSString *checkNrPatterns(NSString *ns){
          [self setCurCallMT:c];
          //self checkMedia:c
          if(vvcToRelease && iVideoScrIsVisible){
-            if(!vvcToRelease.isBeingDismissed)
+            if(!vvcToRelease.isBeingDismissed){
+               iVideoScrIsVisible=0;
                [vvcToRelease.navigationController popViewControllerAnimated:YES];
+            }
             
          }
       }
@@ -968,6 +934,50 @@ NSString *checkNrPatterns(NSString *ns){
       [self showCallManeger];
    }
 }
+#pragma mark - Local notifications
+
+-(void)notifyMissedCall:(CTCall *)c{
+   if ([UIApplication sharedApplication].applicationState !=  UIApplicationStateActive) {
+      // Create a new notification
+      UILocalNotification* notif = [[[UILocalNotification alloc] init] autorelease];
+      if (notif) {
+         [self findName: c];
+         notif.repeatInterval = 0;
+         notif.alertBody =[NSString stringWithFormat: @"Missed call from %@", toNSFromTB(&c->nameFromAB)];
+         notif.alertAction = @"Missed Call";
+         notif.soundName = nil;
+         // Specify custom data for the notification
+         //    NSDictionary *infoDict = [NSDictionary dictionaryWithObject:@"someValue" forKey:@"someKey"];
+         //  notif.userInfo = infoDict;
+         
+         [[UIApplication sharedApplication]  presentLocalNotificationNow:notif];
+      }
+   }
+}
+
+-(void)notifyIncomCall:(CTCall *)c{
+   if ([UIApplication sharedApplication].applicationState !=  UIApplicationStateActive) {
+      // Create a new notification
+      UILocalNotification* notif = [[UILocalNotification alloc] init];
+      if (notif) {
+         notif.repeatInterval = 0;
+         // toNSFromTB(&c->nameFromAB)
+         NSString *p = [self findName:c];
+         
+         notif.alertBody =[NSString stringWithFormat: @"Incoming call from\n%@ %@",toNSFromTB(&c->nameFromAB), p];
+         notif.alertAction = @"Answer";
+         int useRetroRingtone();
+         notif.soundName = useRetroRingtone()?@"ring_retro.caf":@"ring.caf";
+         // Specify custom data for the notification
+         //    NSDictionary *infoDict = [NSDictionary dictionaryWithObject:@"someValue" forKey:@"someKey"];
+         //  notif.userInfo = infoDict;
+         
+         [[UIApplication sharedApplication]  presentLocalNotificationNow:notif];
+         incomCallNotif=notif;
+         
+      }
+   }
+}
 
 
 -(void)incomingCall:(CTCall *)c{
@@ -975,8 +985,14 @@ NSString *checkNrPatterns(NSString *ns){
    
    if(!cc)return;
    
-   if(c){
+   int d=(int)(getTickCount()-uiCanShowModalAt);
+   if(second.isBeingDismissed || (d<0 && d>-5000)){
       
+      [self performSelector:@selector(incomingCall:) withObject:nil afterDelay:1];
+      return;
+   }
+   
+   if(c){
       
       if(cc==1){
          [self setCurCallMT:c];
@@ -984,7 +1000,7 @@ NSString *checkNrPatterns(NSString *ns){
          if(iIsInBackGround)
             [self notifyIncomCall:c];//do it only when app is in background
          
-
+         
          void* playDefaultRingTone(int iIsInBack);
          playDefaultRingTone(iIsInBackGround);
          
@@ -1002,24 +1018,18 @@ NSString *checkNrPatterns(NSString *ns){
       
    }
    
-   if(second.isBeingDismissed || uiCanShowModalAt>getTickCount()){
-
-      [self performSelector:@selector(incomingCall:) withObject:nil afterDelay:1];
-      return;
-   }
-   
    if(cc==1){
-      [self switchAR:iPrevCallLouspkrMode];// 
+      [self switchAR:iPrevCallLouspkrMode];//
       [self muteMic:0];
    }
    
    [self showCallScrMT];
    
 }
+
 -(void)updateRecents:(CTCall *)c{
    if(!c || c->iRecentsUpdated || !c->iCallId)return;
    
-   //TODO test tick count loop
    c->uiRelAt=getTickCount()+5000;
    if(!c->uiRelAt)c->uiRelAt=1;//if getTickCount()+5000 == 0
    
@@ -1036,65 +1046,62 @@ NSString *checkNrPatterns(NSString *ns){
       
    }
    
-   if(c->iIsIncoming && !c->uiStartTime)
-      [recentsController addToRecents:CTRecentsAdd::addMissed(&c->bufPeer[0],0,pServ)]; 
+   if(c->iIsIncoming && !c->uiStartTime){
+      [self notifyMissedCall: c];
+      [recentsController addToRecents:CTRecentsAdd::addMissed(&c->nameFromAB, &c->bufPeer[0],0,pServ)];
+   }
    else if(c->iIsIncoming)
-      [recentsController addToRecents:CTRecentsAdd::addReceived(&c->bufPeer[0],get_time()-(int)c->uiStartTime,pServ)]; 
+      [recentsController addToRecents:CTRecentsAdd::addReceived(&c->nameFromAB,&c->bufPeer[0],get_time()-(int)c->uiStartTime,pServ)];
    else 
-      [recentsController addToRecents:CTRecentsAdd::addDialed(&c->bufPeer[0],c->uiStartTime?(get_time()-(int)c->uiStartTime):0,pServ)]; 
-   
-   // [[Reachability sharedReachability] remoteHostStatus]
+      [recentsController addToRecents:CTRecentsAdd::addDialed(&c->nameFromAB, &c->bufPeer[0],c->uiStartTime?(get_time()-(int)c->uiStartTime):0,pServ)];
    
 }
+
+-(CTCall *)getEmptyCall:(int)iIsMainThread{
+   
+   return calls.getEmptyCall(iIsMainThread);
+}
+-(CTCall *)findCallById:(int)iCallId{
+   
+   return calls.findCallById(iCallId);
+}
+
 
 -(void)clearZRTP_infoMT{
    [btSAS setHidden:YES];
    [btChangePN setHidden:YES];
-   [lbWarning setHidden:YES];
    [uiZRTP_peer setHidden:YES];
    [verifySAS setHidden:YES];
    
    [uiDur setText:@""];
    [uiMediaInfo setText:@""];
-   [lbSecure setText:@"Looking for peer"];
+   [lbSecure setText:@"Connecting"];
    lbSecure.alpha=1.0;
    [lbSecure setHidden:NO];
    
 }
+//
+#if 1
 -(void)updateZRTP_infoMT:(CTCall*)c{
    
    if(vvcToRelease && iVideoScrIsVisible){
       [vvcToRelease showInfoView];
    }
    
-   
-   if(c->zrtpWarning.getLen()>0){
-      [lbWarning setHidden:NO];
-      [lbWarning setText:toNSFromTB(&c->zrtpWarning)];
-   } else  [lbWarning setHidden:YES];
-   
-   const char *pNotSecureSDES="Not SECURE SDES without TLS";
-   
-   int iSecureViaSDES = strcmp(&c->bufSecureMsg[0],"SECURE SDES")==0;// || strcmp(&c->bufSecureMsg[0],pNotSecureSDES)==0;//TODO fix GLOBAL MSG
-   
-   if(iSecureViaSDES){
-      const char *p=sendEngMsg(c->pEng,".isTLS");
-      if(!(p && p[0]=='1')){
-         strcpy(c->bufSecureMsg,pNotSecureSDES);
-         iSecureViaSDES=0;
-      }
-      
-   }
-   
-   //if(iSASConfirmClickCount[0]<T_SAS_NOVICE_LIMIT*2)
-   int iHideSASAndVerify = iCanShowSAS_verify==0 && iSASConfirmClickCount && iSASConfirmClickCount[0]<T_SAS_NOVICE_LIMIT && c->zrtpWarning.getLen()==0 && c->zrtpPEER.getLen()==0;
 
-   int iShowPeer=(!iSecureViaSDES && (c->zrtpPEER.getLen()>0 || (!(c->iShowEnroll|c->iShowVerifySas) && c->bufSAS[0])));
+   
+   int iHideSASAndVerify = iCanShowSAS_verify==0 && iSASConfirmClickCount && iSASConfirmClickCount[0]<T_SAS_NOVICE_LIMIT && c->zrtpWarning.getLen()==0 && c->zrtpPEER.getLen()==0;
+   
+   
+   
+   int iShowPeer=(c->zrtpPEER.getLen()>0 || (!(c->iShowEnroll|c->iShowVerifySas) && c->bufSAS[0]));
    
    int iGreenDispName=(c->nameFromAB==&c->zrtpPEER);//if cache matches display name
+   
    if(iShowPeer && iGreenDispName)iShowPeer=0;
+   
    [lbDstName setTextColor:iGreenDispName?[UIColor greenColor]:[UIColor whiteColor]];
-
+   
    
    if(iShowPeer){
       [uiZRTP_peer setHidden:NO];
@@ -1108,56 +1115,25 @@ NSString *checkNrPatterns(NSString *ns){
    }
    int iSecureInGreen=0;
    
-   // if(!c->bufSecureMsg[0])strcpy(c->bufSecureMsg,"Looking for peer");
+   
+   
    if(c->iActive || (!c->iEnded && c->bufSecureMsg[0])){
       lbSecure.alpha=1.0;
       [lbSecure setHidden:NO];
-      char bufTmp[128]="";
-      char bufTmpS[128]="";
-      strcpy(bufTmp,&c->bufSecureMsg[0]);
-      
-      int iYellowColor=0;
-      int iToServer=iSecureViaSDES;
-
-      
-      if(strncmp(&c->bufSecureMsg[0],"SECURE",6)==0){
-         int  isSilentCircleSecure(int cid, void *pEng);
-         iSecureInGreen=!iSecureViaSDES && isSilentCircleSecure(c->iCallId,c->pEng);
-         int l=strlen(&c->bufSecureMsg[0]);
-         if(l>6 && !iSecureInGreen){
-            strcpy(bufTmpS,&c->bufSecureMsg[6]);
-         }
-         bufTmp[6]=0;
-         if(iSecureInGreen){
-           // strcpy(bufTmpS,"Silent Circle Secure");
-            bufTmpS[0]=0;
-         }
-      }
-      else if(strcmp(&c->bufSecureMsg[0],pNotSecureSDES)==0){
-         int l=strlen("Not SECURE");
-         strcpy(bufTmpS,&c->bufSecureMsg[l]);
-         bufTmp[l]=0;
-         iYellowColor=1;
-         iToServer=0;
-      }
-      [lbSecure setText:[NSString stringWithUTF8String:&bufTmp[0]]];
-      [lbSecureSmall setText:(iToServer?@"to server" : ([NSString stringWithUTF8String:&bufTmpS[0]]))];//crashed in this line
-      [lbSecure setTextColor:iSecureInGreen?[UIColor greenColor]:((iSecureViaSDES || iYellowColor)?[UIColor yellowColor]:[UIColor whiteColor])];
-      
-      
+      iSecureInGreen = c->setSecurityLines(lbSecure, lbSecureSmall);
    }
    else {
-       [lbSecure setText:@""];
-       [lbSecureSmall setText:@""];
+      [lbSecure setText:@""];
+      [lbSecureSmall setText:@""];
    }
-
-   if(c->bufSAS[0] && !iSecureViaSDES && !iHideSASAndVerify){
+   
+   if(c->bufSAS[0] && !iHideSASAndVerify){
       btSAS.alpha=1.0;
       [btSAS setHidden:NO];
       [btSAS setTitle:[NSString stringWithUTF8String:&c->bufSAS[0]] forState:UIControlStateNormal];
    }else [btSAS setHidden:YES];
    
-   if(iSecureViaSDES){
+   if(!c->bufSAS[0]){
       [verifySAS setHidden:YES];
    }
    else if(c->iShowEnroll){
@@ -1170,7 +1146,6 @@ NSString *checkNrPatterns(NSString *ns){
       [verifySAS setTitle:@"Verify" forState:UIControlStateNormal];
       [self showVerifyBT];
       [verifySAS setHidden:NO];
-      // [btSAS setHidden:NO];
    }
    else{
       [verifySAS setHidden:YES];
@@ -1186,10 +1161,13 @@ NSString *checkNrPatterns(NSString *ns){
       
       if(iCanEnableVBt){
          c->iShowVideoSrcWhenAudioIsSecure=2;
-         if(!iVideoScrIsVisible)[self showVideoScr:1];
+         if(!iVideoScrIsVisible)[self showVideoScr:1 call:c];
       }
    }
 }
+
+
+#endif
 
 -(void)checkVideoBTState:(CTCall *)c{
    int iCanEnableVBt=c->iActive && !c->iEnded && !c->iShowVerifySas && c->bufSAS[0] && c->zrtpPEER.getLen()>0;
@@ -1204,9 +1182,6 @@ NSString *checkNrPatterns(NSString *ns){
    
 }
 
-/*
-
- */
 - (void)onNewProximityState{
    BOOL b = UIAccessibilityIsVoiceOverRunning();
    NSLog(@"UIAccessibilityIsVoiceOverRunning()=%d",b);
@@ -1227,12 +1202,7 @@ NSString *checkNrPatterns(NSString *ns){
 
       return 0;
    }
-   //int getCallType();
-   //   int ct=getCallType();
-   //[UIApplication sharedApplication].applicationIconBadgeNumber=1;
-   //[[UIApplication sharedApplication] setIdleTimerDisabled: YES];
-   
-   
+
    int cc=calls.getCallCnt();
    NSLog(@"cc=%d",cc);
    if(!cc)return -1;
@@ -1242,24 +1212,37 @@ NSString *checkNrPatterns(NSString *ns){
    device.proximityMonitoringEnabled = YES;
    if (device.proximityMonitoringEnabled == YES){
       NSLog(@"pr ok");
-   }
-   
-   
-   
+   } 
    
    [self tryShowCallScrMT];
    
-   
    return 1;
 }
+
 -(IBAction)showCallScrPress{
    [self setCurCallMT:calls.curCall]; 
    [self tryShowCallScrMT];
 }
 
+-(void)checkLeds{
+   int *pi=(int*)findGlobalCfgKey("iShowRXLed");
+   int hideLeds=!pi || *pi==0;
+   [iwLed setHidden:hideLeds];
+   
+   {
+      CGPoint p = CGPointMake(
+                              hideLeds ? iwLed.frame.origin.x : (iwLed.frame.origin.x+10),
+                              uiMediaInfo.frame.origin.y
+                              );
+      
+      
+      CGRect r = CGRectMake(p.x, p.y, uiMediaInfo.frame.size.width, uiMediaInfo.frame.size.height);
+      uiMediaInfo.frame = r;
+   }
+}
+
 -(void)tryShowCallScrMT{
    NSLog(@"iCallScreenIsVisible=%d iSettingsIsVisble=%d",iCallScreenIsVisible,iSettingsIsVisble);
-   //if(second.)
    
    if(second.isBeingDismissed){
       [self performSelector:@selector(tryShowCallScrMT) withObject:nil afterDelay:1];
@@ -1277,15 +1260,13 @@ NSString *checkNrPatterns(NSString *ns){
          [self showCallManeger];
       return ;
    }
-   
-   
    iCallScreenIsVisible=1;
+
+   [self checkVolumeWarning];
    
-   if(second.isBeingPresented){
-      if(iShowCallMngr)
-         [self showCallManeger];
-      return;
-   }
+   [self checkLeds];
+
+   //TODO checkSpkrState
    
    iAnimateEndCall=1;
    if(1){
@@ -1307,6 +1288,44 @@ NSString *checkNrPatterns(NSString *ns){
       [self showCallManeger];
 }
 
+-(NSString *)findName:(CTCall *)c{
+   
+   // static CTMutex t;
+   // t.lock();
+   char bufRet[128];
+   char bufRet2[128];
+   
+   char *p2=&c->bufPeer[0];
+   if(!c->iIsIncoming && c->bufDialed[0]){
+      p2=&c->bufDialed[0];
+   }
+   //remove server
+   for(int i=0;i<sizeof(bufRet);i++){
+      if(!p2[i])break;
+      if(p2[i]=='@'){
+         strncpy(bufRet,p2,i);
+         bufRet[i]=0;
+         p2=&bufRet[0];
+         break;
+      }
+   }
+
+
+   int ret=[self findName:p2 len:strlen(p2) pEng:c->pEng  bOut:&c->nameFromAB];
+   
+   if(fixNR(p2,bufRet2,sizeof(bufRet2)-1)>=0)
+      p2=&bufRet2[0];
+   
+   if(ret>=0){
+      
+   }
+   else if(c->iIsIncoming){
+      c->findSipName();
+   }
+   return  [NSString stringWithUTF8String:p2];
+   
+}
+
 -(NSString *)loadUserData:(CTCall*)c{
    
    // static CTMutex t;
@@ -1319,9 +1338,8 @@ NSString *checkNrPatterns(NSString *ns){
       p2=&c->bufDialed[0];
    }
 
-   for(int i=0;i<127;i++){
+   for(int i=0;i<sizeof(bufRet);i++){
       if(!p2[i])break;
-      //  bufRet[i]=p2[i];
       if(p2[i]=='@'){
          strncpy(bufRet,p2,i);
          bufRet[i]=0;
@@ -1330,7 +1348,7 @@ NSString *checkNrPatterns(NSString *ns){
       }
    }
  
-   if(fixNR(p2,bufRet2,127)>=0)
+   if(fixNR(p2,bufRet2,sizeof(bufRet2)-1)>=0)
       p2=&bufRet2[0];
    
    if(c->iUserDataLoaded){
@@ -1342,25 +1360,20 @@ NSString *checkNrPatterns(NSString *ns){
    }
    c->iUserDataLoaded=1;
    
-#if 0
-   CTEditBuf<128> b;
-   b.setText(p2);
-   int ret=[recentsController findContactByEB:&b outb:&c->nameFromAB];
-#else
    int ret=[self findName:p2 len:strlen(p2) pEng:c->pEng  bOut:&c->nameFromAB];
-#endif
-   // sleep(5);
-   
    
    if(ret>=0){
-      
-      NSData *data = [recentsController getImageData:ret];
-      if(data){
-         c->img=[UIImage imageWithData:data];
-         [data release];
-         if(c->img){
-            c->iUserDataLoaded=2;
-            [c->img retain]; c->iImgRetainCnt++;
+      if(!c->img){
+         NSData *data = [recentsController getImageData:ret];
+         if(data){
+            // c->img=[UIImage imageWithData:data];
+            c->img=[[UIImage alloc]initWithData:data];if(c->img)c->iImgRetainCnt++;
+            
+            [data release];
+            if(c->img){
+               c->iUserDataLoaded=2;
+               [c->img retain]; c->iImgRetainCnt++;
+            }
          }
       }
    }
@@ -1400,18 +1413,22 @@ NSString *checkNrPatterns(NSString *ns){
    
    int findCSC_C_S(const char *nr, char *szCountry, char *szCity, char *szID, int iMaxLen);
    char bufC[64],szCity[64],sz2[64];
+   
+
+   
    if(findCSC_C_S(pNr, &bufC[0], &szCity[0], &sz2[0],64)>0){
       strcat(sz2,".png");
       UIImage *im=[UIImage imageNamed: [NSString stringWithUTF8String:&sz2[0]]];
       lbDst.center=CGPointMake(105+28,52);
       [callScreenFlag setImage:im];
+      
    }
    else{
       lbDst.center=CGPointMake(105,52);
       [callScreenFlag setImage:nil];
    }
    
-   
+
 }
 
 -(int)setCurCallMT:(CTCall*)c{
@@ -1468,8 +1485,7 @@ NSString *checkNrPatterns(NSString *ns){
       [self showInfoLabel:0];
    else if(c->iActive)
       [self showZRTPPanel:0];
-   
-   
+
    
    NSString *ci=[NSString stringWithUTF8String:&c->bufMsg[0]];
    [uiCallInfo setText:ci];
@@ -1485,14 +1501,11 @@ NSString *checkNrPatterns(NSString *ns){
    else [uiDur setText:@""];
    
    if(!c->bufServName[0]){
-      strcpy(c->bufServName,getAccountTitle(c->pEng));
+      safeStrCpy(c->bufServName,getAccountTitle(c->pEng), sizeof(c->bufServName)-1);
+     // strcpy(c->bufServName,getAccountTitle(c->pEng));
    }
    [uiServ setText:[NSString stringWithUTF8String:&c->bufServName[0]]];
-   
-   
-   
-   // [zrtpPanel setHidden:YES];
-   // if(!iShowAnswBt)[self restoreEndCallBt];
+
    NSString *p2=[self loadUserData:c];
    
    if(c->img){
@@ -1584,18 +1597,44 @@ NSString *checkNrPatterns(NSString *ns){
       return -1;
    }
    
-   return [self callToS:'c' dst:&buf[0] eng:eng];
+   return [self callToCheckUS:'c' dst:&buf[0] eng:eng];
 }
 
 -(int)callTo:(int)ctype dst:(const char*)dst{
    return [self callToS:ctype dst:dst eng:NULL];
 }
 
+-(int)callToCheckUS:(int)ctype dst:(const char*)dst eng:(void*)eng{
+   
+   int canAddUS_CCode(const char *nr);
+   if(canAddUS_CCode(dst)){
+      char dstnr[64];
+      snprintf(dstnr, sizeof(dstnr)-1, "+1%s",dst );
+      dstnr[63]=0;
+      return [self callToS:ctype dst:dstnr eng:eng];
+   }
+   
+   return [self callToS:ctype dst:dst eng:eng];
+}
+
 -(int)callToS:(int)ctype dst:(const char*)dst eng:(void*)eng{
    
-   if(dst && strncmp(dst,"*##*",4)==0){
+   if(strncmp(dst,"*##*",4)==0){
       int l=strlen(dst);
       if(l>5 && dst[l-1]=='*'){
+         
+         if(strcmp(dst+4,"112233*")==0){
+            void test_close_last_sock();
+            test_close_last_sock();
+            return 0;
+         }
+         /*
+         if(strncmp(dst+4,"112244",6)==0){
+            void test_send_options(const char *name);
+            test_send_options(dst+4+6);
+            return 0;
+         }
+         */
          if(strcmp(dst+4,"668423*")==0){
             if(iSASConfirmClickCount){
                iSASConfirmClickCount[0]=0;
@@ -1604,16 +1643,26 @@ NSString *checkNrPatterns(NSString *ns){
             }
             return 0;
          }
+         if(strcmp(dst+4,"735*")==0){
+            calls.relCallsNotInUse();
+            return 0;
+         }
 
          if(strcmp(dst+4,"56466*")==0){//logon
             [self showChatTab];
             return 0;
          }
-         if(strcmp(dst+4,"88855*")==0){
+         
+         unsigned int calcMD5(const char *p, int iLen, int n);
+         unsigned int code=calcMD5(dst+4,0,20000000);
+         printf("[md5=0x%08x]\n",code);
+         
+         if(code==0x58e7fa40){
             iCfgOn=1;
-           //-- [cfgBT setHidden:NO];
+            [cfgBT setHidden:NO];
             return 0;
          }
+         
          const char *x[2]={"",dst};
          z_main(0,2,x); 
          return 0;
@@ -1641,8 +1690,10 @@ NSString *checkNrPatterns(NSString *ns){
    }
    
    strncpy(szLastDialed,dst,iNRLen);
-   
    szLastDialed[iNRLen]=0;
+   
+   int stripDotsIfNumber(char *p, int iLen);
+   iNRLen = stripDotsIfNumber(szLastDialed, iNRLen);
    
    void *findBestEng(const char *dst, const char *name);
    void *pEng=eng?eng:findBestEng(szLastDialed,NULL);
@@ -1654,7 +1705,7 @@ NSString *checkNrPatterns(NSString *ns){
    char buf[128];
    snprintf(buf,127,":%c %s",ctype,szLastDialed);
    if(pEng){
-      strcpy(c->bufServName,getAccountTitle(pEng));
+      safeStrCpy(c->bufServName,getAccountTitle(pEng), sizeof(c->bufServName)-1);
       printf("[ds=%s, cmd={%s}]",c->bufServName,&buf[0]);
       sendEngMsg(pEng,&buf[0]);
    }
@@ -1747,6 +1798,7 @@ NSString *checkNrPatterns(NSString *ns){
    int findCSC_C_S(const char *nr, char *szCountry, char *szCity, char *szID, int iMaxLen);
    char bufC[64],szCity[64],sz2[64];
    static char prevsz2[5];
+   int iOfsX=0;
    if(findCSC_C_S([nr text].UTF8String, &bufC[0], &szCity[0], &sz2[0],64)>0){
       
       char buf[4]={toupper(sz2[0]),toupper(sz2[1]),0,0};
@@ -1759,7 +1811,7 @@ NSString *checkNrPatterns(NSString *ns){
          UIImage *im=[UIImage imageNamed: [NSString stringWithUTF8String:&sz2[0]]];
          [nrflag setImage:im];
       }
-      
+      iOfsX = nrflag.frame.size.width+5;
       
       CGFloat actualFontSize;
       [nr.text sizeWithFont:nr.font
@@ -1773,13 +1825,23 @@ NSString *checkNrPatterns(NSString *ns){
       actualFontSize/=1.15f; 
       nrflag.frame=CGRectMake(nrflag.frame.origin.x,nrflag.frame.origin.y,nrflag.frame.size.width,actualFontSize);
       nrflag.center=c;
+      
+      [nrflagBt setHidden:NO];
+      
+      
+
    }
    else{
+      [nrflagBt setHidden:YES];
       prevsz2[0]=0;
       [nrflag setImage:nil];
       [countryID setText:@""];
    }
-   void freemem_to_log();freemem_to_log();
+   
+
+   nr.frame = CGRectMake(iOfsX, nr.frame.origin.y, self.window.frame.size.width-iOfsX, nr.frame.size.height);
+
+//   void freemem_to_log();freemem_to_log();
    return 0;   
 }
 
@@ -1796,7 +1858,7 @@ NSString *checkNrPatterns(NSString *ns){
    [nr resignFirstResponder];
 } 
 
-#define CHECK_NAME_DELAYMS 150
+#define CHECK_NAME_DELAYMS 500
 
 -(void)tryFindName:(int*)unused{
    
@@ -1804,8 +1866,8 @@ NSString *checkNrPatterns(NSString *ns){
    static int iIn=0;
    if(iIn)return;
    
-   if(uiNumberChangedAt+CHECK_NAME_DELAYMS>getTickCount())return;
-   
+   if(!iMustSearch || uiNumberChangedAt+CHECK_NAME_DELAYMS>getTickCount() || iIsClearBTDown>0)return;
+   iMustSearch=0;
    iIn=1;
    const char *p=[nr.text UTF8String];
    int l=nr.text.length;
@@ -1821,6 +1883,7 @@ NSString *checkNrPatterns(NSString *ns){
    int l=nr.text.length;
    if(l==0) [nr resignFirstResponder];
    uiNumberChangedAt=getTickCount();
+   iMustSearch=1;
    
    if(!l){
       [lbNRFieldName setText:@""];
@@ -1834,19 +1897,24 @@ NSString *checkNrPatterns(NSString *ns){
    
 }
 -(int)findName:(const char*)p len:(int)len pEng:(void *)pEng bOut:(CTEditBase *)bOut{
-   CTEditBuf<128> b;
    
    if(len>4 &&  strncmp(p,"sip:",4)==0){
       len-=4;p+=4;
    }
+   if(len<1)return -1;
+   
    int l=len;
+   int r;
+   
+   CTEditBuf<128> b;
    b.setText(p,l);
-   int isPhone(const char * sz,int len);
-   if(p[0]!='+'){// && (isalpha(p[0]) || !isPhone(p,l) || l<7)){
+   
+   if(1){
       int iHasAt=0;
-      for(int i=0;i<l;i++)if(p[i]=='@'){iHasAt=1;break;}
+      for(int i=0;i<l;i++){if(p[i]=='@'){iHasAt=1;break;}}
       
       if(!iHasAt){
+
          int iSize=0;
          
          if(!pEng)pEng=getCurrentDOut();
@@ -1860,8 +1928,8 @@ NSString *checkNrPatterns(NSString *ns){
       }
    }
    
-   int ret=[recentsController findContactByEB:&b outb:bOut];
-   return ret;
+   r=[recentsController findContactByEB:&b outb:bOut];
+   return r;
 }
 
 
@@ -1874,15 +1942,6 @@ NSString *checkNrPatterns(NSString *ns){
 
 -(IBAction)clearEditUP{
    iIsClearBTDown=-5;
-   int l=nr.text.length;
-   /*
-   if(l>0)
-   {
-      const char *p=nr.text.UTF8String;
-      char str[5]="del";str[4]=0;str[3]=p[l-1];
-      backspaceBT.accessibilityLabel=[NSString stringWithUTF8String:str];
-   }
-    */
 }
 
 -(void) clearEditRep:(int *)rep{
@@ -1902,8 +1961,8 @@ NSString *checkNrPatterns(NSString *ns){
       NSString *n= [[nr text] substringToIndex:l - rm];
       [self setText:n];
 
-      int v=i<3?0:(i-2);
-      NSTimeInterval ti=1/(v*v+1.5)+.02;
+      int v=i<3?0:(i-1);
+      NSTimeInterval ti=1/(v*v*v+1.2)+.02;
       
       [self performSelector:@selector(clearEditRep:) withObject:nil afterDelay:ti];
       iIsClearBTDown++;
@@ -1921,12 +1980,7 @@ NSString *checkNrPatterns(NSString *ns){
    
    iIsClearBTDown=1;
    
-   int l=nr.text.length;
-
-
-   
    [self clearEditRep:nil]; 
-   // [nr setText:@""];
 }
 
 
@@ -1937,8 +1991,9 @@ NSString *checkNrPatterns(NSString *ns){
    }
    else [recentsController showPeoplePickerController];
 }
+
 -(void)updateLogTab{
-   if(iExiting || objChatTab)return;
+   if(iExiting || objLogTab)return;
    NSString *ns=@"";
    
    for(int i=0;;i++){
@@ -1951,13 +2006,30 @@ NSString *checkNrPatterns(NSString *ns){
       NSString *a=[NSString stringWithUTF8String:p];
       ns=[ns stringByAppendingString:a];
       ns=[ns stringByAppendingString:@"\n"];
- 
    }
+   
+   const char *g_getInfo(const char *cmd);
+   ns=[ns stringByAppendingString:[NSString stringWithUTF8String:g_getInfo(NULL)]];
+   
+   if(iLogPlus>0)
+   {
+      void t_read_log(int iLastNLines, void *ret, void(*fnc)(void *ret, const char *line, int iLen));
+      T_Log l;
+      l.ns=ns;
+      t_read_log(100,&l,fnc_log);
+      ns=l.ns;
+      iLogPlus--;
+   }
+   
    if(ns && ns.length>0){
       [log performSelectorOnMainThread:@selector(setText:) withObject:ns waitUntilDone:FALSE];
    }
 }
 
+-(IBAction)refreshLog:(id)sender{
+   iLogPlus=3;
+   [self updateLogTab];
+}
 
 -(IBAction)pressDP_Bt_up:(id)sender{
    const char *x[]={"",":d"};
@@ -1967,8 +2039,6 @@ NSString *checkNrPatterns(NSString *ns){
 
 -(IBAction)pressDP_Bt:(id)sender{
    
-
-   
    iDialIsPadDown=1;
    UIButton *bt=(UIButton *)sender;
    const char *p=[[[bt titleLabel]text]  UTF8String];
@@ -1976,18 +2046,13 @@ NSString *checkNrPatterns(NSString *ns){
    char buf[4];
    buf[0]=':';buf[1]='d';buf[2]=p[0];buf[3]=0;
    const char *x[]={"",&buf[0]};
-   z_main(0,2,x);
-   /*
-   int l=1;
-   if(l>0)
-   {
-    //  const char *p=nr.text.UTF8String;
-      char str[5]="del";str[4]=0;str[3]=p[l-1];
-      backspaceBT.accessibilityLabel=[NSString stringWithUTF8String:str];
-   }
-    */
-
    
+   
+   if(calls.getCallCnt()>0 && !iLoudSpkr && ![AppDelegate isAudioDevConnected])
+      [self switchAR:1];
+   
+   z_main(0,2,x);
+
    NSString * ns =[[nr text] stringByAppendingString:[[bt titleLabel]text] ];
    if(p[0]=='0'){
       dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), ^{
@@ -2006,9 +2071,6 @@ NSString *checkNrPatterns(NSString *ns){
       });
    }
    [self setText:ns];
-   //[self checkNrPatterns];
-
-   
 }
 
 /*
@@ -2095,6 +2157,7 @@ NSString *checkNrPatterns(NSString *ns){
       [callMngr redraw];
    }
 }
+
 -(IBAction)showCallMngrClick{
    void setFlagShowningCallManeger(int f);
    setFlagShowningCallManeger(0);
@@ -2102,6 +2165,7 @@ NSString *checkNrPatterns(NSString *ns){
    [self showCallManeger];
    
 }
+
 -(IBAction)showCallManeger{
    
    if(iVideoScrIsVisible && vvcToRelease){
@@ -2152,11 +2216,16 @@ NSString *checkNrPatterns(NSString *ns){
    const char *p=[[[bt titleLabel]text]  UTF8String];
    char buf[4];
    char bufx[4];
+   
+   if(!iLoudSpkr && ![AppDelegate isAudioDevConnected])
+      [self switchAR:1];
+   
    buf[0]=':';buf[1]='D';buf[2]=p[0];buf[3]=0;//send dtmf
    bufx[0]=':';bufx[1]='d';bufx[2]=p[0];bufx[3]=0;//play dtmf
    const char *x[]={"",&buf[0],&bufx[0]};
-   z_main(0,3,x);  
+   z_main(0,3,x);
 }
+
 -(IBAction)inCallKeyPad_up:(id)sender{
    // keyPadInCall 
    //stop send dtmf
@@ -2310,7 +2379,13 @@ NSString *checkNrPatterns(NSString *ns){
 
 -(void)stopRingMT{
    void stoRingTone();stoRingTone();
-   [[UIApplication sharedApplication] cancelAllLocalNotifications];
+   //cancelLocalNotification
+   if(incomCallNotif){
+      
+      [[UIApplication sharedApplication] cancelLocalNotification:incomCallNotif];//cancelAllLocalNotifications];
+      [incomCallNotif release];
+      incomCallNotif=NULL;
+   }
 }
 
 -(void)onStopCallMT{
@@ -2336,48 +2411,42 @@ NSString *checkNrPatterns(NSString *ns){
    else [self performSelectorOnMainThread:@selector(onStopCallMT) withObject:nil waitUntilDone:NO];  
 }
 
+
 -(IBAction)hideCallScreen{
    if(iCallScreenIsVisible && iCanHideNow){
       iCanHideNow=0;
       
-      uiCanShowModalAt=getTickCount()+2000;
+      uiCanShowModalAt=getTickCount()+1000;
       
       UIDevice *device = [UIDevice currentDevice];
       device.proximityMonitoringEnabled = NO;;
-
-      CTMutexAutoLock a(mutexCallManeger);      
-
-      
+     
+      CTMutexAutoLock a(mutexCallManeger);
       if(callMngr && [CallManeger isVisibleOrShowningNow]){
 
          [self.navigationController setNavigationBarHidden:YES animated:NO];
          [[callMngr navigationController] popViewControllerAnimated:NO];
       }
       
-      
       if(!second.isBeingDismissed)
          [second dismissModalViewControllerAnimated:YES];
       [self restoreEndCallBt];
-#ifdef T_CREATE_CALL_MNGR
-      void freemem_to_log();freemem_to_log();
-      printf("[cc1[rc]]");
 
-      [callMngr release];
-      callMngr=nil;
+      if(callMngr){
+         [callMngr release];
+         callMngr=nil;
+      }
       
-      freemem_to_log();
-#endif
       iPrevCallLouspkrMode=iLoudSpkr;
       if(calls.getCallCnt()==0){
 
          if(vvcToRelease && iVideoScrIsVisible){
-            [vvcToRelease.navigationController popViewControllerAnimated:NO];
             iVideoScrIsVisible=0;
+            [vvcToRelease.navigationController popViewControllerAnimated:NO];
          }
       }      
       
       iCallScreenIsVisible=0;
-      
    }   
    [backToCallBT setHidden:YES];
 }
@@ -2424,13 +2493,12 @@ NSString *checkNrPatterns(NSString *ns){
       z_main(0,2,x);
    });
 }
+
 -(IBAction)endCallBt{
    
    [self init_or_reinitDTMF];
-   
    iAnimateEndCall=0;
    [self endCallN:calls.curCall];
-   
 }
 
 
@@ -2462,55 +2530,56 @@ NSString *checkNrPatterns(NSString *ns){
    
 }
 
--(void)blinkWarningMsg:(CTCall *)c{
-   CTCall *tmpc=c;
-   
-   if(!tmpc || tmpc->zrtpWarning.getLen()<=0)return;
-   
-   BOOL bShowWarn=tmpc->iShowWarningForNSec>=0;
-   
-   if(tmpc->iShowWarningForNSec>=0){
-
-      [lbWarning setText:toNSFromTB(&tmpc->zrtpWarning)];
-      tmpc->iShowWarningForNSec--;
+-(void)updateLedMT{
+   int g_getCap(int &iIsCN, int &iIsVoice, int &iPrevAuthFail);
+   int iIsCn,iIsVoice,iPrevAuthFail;
+   int v=g_getCap(iIsCn,iIsVoice,iPrevAuthFail);
+   static int pv=-1;
+   static int previPrevAuthFail=-1;
+   float fv=(float)v*0.005f+.35f;
+#if 1
+   if(previPrevAuthFail!=iPrevAuthFail || pv!=v){
+      if(iPrevAuthFail){
+         [iwLed setBackgroundColor:[UIColor colorWithRed:fv green:0 blue:0 alpha:1.0]];
+      }
+      else{
+         [iwLed setBackgroundColor:[UIColor colorWithRed:0 green:fv blue:0 alpha:1.0] ];
+      }
+      pv=v;
+      previPrevAuthFail=iPrevAuthFail;
    }
-   else{
-      tmpc->iShowWarningForNSec=4;
-      
+#else
+   if(iPrevAuthFail){
+      if(previPrevAuthFail!=iPrevAuthFail){
+         previPrevAuthFail=iPrevAuthFail;
+         [iwLed setBackgroundColor:[UIColor colorWithRed:1.0 green:0 blue:0 alpha:1.0] ];
+         pv=-1;
+      }
    }
-   if(lbWarning.hidden==bShowWarn){
-      
-      [UIView animateWithDuration:0.8 
-                            delay:0.2 
-                          options:UIViewAnimationOptionTransitionFlipFromTop 
-                       animations:^ {
-                          lbWarning.alpha=bShowWarn?1:0.0;
-                          btSAS.alpha=lbSecure.alpha=bShowWarn?0:1.0;
-                       }
-                       completion:^(BOOL finished) {
-                          [lbWarning setHidden:!bShowWarn];
-                          [lbSecure setHidden:bShowWarn];
-                          [btSAS setHidden:bShowWarn];
-                          
-                       }];
+   else if(pv!=v){
+      pv=v;
+      [iwLed setBackgroundColor:[UIColor colorWithRed:0 green:fv blue:0 alpha:1.0] ];
+      previPrevAuthFail=-1;
    }
-
+#endif
+   
+   
 }
+
 -(void)updateCallDurMT{
-   
-   
+      
    CTCall *c=calls.curCall;
-   int isZRTPInfoVisible();
+   
    if(c && c->iActive && c->uiStartTime && !isZRTPInfoVisible()){
       
       if(c->iEnded==3){c->iEnded=4;[self onStopCallMT];return;}
       if(c->iEnded==2 && c->iRecentsUpdated) {c->iEnded=3;} 
       if(iVideoScrIsVisible)return;
       
-      int d=c->iTmpDur;//get_time()-curCall->uiStartTime;
+      int d=c->iTmpDur;
       int m=d/60;
       int s=d-m*60;
-      int getMediaInfo(int iCallID, const char *key, char *p, int iMax);
+      
       
       NSString *ns=[NSString stringWithFormat:@"%02d:%02d",m,s];
       [uiDur setText:ns];
@@ -2531,7 +2600,7 @@ NSString *checkNrPatterns(NSString *ns){
 #ifdef T_TEST_MAX_JIT_BUF_SIZE
          if(iAudioBufSizeMS){
             //10 = 1000 msec,25 = 2500 msec, 
-            r+=snprintf(&buf[r],63-r," d%02d",iAudioBufSizeMS/100);//s=iAudioBufSizeMS/1000;(iAudioBufSizeMS-s*1000)/100
+            r+=snprintf(&buf[r],63-r," d%02d",iAudioBufSizeMS/100);
          }
 #endif
          if(r>0)[uiMediaInfo setText:[NSString stringWithUTF8String:&buf[0]]];
@@ -2560,9 +2629,17 @@ NSString *checkNrPatterns(NSString *ns){
             }
          }
       }
-      [self blinkWarningMsg:c];
+      if(!lbVolumeWarning.hidden){
+         if(!isPlaybackVolumeMuted())[lbVolumeWarning setHidden:YES];
+      }
       
-      if(1)
+
+      if(c->iZRTPShowPopup){
+         c->iZRTPShowPopup=0;
+         [self showZRTPErrorPopup:c];
+      }
+
+      if(0)
       {
          void freemem_to_log();
          freemem_to_log();
@@ -2583,13 +2660,60 @@ NSString *checkNrPatterns(NSString *ns){
          [self performSelectorOnMainThread:@selector(updateCallDurMT) withObject:nil waitUntilDone:FALSE];
       }
    }
-   
-   
 }
-#define T_ALERT_TF_NEW 
+
+-(void)callThreadLedCB{
+   if([CallManeger isVisibleOrShowningNow] || isZRTPInfoVisible())return;
+   
+   CTCall *c=calls.curCall;
+   
+   if(c && c->iActive && c->uiStartTime && (!iVideoScrIsVisible || c->iEnded)){
+
+         [self performSelectorOnMainThread:@selector(updateLedMT) withObject:nil waitUntilDone:FALSE];
+      
+   }
+}
+
+#define T_ALERT_TF_NEW
+
+-(void)showExetendedZRTPWarnPopup:(CTCall *)c{
+
+   CTEditBuf<1024> b;
+   CTEditBuf<1024> bDescr;
+   translateZRTP_errMsg(c->zrtpWarning, &b, &bDescr);
+   
+   NSString *ns=toNSFromTB(&b);
+   ns=[ns stringByAppendingString:@"\n\nDescription:\n"];
+   ns=[ns stringByAppendingString:toNSFromTB(&bDescr)];
+   
+   if(c->zrtpWarning.getLen()>8 && c->zrtpWarning.getChar(0)=='s' && c->zrtpWarning.getChar(7)==':'){
+      NSString *toNSFromTBN(CTStrBase *b, int N);
+     // ns=[ns stringByAppendingString:@"\n\nError code: "];
+      ns=[ns stringByAppendingString:@"\n\n"];
+//      ns=[ns stringByAppendingString:toNSFromTBN(&c->zrtpWarning, 7)];
+      ns=[ns stringByAppendingString:toNSFromTB(&c->zrtpWarning)];
+   }
+   
+   UIAlertView *av = [[UIAlertView alloc] initWithTitle:@"Security Warning"
+                                                message:ns
+                                               delegate:nil
+                                      cancelButtonTitle:@"Ok"
+                                      otherButtonTitles:nil];
+   [av show];
+   [av release];
+}
 
 - (void)alertView:(UIAlertView *)alertView clickedButtonAtIndex:(NSInteger)buttonIndex{
    NSLog(@"alertView %d %d",buttonIndex, alertView.tag);
+   
+   if(alertView.tag &&  alertView.tag==(int)alertView){
+      CTCall *c=calls.curCall;
+      if(c && buttonIndex!=alertView.cancelButtonIndex){
+         [self showExetendedZRTPWarnPopup:c];
+      }
+      return;
+   }
+   
 #if defined(T_ALERT_TF_NEW)
    if(alertView.tag!=3 || buttonIndex==alertView.cancelButtonIndex)return;
    UITextField *tf=[alertView textFieldAtIndex:0];
@@ -2628,6 +2752,50 @@ NSString *checkNrPatterns(NSString *ns){
    
 }
 
+
+-(void)showZRTPErrorPopup:(CTCall *)c{
+   if(!c || c->iEnded || !c->iInUse)return;
+   if(c->iZRTPPopupsShowed>1 || [CallManeger isVisibleOrShowningNow])return;
+   
+   int iSDES=0;
+   
+   if(c->zrtpWarning.getLen()>8){
+      
+      CTStr zrtpCode((unsigned short*)c->zrtpWarning.getText(), 8);
+      
+      if (zrtpCode=="s2_c007:" || zrtpCode=="s2_c051:")
+         return;
+      
+      iSDES = isSDESSecure(c->iCallId, 0);
+      
+   }
+   
+   c->iZRTPPopupsShowed++;//should i reset this flag when it is secure
+  
+   CTEditBuf<1024> b;
+   CTEditBuf<1024> bDescr;
+   translateZRTP_errMsg(c->zrtpWarning, &b, &bDescr);
+   
+ //  UIAlertView *av = [[UIAlertView alloc] initWithTitle:@"ZRTP error description"
+   //                                             message:toNSFromTB(&b)
+   
+   avZRTPWarning = [[UIAlertView alloc] initWithTitle: @"Security Warning"
+                                                   message:toNSFromTB(&b)
+                                                  delegate:self
+                                         cancelButtonTitle:@"Ok"
+                                         otherButtonTitles:nil];
+   if(bDescr.getLen()){
+      [avZRTPWarning addButtonWithTitle:@"Details"];
+   }
+   avZRTPWarning.tag=(int)avZRTPWarning;
+   /*
+    [alertView setTitle:@"new title"];
+    [alertView setMessage:@"new message"];
+    */
+   [avZRTPWarning show];
+   [avZRTPWarning release];
+}
+
 -(IBAction)showSasPopupText{
    CTCall *c=calls.curCall;
    if(!c)return;
@@ -2635,7 +2803,7 @@ NSString *checkNrPatterns(NSString *ns){
    NSString *e32=@"You should verbally compare the authentication code with your partner.  If it doesn't match, it indicates the presence of a wiretapper.";
    
       
-   NSString *eW=@"You should verbally compare these authentication words with your partner.  If it doesn't match, it indicates the presence of a wiretapper.";
+ //  NSString *eW=@"You should verbally compare these authentication words with your partner.  If it doesn't match, it indicates the presence of a wiretapper.";
 
    
    UIAlertView *alert = [[UIAlertView alloc] initWithTitle:@"How to detect a wiretapper"
@@ -2751,24 +2919,33 @@ NSString *checkNrPatterns(NSString *ns){
 }
 
 -(IBAction)switchToVideo:(id)sender{
-   [self showVideoScr:1];
+   [self showVideoScr:1 call:calls.curCall];
 }
 
 -(void) checkMedia:(CTCall*)c charp:(const char*)charp intv:(int)intv{
-   if(c!=calls.curCall)return;
+   if(!c)return;
+   
    int iIsAudio=intv==5 && strncmp(charp,"audio",5)==0;
+
+   c->iIsVideo=!iIsAudio;
+   
+   if(c!=calls.curCall && !c->iIsInConferece)return;
    
    if(iIsAudio){
       if(vvcToRelease && iVideoScrIsVisible){
-         dispatch_async(dispatch_get_main_queue(), ^(void) {
-            if(!vvcToRelease.isBeingDismissed)
-               [vvcToRelease.navigationController popViewControllerAnimated:YES];
-         });
+         if(!calls.videoCallsActive(c)){
+            dispatch_async(dispatch_get_main_queue(), ^(void) {
+               if(!vvcToRelease.isBeingDismissed && iVideoScrIsVisible){
+                  iVideoScrIsVisible=0;
+                  [vvcToRelease.navigationController popViewControllerAnimated:YES];
+               }
+            });
+         }
       }
    }
    else if(!iVideoScrIsVisible){
       dispatch_async(dispatch_get_main_queue(), ^(void) {
-         [self showVideoScr:0];
+         [self showVideoScr:0 call:c];
       });      
    }
 }
@@ -2812,17 +2989,18 @@ NSString *checkNrPatterns(NSString *ns){
    }
 }
 
--(void)showVideoScr:(int)iCanSend{
+-(void)showVideoScr:(int)iCanSend call:(CTCall*)c{
    
-   CTCall *c=calls.curCall;
+   //CTCall *c=calls.curCall;
+   if(!c)c=calls.curCall;
    if(!c)return;
    
    if( (!c->bufSAS[0] || c->iShowVerifySas) || iVideoScrIsVisible)return;
+   iVideoScrIsVisible=1;
    
    if(![AppDelegate isAudioDevConnected])
       [self switchAR:1];
    
-   iVideoScrIsVisible=1;
    
    VideoViewController *vvc;
 
@@ -2845,8 +3023,6 @@ NSString *checkNrPatterns(NSString *ns){
    [backToCallBT setHidden:NO];
    
 }
-
--(IBAction)switchCalls:(id)sender{}
 
 -(IBAction)switchMute:(id)sender{
  
@@ -2874,7 +3050,17 @@ NSString *checkNrPatterns(NSString *ns){
    prev=s;
 }
 
+-(void)checkVolumeWarning{
+   
+   [lbVolumeWarning setHidden:isPlaybackVolumeMuted()?NO:YES];
+}
+
 -(void)switchAR:(int)loud{
+   [self _switchAR:loud];
+   if(isPlaybackVolumeMuted())[lbVolumeWarning setHidden:NO];
+}
+
+-(void)_switchAR:(int)loud{
    
    UIButton *b=switchSpktBt;
    int setAudioRoute(int iLoudSpkr);
@@ -2937,8 +3123,8 @@ NSString *checkNrPatterns(NSString *ns){
    }
    
    [self makeCall:(buttonIndex==0?'c':'v')];
-   
 }
+
 - (void)actionSheetCancel:(UIActionSheet *)actionSheet{ }
 
 -(void)setAccountTitle:(void*)eng{
@@ -2963,7 +3149,7 @@ NSString *checkNrPatterns(NSString *ns){
    
    int iAllOn=all_on && strcmp(all_on,"true")==0;
    
-   char bufInfo[1024];
+   char bufInfo[1024]; bufInfo[0]=0;
    
    if(not_ok){
       p=sendEngMsg(eng,"regErr");
@@ -3076,10 +3262,24 @@ NSString *checkNrPatterns(NSString *ns){
    if(!match)return;
    if(!btChangePN.isHidden)return;
    
-   [self askZRTP_cache_name];
+   [self askZRTP_cache_name_f:0];
 }
 
 -(IBAction)askZRTP_cache_name{
+   CTCall *c=calls.curCall;
+   if(!c)return;
+   
+   int iUseNameFromPB=0;
+   
+   if(c->nameFromAB.getLen() && !(c->nameFromAB==&c->zrtpPEER))
+   {
+      iUseNameFromPB = c->sipDispalyNameEquals(c->zrtpPEER);
+   }
+   
+   [self askZRTP_cache_name_f:iUseNameFromPB];
+}
+
+-(void)askZRTP_cache_name_f:(int)iUseNameFromPB{
 
    CTCall *c=calls.curCall;
    
@@ -3117,11 +3317,14 @@ NSString *checkNrPatterns(NSString *ns){
    tf.autocapitalizationType=UITextAutocapitalizationTypeWords;
    if(tf){
       CTEditBase *e=&c->zrtpPEER;
-      if(!e->getLen() && c->nameFromAB.getLen()){
-         char buf[5];
-         int l=::getCallInfo(c->iCallId,"media.zrtp.nomitm",buf,4);
-         if(l>0 && buf[0]=='1')//isNotMitm
+      if(iUseNameFromPB){
+         e=&c->nameFromAB;
+      }
+      else if(!e->getLen() && c->nameFromAB.getLen()){
+         int v;
+         if(::getCallInfo(c->iCallId,"media.zrtp.nomitm",&v)==0 && v==1){
             e=&c->nameFromAB;
+         }
       }
       tf.text=toNSFromTB(e);
       [tf setTextAlignment:UITextAlignmentCenter];
@@ -3163,9 +3366,9 @@ NSString *checkNrPatterns(NSString *ns){
    [UIView animateWithDuration:0.5 animations:^{verifySAS.frame = originalFrame;}];
    
 }
+
 -(void)refreshZRTP:(CTCall *)c{
 
-   
    if(c && c==calls.curCall && c->iInUse && c->pEng && !c->iEnded){
       dispatch_async(dispatch_get_main_queue(), ^(void) {
          [self updateZRTP_infoMT:c];
@@ -3180,11 +3383,8 @@ NSString *checkNrPatterns(NSString *ns){
       });
       
    }
-   else{
-      //updateCallMngrScr
-   }
-   
 }
+
 -(int)selfCheck_comp_calls{
 
    return 0;
@@ -3198,14 +3398,87 @@ NSString *checkNrPatterns(NSString *ns){
 
 @end
 
+class CRESET_SEC_STEATE{
+public:
+   CRESET_SEC_STEATE(void *ret, void *ph, int iCallID, int iIsVideo, CTCall *c)
+   :ret(ret),ph(ph),iCallID(iCallID),iIsVideo(iIsVideo),c(c){
+   }
+   void *ret;
+   void *ph;
+   int iCallID;
+   int iIsVideo;
+   CTCall *c;
+};
+
+void checkSDES(CTCall *c, void *ret, void *ph, int iCallID, int msgid){
+   if(!c || c->iEnded)return ;
+   
+   int iSDESSecure=0;
+   int iErr=0;
+   int iVideo=0;
+  
+   switch(msgid){
+      case CT_cb_msg::eZRTPErrA: iSDESSecure=::isSDESSecure(iCallID, 0);iErr=1;break;
+      case CT_cb_msg::eZRTPErrV: iSDESSecure=::isSDESSecure(iCallID, 1);iErr=1;iVideo=1;break;
+      case CT_cb_msg::eZRTPMsgV: iVideo=1;
+      case CT_cb_msg::eZRTPMsgA:
+         if(strcmp(iVideo? c->bufSecureMsgV :c->bufSecureMsg,"ZRTP Error")==0)
+            iErr=1;
+         
+         if(!iErr)return ;
+         
+         iSDESSecure=::isSDESSecure(iCallID, iVideo);
+         
+         break;
+         
+      default:
+         return;
+   }
+   if(!iSDESSecure)return ;
+   
+   if(c->iReplaceSecMessage[iVideo])return;
+   c->iReplaceSecMessage[iVideo]=1;
+   
+   CRESET_SEC_STEATE *rs = new CRESET_SEC_STEATE(ret,ph,iCallID, iVideo,c);
+   
+   void startThX(int (cbFnc)(void *p),void *data);
+   int resetSecStateTH(void *p);
+   startThX(resetSecStateTH, rs);
+
+   return ;
+}
+
+int resetSecStateTH(void *p){
+   
+   CRESET_SEC_STEATE *rs = (CRESET_SEC_STEATE*)p;
+   for(int i=0;i<5;i++){
+      sleep(1);
+      if(!rs || !rs->c || rs->c->iEnded || rs->c->iCallId!=rs->iCallID)return 0;
+   }
+   
+   int iSDESSecure=::isSDESSecure(rs->iCallID, rs->iIsVideo);
+   if(!iSDESSecure)return 0;
+   
+   fncCBRet(rs->ret, rs->ph, rs->iCallID,
+            rs->iIsVideo? CT_cb_msg::eZRTPMsgV : CT_cb_msg::eZRTPMsgA,
+            "SECURE SDES", 0);
+   return 0;
+}
+
+
+#pragma mark - engine callback
+
 int fncCBRet(void *ret, void *ph, int iCallID, int msgid, const char *psz, int iSZLen){
 
+   
    AppDelegate *s=(AppDelegate*)ret;
    
    if(!s || s->iExiting)return 0;
    
    CTCall *c=[s findCallById:iCallID];
    CTCall *pc=s->calls.curCall;
+   
+   //isSDESSecure
    
    int iLen=0;
    const char *p="";
@@ -3223,7 +3496,6 @@ int fncCBRet(void *ret, void *ph, int iCallID, int msgid, const char *psz, int i
             
             break;
          case CT_cb_msg::eZRTP_peer_not_verifed:
-            NSLog(@"eZRTP_peer_not_verifed");
             if(!c)break;
             c->iShowVerifySas=1;
             if(psz)
@@ -3237,15 +3509,11 @@ int fncCBRet(void *ret, void *ph, int iCallID, int msgid, const char *psz, int i
             if(!c)break;
             if(!psz){
                c->iShowVerifySas=1;
-               
-               //[s performSelectorOnMainThread:@selector(showVerifyBT) withObject:nil waitUntilDone:FALSE]; 
             }
             else{
                c->zrtpPEER.setText(psz);
             }
-            
             [s refreshZRTP:c];
-            NSLog(@"eZRTP_peer %s",psz?psz:"not found");
             break;
          case CT_cb_msg::eZRTPMsgV:
             if(!c)break;
@@ -3260,16 +3528,25 @@ int fncCBRet(void *ret, void *ph, int iCallID, int msgid, const char *psz, int i
          case CT_cb_msg::eZRTPErrV:
             if(!c)break;
             strcpy(c->bufSecureMsgV,"ZRTP Error");
-            if(psz)c->zrtpWarning.setText(psz);
+            c->iIsZRTPError=2;
+            if(psz){
+               c->zrtpWarning.setText(psz);
+               c->iZRTPShowPopup=2;
+            }
             [s refreshZRTP:c];
             break;
          case CT_cb_msg::eZRTPErrA:
             if(!c)break;
             strcpy(c->bufSecureMsg,"ZRTP Error");
+            c->iIsZRTPError=1;
             
          case CT_cb_msg::eZRTPWarn:
             if(!c)break;
-            if(psz)c->zrtpWarning.setText(psz);
+            if(psz){
+               printf("[w=%s]",psz);
+               c->zrtpWarning.setText(psz);
+               c->iZRTPShowPopup=1;
+            }
             [s refreshZRTP:c];
             break;
          case CT_cb_msg::eZRTP_sas:
@@ -3286,11 +3563,8 @@ int fncCBRet(void *ret, void *ph, int iCallID, int msgid, const char *psz, int i
          case CT_cb_msg::eCalling:
             p="Calling...";
             s->iCanShowSAS_verify=0;
-            //if(!c)break;
-            //   NSLog(@"calling cb1 %d",iCallID);
             c=s->calls.curCall;
             if(!c)break;
-            NSLog(@"calling cb %d",iCallID);
             c->pEng=ph;
             c->iCallId=iCallID;
             c->setPeerName(psz, iSZLen);
@@ -3299,9 +3573,11 @@ int fncCBRet(void *ret, void *ph, int iCallID, int msgid, const char *psz, int i
          case CT_cb_msg::eEndCall:
             if(!c || !c->iSipHasErrorMessage)p="Call ended";
             if(!c)break;
-            if(!c->iEnded)c->iEnded=2;
+            if(!c->iEnded){
+               c->iEnded=2;
+               void vibrateOnce();vibrateOnce();
+            }
             [s updateRecents:c];
-            //c->iInUse=0;
             [s onStopCall];
             
             
@@ -3313,13 +3589,10 @@ int fncCBRet(void *ret, void *ph, int iCallID, int msgid, const char *psz, int i
                p=" ";//Call is active";
                c->iActive=2;
                if(!c->uiStartTime)c->uiStartTime=(unsigned int)get_time();
-               //if c==curCall
                if(c==s->calls.curCall){
                   dispatch_async(dispatch_get_main_queue(), ^(void) {
                      [s showZRTPPanel:1];
                      [s checkCallMngrMT];
-                     
-                     //--[s setCurCallMT:c skipZRTP:1];
                   });
                }
                else 
@@ -3341,14 +3614,15 @@ int fncCBRet(void *ret, void *ph, int iCallID, int msgid, const char *psz, int i
             else if(psz && c)p=psz;
             else{
                
-               // const char *xu[]={"",".lastErrMsg"};
-               //p=z_main(1,2,(char **)xu);
                p=sendEngMsg(ph,NULL);
             }
             if(c)c->iSipHasErrorMessage=1;
             //if(curCall->)
          }
       }
+      
+      checkSDES(c, ret,ph,iCallID,msgid);
+      
       if(msgid==CT_cb_msg::eIncomCall){
          s->iCanShowSAS_verify=0;
          c=[s getEmptyCall:0];
@@ -3366,37 +3640,42 @@ int fncCBRet(void *ret, void *ph, int iCallID, int msgid, const char *psz, int i
          c->iShowVideoSrcWhenAudioIsSecure=vc;
          c->setPeerName(psz, iSZLen);
          
-         //-- [s setCurCall:c];//TODO if curCall==NULL {incomingCall}else {showcallmngr}
          dispatch_async(dispatch_get_main_queue(), ^(void) {
             [s incomingCall:c];
             
          });
          
       }
-      if(p && p[0]){
+      
+
+      
+      if(p && p[0] && c){
          NSString *ns=NULL;
-         if(c) {
-            if(iLen<1)iLen=strlen(p);
-            if(iLen+1>=sizeof(c->bufMsg))iLen=sizeof(c->bufMsg)-1;
-            
-            strncpy(c->bufMsg,p,iLen);
-            c->bufMsg[iLen]=0;
-            if(c->bufMsg[0]<' ')c->bufMsg[0]=' ';
-            if(c->bufMsg[1]<' ')c->bufMsg[1]=' ';
-            ns=[[NSString alloc]initWithUTF8String:&c->bufMsg[0]];
-            
-            
-            if((c && pc==c) || s->calls.getCallCnt()==0)
-               [s->uiCallInfo performSelectorOnMainThread:@selector(setText:) withObject:ns waitUntilDone:FALSE]; 
-            [ns release];
-            
-            NSLog(@"msg=:[%.*s]:",iLen,p);
-         }
+         
+         if(iLen<1)iLen=strlen(p);
+         if(iLen>=sizeof(c->bufMsg))iLen=sizeof(c->bufMsg)-1;
+         
+         strncpy(c->bufMsg,p,iLen);
+         c->bufMsg[iLen]=0;
+         if(c->bufMsg[0]<' ')c->bufMsg[0]=' ';
+         if(c->bufMsg[1]<' ')c->bufMsg[1]=' ';
+         ns=[[NSString alloc]initWithUTF8String:&c->bufMsg[0]];
+         
+         
+         if((c && pc==c) || s->calls.getCallCnt()==0)
+            [s->uiCallInfo performSelectorOnMainThread:@selector(setText:) withObject:ns waitUntilDone:FALSE];
+         [ns release];
+         
+         NSLog(@"msg=:[%.*s]:",iLen,p);
          
       }
-      
    }
-   if(!s->iIsInBackGround && c)[s checkCallMngr];
+   if(!s->iIsInBackGround && c)[s checkCallMngr];//TODO else resync cm
+   
+   if(!c && msgid!=CT_cb_msg::eReg && msgid!=CT_cb_msg::eEndCall){
+      //endCall
+   }
+   
    [s engCB];
    
    if(!c && !s->iIsInBackGround){
@@ -3417,6 +3696,7 @@ int isAudioDevConnected(){
    return [AppDelegate isAudioDevConnected];
 }
 
+#pragma mark - config
 
 NSString *toNS(char *p);
 
@@ -3425,8 +3705,15 @@ static const int translateType[]={CTSettingsCell::eUnknown,CTSettingsCell::eOnOf
 static const int translateTypeInt[]={-1,1,0,1,1,0,-1,-1};
 
 void startThX(int (cbFnc)(void *p),void *data);
+typedef struct{
+   CTList *l;
+   AppDelegate *s;
+}_saveCfgFromListTh;
+
 int saveCfgFromListTh(void *p){
-   CTList *l=(CTList*)p;
+   _saveCfgFromListTh *ptr=(_saveCfgFromListTh*)p;
+   CTList *l=ptr->l;
+   AppDelegate *s=ptr->s;
 
    {
       const char *xu[]={"",":beforeCfgUpdate",":waitOffline"};
@@ -3446,14 +3733,20 @@ int saveCfgFromListTh(void *p){
    void t_save_glob();//TODO if title change save
    t_save_glob();
    
+   [s checkBattery];
+   
    const char *xr[]={"",":afterCfgUpdate"};
    z_main(0,2,xr);
+   delete ptr;
 
    return 0;
 }
 
-void saveCfgFromList(CTList *l){
-   startThX(saveCfgFromListTh,l);
+void saveCfgFromList(CTList *l, AppDelegate *s){
+   _saveCfgFromListTh *p=new _saveCfgFromListTh;
+   p->l=l;
+   p->s=s;
+   startThX(saveCfgFromListTh,p);
 }
 
 
@@ -3740,6 +4033,7 @@ CTList *addAcount(CTList *l, const char *name, int iDel){
    addItemByKey(s,"iVideoFrameEveryMs",@"Frame Interval(ms)");
    addItemByKey(s,"iVCallMaxCpu",@"Max CPU usage %");//TODO can change in call
    
+   
   /*
    s=addSection(adv,@"",NULL);
    addItemByKey(s,"szUA",@"SIP user agent");
@@ -3748,10 +4042,15 @@ CTList *addAcount(CTList *l, const char *name, int iDel){
    
    s=addSection(adv,@"",NULL);
    addItemByKey(s,"iDebug",@"Debug");
+   liv=addItemByKey(s,"bCreatedByUser",@"Can reprovision");
+   if(liv)liv->sc.iInverseOnOff=1;
+   
 //   addItemByKey(s,"iIsTiViServFlag",@"Is Tivi server?");
    
    return n;
 }
+
+
 
 int onChangeSHA384(void *pSelf, void *pRetCB){
    
@@ -3967,14 +4266,20 @@ void loadSettings(CTList *l){
    CTList *ui=addSection(pref,NULL,NULL);
    CTList *ui2=addNewLevel(ui,@"User Interface");
    
+   /*
    n=addSectionP(ui2,@"Video",NULL);
    
    it=addItemByKey(n,"iDontSimplifyVideoUI",@"Simplify Usage");
    if(it)it->sc.iInverseOnOff=1;
+   */
   // addItemByKey(n,"iDisplayUnsolicitedVideo",@"Display Unsolicited");
    n=addSection(ui2,@"",NULL);
    addItemByKey(n,"iAudioUnderflow",@"Audio underflow tone");
+   addItemByKey(n,"iShowRXLed",@"Show RX LED");
+   addItemByKey(n,"iKeepScreenOnIfBatOk",@"Desktop phone mode");//keep screen on while charging and battery > 50%
    
+   addItemByKey(n,"iRetroRingtone",@"Retro Ringtone");
+
    
    n=addSection(l,@"Build",NULL);
    NSString* ns = [[NSBundle mainBundle] objectForInfoDictionaryKey:@"CFBundleVersion"];
@@ -3982,6 +4287,7 @@ void loadSettings(CTList *l){
  
 }
 
+#pragma mark - call screen monitoring thread
 
 static int iThreads=0;
 static int iThreadIsStarting=0;
@@ -3993,6 +4299,10 @@ void* callMonitorThread(void* data)
    iThreads++;
    int iThreadID=iThreads;
    AppDelegate *p=(AppDelegate*)data;
+   
+   int iShowRXLed=0;
+   int *pi=(int*)findGlobalCfgKey("iShowRXLed");
+   if(pi)iShowRXLed=*pi;
 
    NSAutoreleasePool* tempPool = [[NSAutoreleasePool alloc] init];
    
@@ -4007,12 +4317,18 @@ void* callMonitorThread(void* data)
       }
    }
    
-   
+   int n=0;
    while(1){
+      if(iShowRXLed || p->iCanShowMediaInfo || p->iAudioUnderflow){
+         [p callThreadLedCB];
+         usleep(20*1000);
+         n++;
+         if(n<40)continue;
+         n=0;
+      }
       int cs=p->calls.getCallCnt();
       if(!cs && cnt>4)break;
       [p callThreadCB:900];
-      usleep(900*1000);
       cnt++;
       if(iThreads>1){
          i2Threads++;
@@ -4023,6 +4339,8 @@ void* callMonitorThread(void* data)
          i2Threads=0;
       }
    }
+   
+   
    if(iThreads==1){
       int i;
       for(i=0;[p callScrVisible] && i<3;i++){

@@ -14,7 +14,7 @@
 #include <string.h>
 
 #ifndef __EXPORT
-  #if defined _WIN32 || defined __CYGWIN__
+  #if (defined _WIN32 || defined __CYGWIN__) && defined(_DLL)
     #define __EXPORT    __declspec(dllimport)
     #define __LOCAL
   #elif __GNUC__ >= 4
@@ -57,6 +57,7 @@ public:
         eSecureMitm,
         eSecureMitmVia,
         eSecureSdes,
+        eSecurityDisabled,
         eWrongStream = -1
     } tiviStatus;
 
@@ -346,9 +347,12 @@ public:
      *
      * @param streamNm specifies which stream for this hello hash.
      *
+     * @param index  Hello hash of the Hello packet identfied by index. Index must 
+     *               be 0 <= index < getNumberSupportedVersions().
+     *
      * @return the number of characters in the @c helloHash buffer.
      */
-    int getSignalingHelloHash(char *helloHash, streamName streamNm);
+    int getSignalingHelloHash(char *helloHash, streamName streamNm, int32_t index);
 
     /**
      * @brief Set the ZRTP Hello hash from signaling.
@@ -576,6 +580,20 @@ public:
     bool setCryptoMixAttribute(const char *algoNames, streamName streamNm);
 
     /**
+     * @brief Reset SDES
+     * 
+     * This method deletes an existing SDES context unconditionally. The application must make
+     * sure that it does not use the SDES context in any way, for example feeding RTP or SRTP packets
+     * to this stream.
+     *
+     * @param streamNm stream identifier.
+     *
+     * @param force if set to true then it resets the context unconditionally, otherwise only if
+     *              SDES is not in active state.
+     */
+    void resetSdesContext(streamName streamNm, bool force =false);
+
+    /**
      * @brief Clean Cache
      *
      * This method does not work for file based cache implementation. An application
@@ -585,6 +603,40 @@ public:
      * The cache must be initialized and open.
      */
     static void cleanCache();
+
+    /**
+     * @brief Get number of supported ZRTP protocol versions.
+     *
+     * @param streamNm stream identifier.
+     *
+     * @return the number of supported ZRTP protocol versions.
+     */
+    int32_t getNumberSupportedVersions(streamName streamNm);
+
+    /**
+     * @brief Get the supported ZRTP encapsulation attribute.
+     * 
+     * Get this attribute value and set it as a SDP parameter to signal support of ZRTP encapsulation.
+     *
+     * @param streamNm stream identifier.
+     *
+     * @return the pointer to the attribute cC-string or @c NULL if encapsulation is not supported.
+     */
+    const char* getZrtpEncapAttribute(streamName streamNm);
+
+    /**
+     * @brief Set the ZRTP encapsulation attribute.
+     * 
+     * If an application receives the ZRTP encapsulation SDP attribute then it should set the
+     * attribute value. The stream uses ZRTP encapsulation only if this SDP parameter is set
+     * @b and SDES is available and active.
+     * 
+     * @param attribute pointer to a C-string that defines the ZRTP encapsulation method.
+     * @param streamNm stream identifier.
+     *
+     * @see getZrtpEncapAttribute
+     */
+    void setZrtpEncapAttribute(const char *attribute, streamName streamNm);
 
 protected:
     friend class CtZrtpStream;

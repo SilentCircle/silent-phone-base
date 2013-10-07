@@ -135,10 +135,10 @@ public:
             return 0;
          }
       }
-
       //add to list
       return -1;
    }
+   
    int remCB(CTAudioGetDataCB *cb, CTAudioOutBase *ab){
       for(int i=0;i<eMaxL;i++){
          if(al[i].iUsed && al[i].cb==cb && al[i].ab==ab){
@@ -150,6 +150,7 @@ public:
       }
       return -1;
    }
+   
    int isAbsoluteSilence(void *p, int sz){
       sz/=sizeof(int);
       sz--;
@@ -165,6 +166,7 @@ public:
       
       return 1;
    }
+   
    int getAudioData(void *p, int iSamples, int iDevRate, int iSampleTypeEnum, int iOneSampleSize, int iIsFirstPack){
       
       int ac=iErrDetected || iCheckAfter?activeCnt():iActiveCnt;
@@ -177,17 +179,19 @@ public:
       
       int iFound=0;
       for(int i=0;i<eMaxL;i++){
+         if(iFound==ac)break;
          if(al[i].iUsed){
-            al[i].cb->getAudioData(p, iSamples,iDevRate,  iSampleTypeEnum,  iOneSampleSize,iIsFirstPack);
-            memcpy(al[i].bufPrevTMP,p,iSamples*iOneSampleSize);
-            //TODO use fifo for conf calls
+            al[i].cb->getAudioData(p, iSamples, iDevRate, iSampleTypeEnum, iOneSampleSize, iIsFirstPack);
+            iFound++;
+            
+            if(!al[i].cb->canUseAudioData())continue;
+            
+            memcpy(al[i].bufPrevTMP, p, iSamples*iOneSampleSize);
             //TODO notify mixer about speech
             
             toMix[iMixStreams]=(short*)&al[i].bufPrevTMP[0];
             iMixStreams++;
             
-            iFound++;
-            if(iFound==ac)break;
          }
       }
       if(iFound!=ac){
@@ -197,6 +201,12 @@ public:
       
       if(iMixStreams>1){
          CTAudioUtils::mix<short,int>(iMixStreams,toMix,iSamples,32700,-32700,(short*)p,1);
+      }
+      else if(iMixStreams){
+         memcpy(p, toMix[0], iSamples*iOneSampleSize);
+      }
+      else{
+         memset(p, 0, iSamples*iOneSampleSize);
       }
       
       return 0;

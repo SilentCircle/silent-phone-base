@@ -96,13 +96,13 @@ void relTcpBGSock(void *ptr){
 
 
 NSString *toNSFromTBN(CTStrBase *b, int N){
-   if(!b->getLen())return @"";
+   if(!b || !b->getLen())return @"";
    NSString *r=[NSString stringWithCharacters:(const unichar*)b->getText() length:min(N,b->getLen())];  
    return r;
 }
 
 NSString *toNSFromTB(CTStrBase *b){
-   if(!b->getLen())return @"";
+   if(!b || !b->getLen())return @"";
 
    NSString *r=[NSString stringWithCharacters:(const unichar*)b->getText() length:b->getLen()];   
    return r;

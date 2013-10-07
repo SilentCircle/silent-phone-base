@@ -155,13 +155,14 @@ void insertDateFriendly(char  *buf, int iTime ,int iInsertToday)
    }else{
       int difD=t2->tm_yday-ts.tm_yday;
       if(difD==1 && iThisYear){
-         strcpy(buf, "Yesterday");
+         sprintf(buf, "Yesterday %02u:%02u",ts.tm_hour,ts.tm_min);
       }
       else if(difD<7 && difD>0 && iThisYear)
          sprintf(buf,"%s",w_name[ts.tm_wday]);
       else
          sprintf(buf, "%s %2d, %d",mon_name[ts.tm_mon],ts.tm_mday,ts.tm_year+1900);
    }
+   
 #endif
    
    
@@ -341,24 +342,26 @@ CTEditBase::CTEditBase(const char *p,int iLen, int iIsUnicode)
       setText("",0);
 }
 
-int CTEditBase::operator == (const char *p){
+int CTStrBase::operator == (const char *p){
    int l = strlen(p);
    if(l!=getLen() )return 0;
    if(l==0)return 1;
+   short *pD=getText();
    l--;
    for(;l>=0;){
-      if(pData[l]!=p[l])return 0;
+      if(pD[l]!=p[l])return 0;
       l--;
    }
    return 1;
 }
 
-int CTEditBase::operator==(CTStrBase *b){
-   
-   if(b->getLen()!=iLen)return 0;
+int CTStrBase::operator==(CTStrBase *b){
+   int l=getLen();
+   if(b->getLen()!=l || !l)return 0;
+   short *pD=getText();
    short *ps=b->getText();
-   if(ps[iLen>>1]!=pData[iLen>>1])return 0;
-   return memcmp(pData,ps,iLen*2)==0;
+   if(ps[l>>1]!=pD[l>>1])return 0;
+   return memcmp(pD,ps,l*2)==0;
 }
 
 void CTEditBase::trim()
@@ -559,6 +562,72 @@ char *CTEditBase::getTextUtf8(char *pOut, int *iMaxLen){
    *iMaxLen=l;
    return pOut;
 }
+
+unsigned short  *
+t_utf8_to_ucs2(const unsigned char *str, int len, int *ucs2_len, unsigned short  *ucs2_str)
+{
+   unsigned int ch;
+   int      cnt = 0;
+   int             i_str, i_ucs2_str;
+   
+   if (len == 0)
+      return NULL;
+   
+   for (i_ucs2_str = 0, i_str = 0; i_str < len; i_str++) {
+      if (cnt > 0) {
+         unsigned int        byte = str[i_str];
+         
+         if ((byte & 0xc0) != 0x80) {
+            i_str--;
+            cnt = 0;
+         } else {
+            ch <<= 6;
+            ch |= byte & 0x3f;
+            if (--cnt == 0) {
+               ucs2_str[i_ucs2_str++] = ch;
+            }
+         }
+      } else {
+         ch = str[i_str];
+         if (ch < 0x80) {
+            /* One byte sequence.  */
+            ucs2_str[i_ucs2_str++] = ch;
+         } else {
+            if (ch >= 0xc2 && ch < 0xe0) {
+               /* We expect two bytes.  The first byte cannot be 0xc0
+                * or 0xc1, otherwise the wide character could have been
+                * represented using a single byte.  */
+               cnt = 2;
+               ch &= 0x1f;
+            } else if ((ch & 0xf0) == 0xe0) {
+               /* We expect three bytes.  */
+               cnt = 3;
+               ch &= 0x0f;
+            } else if ((ch & 0xf8) == 0xf0) {
+               /* We expect four bytes.  */
+               cnt = 4;
+               ch &= 0x07;
+            } else if ((ch & 0xfc) == 0xf8) {
+               /* We expect five bytes.  */
+               cnt = 5;
+               ch &= 0x03;
+            } else if ((ch & 0xfe) == 0xfc) {
+               /* We expect six bytes.  */
+               cnt = 6;
+               ch &= 0x01;
+            } else {
+               cnt = 1;
+            }
+            --cnt;
+         }
+      }
+   }
+   
+   *ucs2_len = i_ucs2_str;
+   return ucs2_str;
+   
+}
+
 void CTEditBase::addText(const char *buf, int iCharCount, int iIsUnicode)
 {
   // int iPrevLen=iLen;
@@ -586,46 +655,13 @@ void CTEditBase::addText(const char *buf, int iCharCount, int iIsUnicode)
       }
       else
       {
-#if 0
-         convert8_16((unsigned char *)buf, (unsigned  short *)pData+iLen, iCharCount);
-#else
-         int i;
-         int iCC=0;
+         
          unsigned  short *d=(unsigned  short *)pData+iLen;
          unsigned char *b=(unsigned char *)buf;
-         int futf8=0;
-         for(i=0;i<iCharCount;i++){
-            int iCur=b[i];
-            if(iCur>=192 ){
-            //   futf8=1;
-
-               futf8=1;
-               if(iCur&32){
-                  futf8++;
-                  if(iCur&16){
-                     futf8++;
-                     if(iCur&8){
-                        futf8++;
-                        if(iCur&4){
-                           futf8++;
-                        }
-                     }
-                  }
-               }
-               d[iCC]='a';//b[i];
-               iCC++;
-               i+=futf8;
-      //         futf8+=(iCur&64);
-               continue;
-            }
-            //if(futf8>0 && iCur>=128 && (iCur&64)==0){futf8--;continue;}
-            //futf8=0;
-            d[iCC]=b[i];
-            iCC++;
-
-         }
-         iCharCount=iCC;
-#endif
+     
+         int dstLen=0;
+         t_utf8_to_ucs2(b, iCharCount, &dstLen, d);
+         iCharCount=dstLen;
       }
       iLen+=iCharCount;
    }

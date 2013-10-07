@@ -38,8 +38,8 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #endif
 
 
-int isFileExistsW(const short *fn);
 void setCfgFN(CTEditBase &b, int iIndex);
+void setFileBackgroundReadable(CTEditBase &b);
 
 
 //TODO int getGlobInts(char *pkeys[], int *values[], int iMax);
@@ -70,9 +70,14 @@ typedef struct{
    int iDisplayUnsolicitedVideo;
    
    int iAudioUnderflow;
+   int iShowRXLed;
+   
+   int iKeepScreenOnIfBatOk;
    
    
-   int iSASConfirmClickCount;
+   int iSASConfirmClickCount;//TODO remove
+   
+   int iRetroRingtone;
    
    char szLastUsedAccount[128];
    
@@ -109,6 +114,7 @@ public:
       int iCfgLen=0;
       char *p=loadFileW(b.getText(),iCfgLen);
       if(!p){iInitOk=0;return;}
+      setFileBackgroundReadable(b);
       
       
       int getCFGItemSz(char *ret, int iMaxSize, char *p, int iCfgLen, const char *key);
@@ -132,6 +138,7 @@ public:
       
       
       
+      
       if(g_Settings.iDisableECDH384==0){
          g_Settings.iEnableSHA384=1;
          g_Settings.iDisableAES256=0;
@@ -143,6 +150,13 @@ public:
       M_FNC_INT_T(g_Settings.iDisplayUnsolicitedVideo,iDisplayUnsolicitedVideo);
       
       M_FNC_INT_T(g_Settings.iAudioUnderflow,iAudioUnderflow);
+      g_Settings.iDontSimplifyVideoUI=1;
+      
+      
+      M_FNC_INT_T(g_Settings.iKeepScreenOnIfBatOk,iKeepScreenOnIfBatOk);
+      M_FNC_INT_T(g_Settings.iShowRXLed,iShowRXLed);
+      M_FNC_INT_T(g_Settings.iRetroRingtone,iRetroRingtone);
+      
       
       
       
@@ -150,7 +164,7 @@ public:
       
       g_Settings.iSASConfirmClickCount=10;
       
-      getCFGItemSz(g_Settings.szLastUsedAccount,sizeof(g_Settings.szLastUsedAccount),p,iCfgLen,"szLastUsedAccount");
+   getCFGItemSz(g_Settings.szLastUsedAccount,sizeof(g_Settings.szLastUsedAccount),p,iCfgLen,"szLastUsedAccount");
       
       
       memcpy(&prevSettings,&g_Settings,sizeof(TG_SETTINS));
@@ -186,10 +200,17 @@ public:
       SAVE_G_CFG_I(g_Settings.iDontSimplifyVideoUI,iDontSimplifyVideoUI);
       SAVE_G_CFG_I(g_Settings.iDisplayUnsolicitedVideo,iDisplayUnsolicitedVideo);
       SAVE_G_CFG_I(g_Settings.iAudioUnderflow,iAudioUnderflow);
+      SAVE_G_CFG_I(g_Settings.iRetroRingtone,iRetroRingtone);
       
       
       
-      SAVE_G_CFG_I(g_Settings.iSASConfirmClickCount,iSASConfirmClickCount);
+      
+      
+      SAVE_G_CFG_I(g_Settings.iSASConfirmClickCount,iSASConfirmClickCount);//TODO remove
+      SAVE_G_CFG_I(g_Settings.iShowRXLed,iShowRXLed);
+      SAVE_G_CFG_I(g_Settings.iKeepScreenOnIfBatOk,iKeepScreenOnIfBatOk);
+      
+      
       
       
       
@@ -197,6 +218,11 @@ public:
       
       
       saveFileW(b.getText(),&dst[0],l);
+      
+      
+      setFileBackgroundReadable(b);
+      
+      
    }
    ~CTG(){
       save();
@@ -255,10 +281,15 @@ return &g_Settings._K;\
    GLOB_I_CHK(iDisplayUnsolicitedVideo);
    
    GLOB_I_CHK(iAudioUnderflow);
+   GLOB_I_CHK(iRetroRingtone);
    
    
-   
+
    GLOB_I_CHK(iSASConfirmClickCount);
+   
+   GLOB_I_CHK(iShowRXLed);
+   GLOB_I_CHK(iKeepScreenOnIfBatOk);
+   
    
    GLOB_SZ_CHK(szLastUsedAccount);
    

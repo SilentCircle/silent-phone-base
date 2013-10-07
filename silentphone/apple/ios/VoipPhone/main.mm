@@ -1,4 +1,4 @@
-//
+ //
 //  main.m
 //  VoipPhone
 //
@@ -12,6 +12,15 @@
 #import "KeychainItemWrapper.h"
 
 
+int isBackgroundReadable(const char *fn);
+void log_file_protection_prop(const char *fn);
+void setFileAttributes(const char *fn, int iProtect);
+char *loadFile(const  char *fn, int &iLen);
+void saveFile(const char *fn,void *p, int iLen);
+void bin2Hex(unsigned char *Bin, char * Hex ,int iBinLen);
+int hex2BinL(unsigned char *Bin, char *Hex, int iLen);
+
+
 
 //http://www.ios-developer.net/iphone-ipad-programmer/development/file-saving-and-loading/using-the-document-directory-to-store-files
 void setFileStorePath(const char *p);
@@ -19,23 +28,34 @@ char *getFileStorePath();
 
 void setFSPath(char *p){
    
-   char *b=getFileStorePath();
+  // char *b=getFileStorePath();
    NSString *path;
 	NSArray *paths = NSSearchPathForDirectoriesInDomains(NSDocumentDirectory, NSUserDomainMask, YES);
 	path = [[paths objectAtIndex:0] stringByAppendingPathComponent:@"tivi"];
    NSError *error;
 	if (![[NSFileManager defaultManager] fileExistsAtPath:path])	//Does directory already exist?
 	{
+      NSString * const pr = NSFileProtectionCompleteUntilFirstUserAuthentication;// NSFileProtectionNone;
+      NSDictionary *d=[NSDictionary dictionaryWithObject:pr
+                                                  forKey:NSFileProtectionKey];
+      
 		if (![[NSFileManager defaultManager] createDirectoryAtPath:path
                                      withIntermediateDirectories:NO
-                                                      attributes:nil
+                                                      attributes:d
                                                            error:&error])
 		{
 			NSLog(@"Create directory error: %@", error);
 		}
 	}
+   else{
+      const char *str=[path UTF8String];
+      
+      if(!isBackgroundReadable(str)){
+         setFileAttributes(str,0);
+      }
+   }
+   
    setFileStorePath([path UTF8String]);
-   strcpy(b,[path UTF8String]);
 
 }
 
@@ -190,24 +210,52 @@ unsigned int get_free_memory() {
 void freemem_to_log(){
    unsigned int uiU=usedMemory();
    unsigned int ui=get_free_memory();
-   NSLog(@"freemem=%d %03d %03d",ui>>20,(ui>>10)&((1<<10)-1),(ui)&((1<<10)-1));
-   ui=uiU;
-   NSLog(@"used-mem =%d %03d %03d",ui>>20,(ui>>10)&((1<<10)-1),(ui)&((1<<10)-1));
+   NSLog(@"freemem=%dK, used-mem=%dK",ui>>10, uiU>>10);
 }
 
-static char bufDevID[64];
-static char bufMD5[64];
+#define T_MAX_DEV_ID_LEN 63
+#define T_MAX_DEV_ID_LEN_BIN (T_MAX_DEV_ID_LEN/2)
+
+static char bufDevID[T_MAX_DEV_ID_LEN+2];
+static char bufMD5[T_MAX_DEV_ID_LEN+32+1];
 
 
 
 void initDevID(){
+   
+   memset(bufDevID,0,sizeof(bufDevID));
+#if 0
+   //depricated  6.0
    NSString *n = [[UIDevice currentDevice]uniqueIdentifier];
    
    const char *pn=n.UTF8String;
+#else
+   int iDevIdLen=0;
+   char fn[1024];
+   snprintf(fn,sizeof(fn)-1, "%s/devid-hex.txt", getFileStorePath());
    
+   char *pn=loadFile(fn, iDevIdLen);
    
-   memset(bufDevID,0,sizeof(bufDevID));
+   if(!pn || iDevIdLen<=0){
+      
+      pn=&bufDevID[0];
+      
+      FILE *f=fopen("/dev/urandom","rb");
+      if(f){
+         unsigned char buf[T_MAX_DEV_ID_LEN_BIN+1];
+         fread(buf,1,T_MAX_DEV_ID_LEN_BIN,f);
+         fclose(f);
+         
+         bin2Hex(buf, bufDevID, T_MAX_DEV_ID_LEN_BIN);
+         bufDevID[T_MAX_DEV_ID_LEN]=0;
+         
+         saveFile(fn, bufDevID, T_MAX_DEV_ID_LEN);
+         setFileAttributes(fn,0);
+      }
+      
+   }
    
+#endif
    void safeStrCpy(char *dst, const char *name, int iMaxSize);
    safeStrCpy(&bufDevID[0],pn,sizeof(bufDevID)-1);
    
@@ -243,25 +291,17 @@ void rememberAppStartupTime(){
    iAppStartTime=get_time();
 }
 
-/*
- [password setText:[keychain objectForKey:(id)kSecValueData]];
- NSLog(@"password: %@", [password text]);
- 
- if ([password text])
- [keychain setObject:[password text] forKey:(id)kSecValueData];
- */
 
-void bin2Hex(unsigned char *Bin, char * Hex ,int iBinLen);
-int hex2BinL(unsigned char *Bin, char *Hex, int iLen);
 
 void loadPWDKey(){
 #define T_AES_KEY_SIZE 32
-   
+   NSLog(@"KC");
    unsigned char buf[T_AES_KEY_SIZE+2];
    char bufHex[T_AES_KEY_SIZE*2+2];
    memset(buf, 0, sizeof(buf));
    
    KeychainItemWrapper *keychain = [[KeychainItemWrapper alloc] initWithIdentifier:@"SC-SP-key" accessGroup:nil];
+   [keychain setObject:(__bridge id)kSecAttrAccessibleAlways forKey:(__bridge id)kSecAttrAccessible];
    NSString *key=[keychain objectForKey:(id)kSecValueData];
    if(!key || key.length<1){
       FILE *f=fopen("/dev/urandom","rb");
@@ -282,7 +322,44 @@ void loadPWDKey(){
    setPWDKey(buf, T_AES_KEY_SIZE);
    
    [keychain release];
+   NSLog(@"KC - ok");
 }
+
+int isBackgroundReadable(const char *fn){
+   NSString *p = [[[NSFileManager defaultManager] attributesOfItemAtPath: [NSString stringWithUTF8String: fn ]
+                                                                   error:NULL] valueForKey:NSFileProtectionKey];
+   return [p isEqualToString:NSFileProtectionNone];
+}
+
+void log_file_protection_prop(const char *fn){
+   /*
+    NSFileProtectionKey
+    NSFileProtectionNone
+    
+    */
+
+   NSString *p = [[[NSFileManager defaultManager] attributesOfItemAtPath: [NSString stringWithUTF8String: fn ]
+                                                                             error:NULL] valueForKey:NSFileProtectionKey];
+   NSLog(@"[fn(%s)=%@",fn,p);
+}
+
+void setFileAttributes(const char *fn, int iProtect){
+   
+   NSString * const pr = iProtect? NSFileProtectionComplete : NSFileProtectionNone;
+   NSDictionary *d=[NSDictionary dictionaryWithObject:pr
+                                               forKey:NSFileProtectionKey];
+   /*
+    attributes:[NSDictionary dictionaryWithObject:NSFileProtectionComplete
+    forKey:NSFileProtectionKey]];
+    */
+   /*
+    - (BOOL)setAttributes:(NSDictionary *)attributes ofItemAtPath:(NSString *)path error:(NSError **)error
+    */
+   
+   
+   [[NSFileManager defaultManager]  setAttributes: d ofItemAtPath:[NSString stringWithUTF8String: fn ]error:NULL  ];
+}
+
 
 int main(int argc, char *argv[])
 {
@@ -291,7 +368,9 @@ int main(int argc, char *argv[])
    
    NSAutoreleasePool * pool = [[NSAutoreleasePool alloc] init];
    
+   
    setFSPath(argv[0]);
+
    
 #if defined(DEBUG)
    NSLog(@"[path=%s] build=debug",argv[0]);
@@ -308,13 +387,14 @@ int main(int argc, char *argv[])
    
    int isProvisioned(int iCheckNow);
    int z_main_init(int argc, const char* argv[]);
-   
    void t_init_glob();
-   t_init_glob();
-   
+  
    if(isProvisioned(1)){
-      const char *x[]={"",":reg"};
-      z_main_init(2,x);
+      
+      t_init_glob();
+ 
+      const char *x[]={""};
+      z_main_init(0,x);
    }
    else{
       
@@ -333,6 +413,7 @@ int main(int argc, char *argv[])
 
 float cpu_usage()
 {
+   //--
    return 0.1;
    //cpu_usage is  leaking memory????
    kern_return_t kr;

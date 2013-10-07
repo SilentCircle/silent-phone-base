@@ -44,10 +44,10 @@ public:
    int closeSocket();
    int _connect(ADDR *address);
    int _send(const char *buf, int iLen);
-   int _recv(char *buf, int iLen);
+   int _recv(char *buf, int iMaxSize);
    inline int Bind(int port, int toAny) {addr.setPort(port); return 0;}
    inline int Bind(ADDR *addrToBind, int toAny){addr=*addrToBind;return 0;}
-   inline int isConected(){return iConnected;}//TODO check ssl sock
+   inline int isConected(){return iConnected && addrConnected.ip;}//TODO check ssl sock
    ADDR &getAddrConnected(){return addrConnected;}
    ADDR addr;
    int (*errMsg)(void *pRet, const char *err);
@@ -58,6 +58,7 @@ public:
    
    int isClosed(){return iClosed;}
    
+   int iCallingConnect;
 private:
    int iEntropyInicialized;
    int iCertFailed;

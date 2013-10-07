@@ -44,6 +44,8 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
    IBOutlet UIBarButtonItem *btSignIn;
    IBOutlet UIBarButtonItem *btSignUp;
    IBOutlet UIProgressView *uiProg;
+   IBOutlet UIImageView *uiBackgr;
+   
    
 @public id <ProvResponce>  _provResponce;
 

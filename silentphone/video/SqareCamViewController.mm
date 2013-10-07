@@ -591,10 +591,9 @@ bail:
    // Return YES for supported orientations
 	return (interfaceOrientation == UIInterfaceOrientationPortrait);
 }
-
-
-
 @end
+
+
 
 unsigned int CTVideoInIOS::onNewVideoData(int *d, unsigned char *yuv, int nw, int nh){
    if(!iStarted)return 0;
@@ -639,7 +638,12 @@ void CTVideoInIOS::sendBuf(unsigned int uiPos){
 
 
 CTVideoInIOS::~CTVideoInIOS(){}
-int CTVideoInIOS::start(){
+int CTVideoInIOS::start(void *pData){
+   
+   //if(pData==NULL)user_presed
+   
+   if(pData)idArray.add(pData);
+   
    if(!ptr)return 0;
    if(iStarted)return 0;
    init(NULL);
@@ -652,8 +656,17 @@ int CTVideoInIOS::start(){
    iStarted=1;
    return 0;
 }
-void CTVideoInIOS::stop(){
+
+void CTVideoInIOS::stop(void *pData){
+   
+   if(pData){
+      idArray.rem(pData);
+      if(!idArray.isEmpty())return;
+   }
    if(!ptr)return;
+   
+   //if(pData==NULL)user_presed
+   
    if(!iStarted || iEnding)return;
    iEnding=1;
    

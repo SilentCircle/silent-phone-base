@@ -33,14 +33,15 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 //#include ""
 
 class CTConference{
-   enum{eMaxCC=10, eMaxChToMix};
+   enum{eMaxCC=20, eMaxChToMix};
    CSesBase *s[eMaxCC];
    short dst[4096];
+   short dstSilence[4096];
    short tmp[eMaxCC*4096];
    int strFlags[eMaxCC];
    int cnt;
 public:
-   CTConference(){cnt=0;for(int i=0;i<eMaxCC;i++){s[i]=NULL;}}
+   CTConference(){cnt=0;for(int i=0;i<eMaxCC;i++){s[i]=NULL;}memset(dstSilence,0,sizeof(dstSilence));}
    int callsInConf(){return cnt;}
    void onAudioData(char *p, int iLen, unsigned int uiPos, int iDataType, int iIsVoice, int iMuteMe){
       
@@ -55,19 +56,27 @@ public:
       if(iMuteMe)memset(p,0,iLen);
       
       for(int i=0;i<eMaxChToMix;i++)mbl[i]=NULL;
+      
+      int iConfIsOnHold=0;
 
       int iStreamsFound=0;
       for(int i=0;i<eMaxCC;i++){
          CSesBase *cur=s[i];
          //TODO if !cur actvie rem from conf
-         if(!cur || !cur->iIsInConference || !cur->isSession() || !cur->isSesActive()  || cur->cs.iCallStat!=CALL_STAT::EOk)continue;
+         if(!cur || !cur->cs.iIsInConference || !cur->isSession() || !cur->isSesActive()  || cur->cs.iCallStat!=CALL_STAT::EOk)continue;
          
          
          CTSesMediaBase *mb=cur->mBase;
          mbl[iStreamsFound]=mb;
          if(mbl[iStreamsFound]){
+            
             cAO=mbl[iStreamsFound]->cAO;
             if(cAO){
+               
+               if(!iConfIsOnHold){
+                  iConfIsOnHold=cur->cs.iIsOnHold;
+               }
+               
                int iRate=cAO->getRate();
                int iRate4=iRate*4;
                int iRated2=iRate>>1;
@@ -95,9 +104,14 @@ public:
             }
          }
       }
+      
+      if(iConfIsOnHold){
+         iMuteMe=1;
+      }
+      
       int iSent=0;
       for(int i=0;i<iStreamsFound;i++){
-         short *mix[11];
+         short *mix[eMaxCC+1];
          int n=0;
          
          for(int z=0;z<iStreamsFound;z++){
@@ -106,7 +120,14 @@ public:
             }
          }
          
-         if(!iMuteMe || !n){mix[n]=(short*)p;n++;}
+       //  if(!iMuteMe || !n){mix[n]=(short*)&dstSilence[0];n++;}
+         if(!iMuteMe || !n){
+            if(iMuteMe)
+               mix[n]=(short*)&dstSilence[0];
+            else
+               mix[n]=(short*)&p[0];
+            n++;
+         }
          
          if(!mbl[i])continue;
          iSent++;
@@ -117,10 +138,11 @@ public:
       }
     //  printf("[cnt=%d,sf=%d,s=%d]",cnt,iStreamsFound,iSent);
    }
+   
    int addCalls(int iAll, CSesBase *root, int iMax){
       int c=0;
       for(int i=0;i<iMax;i++){
-         if(root[i].cs.iBusy && root[i].isSession() && (root[i].iIsInConference || iAll)){
+         if(root[i].cs.iBusy && root[i].isSession() && (root[i].cs.iIsInConference || iAll)){
             if(addCall(&root[i])<0)break; 
             c++;
          }
@@ -129,20 +151,20 @@ public:
    }
    int addCall(CSesBase *c){
       for(int i=0;i<eMaxCC;i++){
-         if(s[i]==c){   c->iIsInConference=1; strFlags[i]=0;return 0;  }
+         if(s[i]==c){   c->cs.iIsInConference=1; strFlags[i]=0;return 0;  }
       }
       for(int i=0;i<eMaxCC;i++){
-         if( !s[i] || !s[i]->iIsInConference){
+         if( !s[i] || !s[i]->cs.iIsInConference){
             
-              c->iIsInConference=1; cnt++; s[i]=c; strFlags[i]=0; return 0;
+              c->cs.iIsInConference=1; cnt++; s[i]=c; strFlags[i]=0; return 0;
          }
       }
-      c->iIsInConference=0;
+      c->cs.iIsInConference=0;
       return -1;
    }
    void remCall(CSesBase *c){
       for(int i=0;i<eMaxCC;i++){
-         if(c && s[i]==c){c->iIsInConference=0; cnt--;s[i]=NULL;  break;}
+         if(c && s[i]==c){c->cs.iIsInConference=0; cnt--;s[i]=NULL;  break;}
       }
       if(c<0)puts("[err conf---------------]");
       

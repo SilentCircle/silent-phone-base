@@ -151,10 +151,10 @@ int addToFavorites(CTRecentsItem *i, void *fav, int iFind){
    if(n){
    
       if(f){
-         n->name.setText([f UTF8String],[f length]);
+         n->name.setText([f UTF8String]);
          if(l)n->name.addChar(' ');
       }
-      if(l)n->name.addText([l UTF8String],[l length]);
+      if(l)n->name.addText([l UTF8String]);
       
       n->peerAddr.setText([phone UTF8String]);
       fl->getList()->addToTail(n);

@@ -41,15 +41,16 @@ class CTEditBase;
 
 class CTRecentsAdd{
 protected:
-   CTRecentsAdd(){iThisDur=iThisDir=0;pThisPeer=NULL;pThisServ=NULL;}
-   void add(int iDir, char *p, int iDur, const char *serv);
+   CTRecentsAdd(){iThisDur=iThisDir=0;pThisPeer=NULL;pThisServ=NULL;pThisNameFromABorSIP=NULL;}
+   void add(int iDir,CTEditBase *nameFromABorSIP, char *p, int iDur, const char *serv);
 public:
-   static CTRecentsAdd* addMissed(char *p, int iDur, const char *serv);
-   static CTRecentsAdd* addDialed(char *p, int iDur, const char *serv);
-   static CTRecentsAdd* addReceived(char *p, int iDur, const char *serv);
+   static CTRecentsAdd* addMissed(CTEditBase *nameFromABorSIP, char *p, int iDur, const char *serv);
+   static CTRecentsAdd* addDialed(CTEditBase *nameFromABorSIP, char *p, int iDur, const char *serv);
+   static CTRecentsAdd* addReceived(CTEditBase *nameFromABorSIP, char *p, int iDur, const char *serv);
    int iThisDir,iThisDur;
    char *pThisPeer;
    const char *pThisServ;
+   CTEditBase *pThisNameFromABorSIP;
    
    
 };
@@ -81,8 +82,8 @@ UITextFieldDelegate,
    
    CTRecentsAdd *tmpRA;
    
-   ABAddressBookRef g_addressBook;
-   NSArray *g_people;
+ //  ABAddressBookRef g_addressBook;
+  // NSArray *g_people;
 
    NSString *tmpSet;
 }
@@ -98,6 +99,7 @@ UITextFieldDelegate,
 -(void)addToRecents:(CTRecentsAdd*) r;
 -(int)findContactByEB:(CTEditBase *)peer outb:(CTEditBase *)name;
 -(NSData *)getImageData:(int)p_id;
+-(void)resetBadgeNumber:(bool)bResetToZero;
 
 -(void)showPersonVCard:(CTRecentsItem*)i;
 -(void)saveRecents;

@@ -43,6 +43,18 @@ class CVCodecBase;
 class CTAudioOutBase;
 class CTVideoOutBase;
 
+class CTVideoMem{
+   unsigned char *pMem;
+   int iNextPos;
+   int iVB_bytesFree;
+   unsigned char *getBuf();
+public:
+   CTVideoMem();
+   ~CTVideoMem(){if(pMem)delete pMem;pMem=NULL;}
+   unsigned char *getVidFrameBuf(int sz);
+   void relVidFrameBuf(unsigned char *p);
+};
+
 class CListItemFrame: public CListItem{
 public:
 
@@ -55,33 +67,34 @@ public:
    int iShow;
    
    CVCodecBase *codec;
+   CTVideoMem *mem;
    
-   static CListItemFrame *newc(unsigned char *p, int iPicLen, unsigned int uiTimeStamp, int iPrevRecFPS, CVCodecBase *c)
+   static CListItemFrame *newc(CTVideoMem &mem, unsigned char *p, int iPicLen, unsigned int uiTimeStamp, int iPrevRecFPS, CVCodecBase *c)
    {
       CListItemFrame *ret=new CListItemFrame(iPicLen,uiTimeStamp, iPrevRecFPS);
       
       if(!ret)return NULL;
-      unsigned char *getVidFrameBuf(int sz);
       
       ret->codec=c;
-      ret->pBuf=getVidFrameBuf(iPicLen+1);//new unsigned char [iPicLen+1];
+      ret->pBuf=mem.getVidFrameBuf(iPicLen+1);//new unsigned char [iPicLen+1];
       if(!ret->pBuf){
          delete ret;
          return NULL;
       }
       memcpy(ret->pBuf,p,iPicLen);
-      
+      ret->mem=&mem;
       return ret;
    }
    virtual ~CListItemFrame(){
       void relVidFrameBuf(unsigned char *p);
-      relVidFrameBuf(pBuf);
+      if(mem)mem->relVidFrameBuf(pBuf);
       pBuf=NULL;
    }
 private:
    CListItemFrame(int iLen,unsigned int uiTS, int iPrevRecFPS)
    :CListItem((int)uiTS),iLen(iLen),uiTS(uiTS),iPrevRecFPS(iPrevRecFPS)
    {
+      mem=NULL;
       pBuf=NULL;//&pBufZ[0];
       iPosDecoded=0;
       iShow=0;
@@ -91,11 +104,13 @@ private:
 
 class CTFrameList: public CTList{
    int iFramesInList;
+
+   CTVideoMem vmem;
 public:
    CTFrameList():CTList(){iFramesInList=0;}
    int addFrame(unsigned char *p, int iLen, unsigned int uiPos, int iPrevRecFPS, CVCodecBase *c)
    {
-      CListItem *l=(CListItem*)CListItemFrame::newc(p,iLen,uiPos, iPrevRecFPS,c);
+      CListItem *l=(CListItem*)CListItemFrame::newc(vmem, p,iLen,uiPos, iPrevRecFPS,c);
       if(l){addToTail(l);iFramesInList++;}
       return l?0:-1;
    }

@@ -217,7 +217,9 @@ int exeExists(){
 #endif
 }
 
-
+#if !defined(ANDROID_NDK)
+void wakeCallback(int iLock){}
+#endif
 
 int getPathW(short *p, int iMaxLen)//TODO rename exec path
 {
@@ -650,4 +652,11 @@ int isWinPocketPC()
 #endif
 }
 
+#include "../os/CTThread.h"
+
+void startThX(int (cbFnc)(void *p),void *data){
+   CTThread *th=new CTThread();
+   th->destroyAfterExit();
+   th->create(cbFnc,data);
+}
 

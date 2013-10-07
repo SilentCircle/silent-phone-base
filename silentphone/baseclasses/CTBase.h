@@ -67,6 +67,10 @@ public:
       return 1;
       
    }
+   int operator ==(CTStrBase *b);
+   int operator ==(const char *p);
+   inline int operator !=(const char *p){return !(*this==p);}
+   inline int operator !=(CTStrBase *b){return !(*this==b);}
 };
 
 class CTOSWinBase{//TODO varbuut likt katraa baazee ???
@@ -202,6 +206,7 @@ class CTAudioGetDataCB{
 public:
    enum{eUnknown, eShort, eFloat32, eLast};
    virtual int getAudioData(void *p, int iSamples, int iDevRate, int iSampleTypeEnum, int iOneSampleSize, int iIsFirstPack)=0;
+   virtual int canUseAudioData(){return 1;}//onlyInConference 
 };
 //TODO audio base, audio voip base
 
@@ -220,10 +225,11 @@ public:
    virtual unsigned int getSamplePlayPos()=0;
    
    //voip
+   virtual void onlyInConference(int ok){}//if call->is_in_conf && is call->onhold then ok=1
    virtual int receivedTS(unsigned int uiPos, int iPrevLost, int iIsCN){return -1;}
    virtual int msg(const char *pid, int iLen, void *p, int iSizeofP){return -1;}
    virtual int getLastPlayBuf(short *p, int iSamples, int &iLeftInBuf)=0;
-   virtual int isPrevPackSpeech(){return 2;}
+   virtual int isPrevPackSpeech(){return 2;}//return if(ret>0) true, if(ret<=0) false
    
    virtual int addPack(unsigned int ts, unsigned short seq, unsigned char *data, int iDataLen, CCodecBase *c){return -1;}
    
@@ -233,6 +239,7 @@ protected:
    CTAudioGetDataCB *cbAudioDataGet;
    CTAudioOutBase *cAudioOut;
 };
+
 class CTAudioInBase{
 public:
    enum{ePCM16, eAMR, eG729};
@@ -251,12 +258,14 @@ public:
 
 class CTVideoInBase{
 public:
-   virtual int start()=0;
-   virtual void stop()=0;
+   virtual int start(void *pData)=0;
+   virtual void stop(void *pData)=0;
+   
    virtual int init(void *hParent)=0;
    virtual int getXY(int &x , int &y)=0;
    virtual void setXY(int x, int y)=0;
 };
+
 class CTBmpBase{
 public:   
  // virtual void *getBuf()=0;

@@ -37,12 +37,10 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 extern "C"{
 #include "lib/jpeglib.h"
-void t_freeJpg(j_common_ptr cinfo);
-void t_onNewFrame(j_common_ptr cinfo);
+   void t_freeJpg(j_common_ptr cinfo);
+   void t_onNewFrame(j_common_ptr cinfo);
 };
 #include "../CTVidCodec.h"
-
-
 
 
 class CTJpgEnc{
@@ -50,7 +48,7 @@ class CTJpgEnc{
    struct jpeg_error_mgr jerr;
    T_JPG_OPT_STRUCT optJpg;
    int iOptCoding;
-
+   
 public:
    inline int getOptCoding(){return iOptCoding;}
    
@@ -59,16 +57,16 @@ public:
    int x,y;
    int iFullImgW;
    int iFullImgH;
-
+   
    int iQulaity;
    int iColorSpace;
-
+   
    int iIsDif;
    int iFlagRot;
-
+   
    unsigned int bufQuantYTable[64];
    unsigned char rowTmp[2048*3];
-
+   
    CTJpgEnc(int x, int y):x(x),y(y){
       iFlagRot=0;
       iFullImgH=0;
@@ -76,16 +74,16 @@ public:
       iOptCoding=1;
       memset(&optJpg,0,sizeof(T_JPG_OPT_STRUCT));
       cinfo.client_data=&optJpg;
-   //  memset(&cinfo,0,sizeof(struct jpeg_compress_struct));
-//#ifndef linux
-     cinfo.err = jpeg_std_error(&jerr);
-     iQulaity=50;
-     iColorSpace=JCS_RGB;//JCS_RGB;//JCS_RGB;//JCS_GRAYSCALE,JCS_RGB,JCS_YCbCr
-     iXOffset=iYOffset=0;
-     iIsDif=0;
-//#endif
+      //  memset(&cinfo,0,sizeof(struct jpeg_compress_struct));
+      //#ifndef linux
+      cinfo.err = jpeg_std_error(&jerr);
+      iQulaity=50;
+      iColorSpace=JCS_RGB;//JCS_RGB;//JCS_RGB;//JCS_GRAYSCALE,JCS_RGB,JCS_YCbCr
+      iXOffset=iYOffset=0;
+      iIsDif=0;
+      //#endif
    }
-
+   
    void start()
    {
       optJpg.iIsDif=iIsDif;
@@ -94,46 +92,46 @@ public:
       t_onNewFrame((j_common_ptr)&cinfo);
       //TODO varbuut nokopeet statusu peec init un tad uzkopeet virsuu
       //tad ja nekas nav mainiijies
-
-//#ifndef linux
-     // iColorSpace=JCS_RGB;
+      
+      //#ifndef linux
+      // iColorSpace=JCS_RGB;
       cinfo.in_color_space = (J_COLOR_SPACE)iColorSpace; 	/* colorspace of input image */
       jpeg_create_compress(&cinfo);
       //cinfo.jpeg_color_space=
-         cinfo.in_color_space = (J_COLOR_SPACE)iColorSpace; 	/* colorspace of input image */
-      cinfo.image_width = x; 
+      cinfo.in_color_space = (J_COLOR_SPACE)iColorSpace; 	/* colorspace of input image */
+      cinfo.image_width = x;
       cinfo.image_height = y;
       cinfo.input_components = JCS_GRAYSCALE==iColorSpace?1:3;//3;		/* # of color components per pixel */
       jpeg_set_defaults(&cinfo,iQulaity);
-
+      
       cinfo.dct_method = JDCT_DEFAULT;
-
+      
       cinfo.optimize_coding=iOptCoding;//test
    }
    void optCoding(int iTrue)
    {
       iOptCoding=iTrue;
    }
-   int encode(unsigned char *bufIn, unsigned char *bufOut) 
+   int encode(unsigned char *bufIn, unsigned char *bufOut)
    {
-//#ifndef linux
+      //#ifndef linux
       if(iFullImgH==0)iFullImgH=y;
       if(iFullImgW==0)iFullImgW=x;
       jpeg_data_dest(&cinfo, bufOut);
       jpeg_start_compress(&cinfo, TRUE);
-
+      
       unsigned char *p;
-
+      
       //int row_stride=cinfo.image_width*cinfo.input_components;
       int row_stride=iFullImgW*cinfo.input_components;
       int iXOxC=iXOffset*cinfo.input_components;
-
-      while (cinfo.next_scanline < cinfo.image_height) 
+      
+      while (cinfo.next_scanline < cinfo.image_height)
       {
          if(iFlagRot){
             //z=cinfo.image_width*3;
             p=&bufIn[(cinfo.image_height-(cinfo.next_scanline +iYOffset+1)) * row_stride+iXOxC];
-
+            
             (void) jpeg_write_scanlines(&cinfo, &p, 1);
          }
          else {
@@ -141,19 +139,19 @@ public:
             (void) jpeg_write_scanlines(&cinfo, &p, 1);
          }
       }
-
-     jpeg_finish_compress(&cinfo);
-//#endif
-     return cinfo.dest->iBytesInFile;
+      
+      jpeg_finish_compress(&cinfo);
+      //#endif
+      return cinfo.dest->iBytesInFile;
    }
    void stop()
    {
-//#ifndef linux
-     jpeg_destroy_compress(&cinfo);
-//#endif
+      //#ifndef linux
+      jpeg_destroy_compress(&cinfo);
+      //#endif
    }
    virtual ~CTJpgEnc(){t_freeJpg((j_common_ptr)&cinfo);}
-
+   
 };
 
 class CTJpgDec{
@@ -181,21 +179,21 @@ public:
       memset(&optJpg,0,sizeof(T_JPG_OPT_STRUCT));
       cinfo.client_data=&optJpg;
       iOutColorSpace=-1;
-
       
-//#ifndef linux
-     cinfo.err = jpeg_std_error(&jerr);
-//#endif
-     buffer=(JSAMPARRAY)new JSAMPARRAY[2];
-     buffer[0]=NULL;
-     buffer[1]=NULL;
-     bmpBase=NULL;
-     testx=testy=0;
-     iFullImgW=iFullImgH=0;
-     iXOffset=iYOffset=0;
-     iBytesInRowBuf=0;
-
-    // input_file=fopen("99.jpg","rb");
+      
+      //#ifndef linux
+      cinfo.err = jpeg_std_error(&jerr);
+      //#endif
+      buffer=(JSAMPARRAY)new JSAMPARRAY[2];
+      buffer[0]=NULL;
+      buffer[1]=NULL;
+      bmpBase=NULL;
+      testx=testy=0;
+      iFullImgW=iFullImgH=0;
+      iXOffset=iYOffset=0;
+      iBytesInRowBuf=0;
+      
+      // input_file=fopen("99.jpg","rb");
    }
    virtual ~CTJpgDec()
    {
@@ -206,8 +204,8 @@ public:
          delete buffer;
       }
       t_freeJpg((j_common_ptr)&cinfo);
-     // if(input_file)
-        // fclose(input_file);
+      // if(input_file)
+      // fclose(input_file);
    }
    CTBmpBase *bmpBase;
    void start()
@@ -215,13 +213,13 @@ public:
       t_onNewFrame((j_common_ptr)&cinfo);
       jpeg_create_decompress(&cinfo);
    }
-
-   int decode(unsigned char *bufIn, unsigned char *bufOut, int iInLen) 
+   
+   int decode(unsigned char *bufIn, unsigned char *bufOut, int iInLen)
    {
       int i=0;
-//#ifndef linux
+      //#ifndef linux
       jpeg_data_src(&cinfo,bufIn, iInLen);
-
+      
       (void) jpeg_read_header(&cinfo, TRUE);
       if(iOutColorSpace!=-1)cinfo.out_color_space=JCS_YCbCr;
       (void) jpeg_start_decompress(&cinfo);
@@ -237,7 +235,7 @@ public:
       //if(iFullImgW==0)iFullImgW=testx;
       //if(iFullImgH==0)iFullImgH=testy;
       
-     //??? cinfo.quant_tbl_ptrs[0]->quantval[0]
+      //??? cinfo.quant_tbl_ptrs[0]->quantval[0]
       if(cinfo.quant_tbl_ptrs[0]){
          iPrevQ0=(cinfo.quant_tbl_ptrs[0]->quantval[0]*3+cinfo.quant_tbl_ptrs[0]->quantval[1])>>1;
       }
@@ -248,23 +246,23 @@ public:
          iBytesInRowBuf=row_stride;
          if(buffer[0])delete buffer[0];
          if(buffer[1])delete buffer[1];
-         buffer[0]=new unsigned char[row_stride*2];      
-         buffer[1]=new unsigned char[row_stride*2];      
+         buffer[0]=new unsigned char[row_stride*2];
+         buffer[1]=new unsigned char[row_stride*2];
       }
-
-
+      
+      
       if(bmpBase)
       {
          bmpBase->startDraw();
          
          while (cinfo.output_scanline < cinfo.output_height) {
-           (void) jpeg_read_scanlines(&cinfo, buffer, 1);
-
-           if(iFlagRot){
-              bmpBase->setScanLine(cinfo.output_height-(i+iYOffset+1),iXOffset,(unsigned char*) buffer[0],row_stride,24);
-           }
-           else bmpBase->setScanLine(i+iYOffset,iXOffset,(unsigned char*) buffer[0],row_stride,24);
-           i++;
+            (void) jpeg_read_scanlines(&cinfo, buffer, 1);
+            
+            if(iFlagRot){
+               bmpBase->setScanLine(cinfo.output_height-(i+iYOffset+1),iXOffset,(unsigned char*) buffer[0],row_stride,24);
+            }
+            else bmpBase->setScanLine(i+iYOffset,iXOffset,(unsigned char*) buffer[0],row_stride,24);
+            i++;
          }
          bmpBase->endDraw();
       }
@@ -272,28 +270,28 @@ public:
       {
          int iXOxC=0;//iXOffset* cinfo.output_components;
          while (cinfo.output_scanline < cinfo.output_height) {
-           (void) jpeg_read_scanlines(&cinfo, buffer, 1);
+            (void) jpeg_read_scanlines(&cinfo, buffer, 1);
             if(iFlagRot)
                memcpy(bufOut+row_stride*(cinfo.output_height-i-1)+iXOxC,buffer[0], row_stride);
-            else 
+            else
                memcpy(bufOut+row_stride*(i)+iXOxC,buffer[0], row_stride);
-           i++;
+            i++;
          }
       }
       return row_stride*i;
    };
    void stop()
    {
-//#ifndef linux
-     (void) jpeg_finish_decompress(&cinfo);
-     jpeg_destroy_decompress(&cinfo);
-//#endif
+      //#ifndef linux
+      (void) jpeg_finish_decompress(&cinfo);
+      jpeg_destroy_decompress(&cinfo);
+      //#endif
    }
-
+   
 };
 
 class CTJpg: public CVCodecBase{
-  CTJpgEnc e;
+   CTJpgEnc e;
 public:
    CTJpg():e(0,0){}
    virtual int encode(unsigned char *pI, unsigned char *pO, int iLen)
@@ -321,10 +319,10 @@ public:
       q=q>100?100:q<0?0:q;
       e.iQulaity=q;
    }
-
-
-
-
+   
+   
+   
+   
 };
 
 class CTJpgED: public CVCodecBase{
@@ -340,7 +338,15 @@ class CTJpgED: public CVCodecBase{
    }T_JPG_RTP;
    int iMaxFrameSizeInc;
    
-public:   
+   unsigned char *tmpOut;//[40000];
+   int iBytesRemainInOutBuf;
+   int iCurFrameSize;
+   
+   unsigned char *tmpIn;//[40000];
+   int iTmpInBufSize;
+   int iBytesInTmpBuf;
+   
+public:
    CTJpgEnc e;
    int iEnableLoopFilter;
    int iMaxFrameSize;
@@ -361,19 +367,20 @@ public:
       reset();
       tmpIn=tmpOut=NULL;
       iTmpInBufSize=0;
-      setXY(160,120);
+      setXY(80,60);
       cVO=NULL;
       iqConst=0;
       iSendNext=1;
-
+      
       setQuality(30);
-
+      
       iMaxQuality=75;
-
+      prev_enc_frame_crc=0;
+      
       
    }
    
-
+   
    
    
    const char *getName(){return "TiVi-JPG";}
@@ -387,21 +394,19 @@ public:
    void reset()
    {
       /*
-      iLast=1;
-      iSendNext=2;
-      */
+       iLast=1;
+       iSendNext=2;
+       */
       iLast=0;
       iSendNext=5;
       iBytesInTmpBuf=iCurFrameSize=iBytesRemainInOutBuf=0;
       iFrameCounter=iFramesPerSec=0;
       uiNextResetTs=0;
-
-
+      
+      
    }
+   
 
-   unsigned char *tmpOut;//[40000];
-   int iBytesRemainInOutBuf;
-   int iCurFrameSize;
    CTisVSilence colc;
    int iSendNext;
    int iq;
@@ -416,14 +421,14 @@ public:
       if(x>350)iMaxQuality=55;else iMaxQuality=70;
       if(e.x!=x || e.y!=y)
       {
-         if(tmpOut)delete tmpOut;; 
+         if(tmpOut)delete tmpOut;;
          tmpOut=new unsigned char [x*y*4];
       }
       if(iqConst)
          iq=iqConst;
-      else 
+      else
          if(x>160){iq=25;}else{iq=30;}
-
+      
       
       e.x=x;
       e.y=y;
@@ -432,18 +437,19 @@ public:
    }
    int iFramesPerSec,iFrameCounter;
    unsigned int uiNextResetTs;
+private:
    
-   virtual int encode(unsigned char *pI, unsigned char *pO, int iLen)
+   int encode_priv(unsigned char *pI, unsigned char *pO, int iLen)
    {
-     
+      
       if(iLast)
       {
          iLast=0;
          return 0;
       }
 #ifdef _WINDOWS_
-
-
+      
+      
       {
          unsigned int uiTS=GetTickCount();
          if(uiTS>uiNextResetTs)
@@ -453,58 +459,70 @@ public:
             iFrameCounter=0;
          }
          iFrameCounter++;
-
+         
       }
 #endif
-
+      
       int l=0;
       T_JPG_RTP *v=(T_JPG_RTP *)pO;
       pO+=sizeof(T_JPG_RTP);
-
+      
       v->vers=1;
       v->sizeofHdr=sizeof(T_JPG_RTP);
       v->cx=e.x;
       v->cy=e.y;
-
+      
       if(iBytesRemainInOutBuf==0)//iLast)
       {
          
          if(iq>70)iq=70;else if(iq<20)iq=20;
          if(iMaxQuality>80)iMaxQuality=80;else if(iMaxQuality<20)iMaxQuality=20;
          e.iQulaity=iq;
-         colc.iDifConst=3;
-
-         if(iSendSileceFrames==0 && colc.isVideoSilence(pI,v->cx,v->cy))
-         {
-
-            e.iQulaity=(iMaxQuality+iq)>>1;
-            if(iSendNext<0){
-               iSendNext=0;
-               return 1;
+         
+         unsigned int crc32_calc_video(const void *ptr, size_t cnt);
+         unsigned int crc = crc32_calc_video(pI, iLen);
+         
+         if( prev_enc_frame_crc==crc && iCurFrameSize>0){//video conf, don't send video frames 2x
+            
+            iBytesRemainInOutBuf=iCurFrameSize;
+         //   printf("[crc=%u %d %d %d %d]",crc,iCurFrameSize,tmpOut[0],tmpOut[5], tmpOut[iCurFrameSize>>1]);
+            if(iCurFrameSize==1){iBytesRemainInOutBuf=0; return 1;}
+         }
+         else{
+            prev_enc_frame_crc = crc;
+            
+            colc.iDifConst=3;
+            if(iSendSileceFrames==0 && colc.isVideoSilence(pI,v->cx,v->cy))
+            {
+               
+               e.iQulaity=(iMaxQuality+iq)>>1;
+               if(iSendNext<0){
+                  iSendNext=0;
+                  iCurFrameSize=1;
+                  return 1;
+               }
             }
-          //--  if(iSendNext==0)
-            //--   e.iQulaity=iMaxQuality;
-             
-
-            //return 0;
-         }
-         else 
-         {
-            iSendNext=iFramesPerSec;
-            if(iSendNext<2)iSendNext=2; else if(iSendNext>10)iSendNext=10;
-         }
-         iSendNext--;
-         {
-            e.iFlagRot=1;//1;
-            e.start();
-            iCurFrameSize=iBytesRemainInOutBuf=e.encode(pI,tmpOut);
-            e.stop();
+            else
+            {
+               iSendNext=iFramesPerSec;
+               if(iSendNext<2)iSendNext=2; else if(iSendNext>10)iSendNext=10;
+            }
+            iSendNext--;
+            
+            {
+               e.iFlagRot=1;//1;
+               e.start();
+               iCurFrameSize=iBytesRemainInOutBuf=e.encode(pI,tmpOut);
+               e.stop();
+               
+           //    printf("[crc=%u %d %d %d %d]",crc,iCurFrameSize,tmpOut[0],tmpOut[5], tmpOut[iCurFrameSize>>1]);
+            }
          }
       }
-
+      
       v->offset=(unsigned short)(iCurFrameSize-iBytesRemainInOutBuf);
       v->allFrameSize=(unsigned short)iCurFrameSize;
-
+      
       if(iBytesRemainInOutBuf>iMaxFrameSize+iMaxFrameSizeInc)
       {
          l=iMaxFrameSize+iMaxFrameSizeInc;
@@ -523,21 +541,27 @@ public:
       iMaxFrameSizeInc+=((p[l>>1]&7));
       iMaxFrameSizeInc&=63;
       /*
-      iMaxFrameSize++;
-      if(iMaxFrameSizeInc>50)
-      {
-         iMaxFrameSize-=iMaxFrameSizeInc;
-         iMaxFrameSizeInc=0;
-      }
-*/
-   //   printf("[jsend=%d]",l);
+       iMaxFrameSize++;
+       if(iMaxFrameSizeInc>50)
+       {
+       iMaxFrameSize-=iMaxFrameSizeInc;
+       iMaxFrameSizeInc=0;
+       }
+       */
+      //   printf("[jsend=%d]",l);
       return l+sizeof(T_JPG_RTP);
    }
+   
+   unsigned int prev_enc_frame_crc;
+public:
+   
+   virtual int encode(unsigned char *pI, unsigned char *pO, int iLen)
+   {
+      int r=encode_priv(pI, pO, iLen);
+      return r;
+   }
+   
 
-   unsigned char *tmpIn;//[40000];
-   int iTmpInBufSize;
-
-   int iBytesInTmpBuf;
    void getDecXY(int &x ,int  &y){}
    
    virtual int canSkipThis(unsigned char *p, int iLen){return 1;}
@@ -545,7 +569,7 @@ public:
       if(iLen<sizeof(T_JPG_RTP))return 0;
       
       T_JPG_RTP *v=(T_JPG_RTP *)p;
-      p+=sizeof(T_JPG_RTP);
+     // p+=sizeof(T_JPG_RTP);
       iLen-=sizeof(T_JPG_RTP);
       if(v->sizeofHdr!=sizeof(T_JPG_RTP))return 0;
       
@@ -560,7 +584,7 @@ public:
       if(iLen<sizeof(T_JPG_RTP))return 0;
       
       T_JPG_RTP *v=(T_JPG_RTP *)p;
-      p+=sizeof(T_JPG_RTP);
+   //   p+=sizeof(T_JPG_RTP);
       iLen-=sizeof(T_JPG_RTP);
       if(v->sizeofHdr!=sizeof(T_JPG_RTP))return 0;
       if(v->vers!=1)return 0;
@@ -569,18 +593,23 @@ public:
       return 1;
    }
    
-
+   
    virtual int decode(unsigned char *pI, unsigned char *pO, int iLen)
    {
+      
+      
       if(iLen<sizeof(T_JPG_RTP))return -2;
       T_JPG_RTP *v=(T_JPG_RTP *)pI;
+      
+      // printf("[bi=%d vo=%d l=%d va=%d]",iBytesInTmpBuf, v->offset,iLen, v->allFrameSize);
+      
       pI+=sizeof(T_JPG_RTP);
       iLen-=sizeof(T_JPG_RTP);
       if(v->sizeofHdr!=sizeof(T_JPG_RTP))return -2;
-
+      
       if(v->vers!=1)return -3;
-
-
+      
+      
       //cmp iBytesInTmpBuf==v->offset
       if(iBytesInTmpBuf!=v->offset)
       {
@@ -605,17 +634,18 @@ public:
       p+=iBytesInTmpBuf;
       memcpy(p,pI,iLen);
       iBytesInTmpBuf+=iLen;
-//TODO check v->offset+iLen==iBytesInTmpBuf
+      //TODO check v->offset+iLen==iBytesInTmpBuf
       int l=0;
-
+      //    printf("vo=%d l=%d vol=%d va=%d\n",v->offset,iLen, v->offset+iLen,v->allFrameSize);
+      
       if(v->offset+iLen==v->allFrameSize)
       {
          if(cVO)
          {
             cVO->setOutputPictureSize(v->cx,v->cy);
-              
+            
          }
-
+         
          if(cVO==NULL || cVO->rawJpgData(tmpIn,iBytesInTmpBuf)==-1)
          {
             d.testx=v->cx;
@@ -635,7 +665,7 @@ public:
             
             
             if(iEnableLoopFilter && l>=0 && cVO && cVO!=d.bmpBase){
-              // printf("iPrevQ0=%d",d.iPrevQ0);
+               // printf("iPrevQ0=%d",d.iPrevQ0);
                int r=v->cy;
                int str=v->cx*3;
                void tblockRGB(unsigned char *pic, int w, int h, int q);
@@ -650,11 +680,11 @@ public:
          }
          l=1;
          iBytesInTmpBuf=0;
-
+         
       }
       return l;
    }
-
+   
 };
 
 static int jpgFilter(unsigned char *p, unsigned char *bufTmp, int wi, int hi, int iLen, int q)
@@ -662,13 +692,13 @@ static int jpgFilter(unsigned char *p, unsigned char *bufTmp, int wi, int hi, in
    if(q>98)q=98;
    CTJpgEnc e(wi,hi);
    e.iQulaity=q;
-//   e.iIsDif=1;
+   //   e.iIsDif=1;
    e.start();
    //e.iIsDif=1;
    int l=e.encode(p,(unsigned char*)bufTmp);
    e.stop();
-
-  // unsigned int uiT=(unsigned int)timeGetTime ();
+   
+   // unsigned int uiT=(unsigned int)timeGetTime ();
    CTJpgDec d;
    d.start();
    d.decode((unsigned char*)bufTmp,p,l);

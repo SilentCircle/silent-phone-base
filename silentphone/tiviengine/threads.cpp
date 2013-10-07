@@ -257,25 +257,44 @@ int CTiViPhone::TimerProc(void *f)
    return 0;
 }
 
+void wakeCallback(int iLock);
+
+class CTCpuWakeLock{
+   int iLocked;
+public:
+   CTCpuWakeLock(int iLock){if(iLock){wakeCallback(1);}iLocked=iLock;}
+   ~CTCpuWakeLock(){if(iLocked)wakeCallback(0);}
+};
+
 int CTiViPhone::thSipRec(void *f)
 {
    CTiViPhone *ph=(CTiViPhone *)f;
    SIP_MSG *sMsg = new SIP_MSG ;
    int iResetParam=0;
    
+   //int t_AttachCurrentThread();
+   //t_AttachCurrentThread();
+   
    strcpy(ph->thTimer.thName,"_t_r_timer");
    
    ph->thTimer.create(&CTiViPhone::TimerProc,(void *)ph);
    
+   ph->sockSip.sendQuve();
+   
    while(ph->bRun)
    {
-      ph->sockSip.sendQuve();
-      if(!ph->bRun)break;
+      //ph->sockSip.sendQuve();if(!ph->bRun)break;
       
       if(iResetParam!=10)
          memset(sMsg,0,sizeof(SIP_MSG));
       
-      iResetParam=ph->recMsg(sMsg);
+      ADDR addr;
+      int rec = ph->sockSip.recvFrom((char *)&sMsg->rawDataBuffer[0],MSG_BUFFER_SIZE-100,&addr);
+      
+      CTCpuWakeLock wakeLock(rec>100);//should it be after recv or recvfrom
+      iResetParam=ph->recMsg(sMsg, rec, addr);
+      if(!ph->bRun)break;
+      ph->sockSip.sendQuve();
       
    }
    

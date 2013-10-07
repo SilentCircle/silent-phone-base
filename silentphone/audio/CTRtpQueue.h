@@ -31,11 +31,15 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #ifndef _C_T_RTP_QUEUE_H
 #define _C_T_RTP_QUEUE_H
 
+#define MAX_A_RTP_PACK_SIZE 1024
+
+void log_audio(const char *tag, const char *buf);
+
 class CTMemBuf{
    long long iAlocated,iReleased;
    int iPos;
    int iRelPos;
-   enum{eSize=320*512};
+   enum{eSize=160*MAX_A_RTP_PACK_SIZE};
    unsigned char buf[eSize+16];
    
 public:
@@ -43,7 +47,7 @@ public:
    int bytesUsed(){return (int)(iAlocated-iReleased);}
    void reset(){iPos=0;iAlocated=0;iReleased=0;}
    unsigned char *getBuf(int iBytes){
-      if(iBytes>eSize)return NULL;
+      if(iBytes>eSize || iBytes<=0)return NULL;
       int np=iPos+iBytes;
       if(np>eSize){iPos=0;np=iBytes;}
       iAlocated+=iBytes;
@@ -59,9 +63,57 @@ public:
 
 //#define RTP_BUF_DATA_SIZE 320
 
+class CTRoc{
+   int iIncRoc;
+   unsigned int uiPrevRolSeq;
+   unsigned int uiRollover;
+   unsigned short usPrevSeq;
+public:
+   
+   CTRoc(){uiRollover=0; reset();}
+   void reset(){
+      uiRollover++;
+      if(uiRollover>80)uiRollover=1;
+      uiPrevRolSeq=(uiRollover)<<16;
+      usPrevSeq=0;
+      iIncRoc=0;
+   }
+   
+   unsigned int rolSeq(unsigned short seq){
+      
+      iIncRoc=0;
+      
+      unsigned int tsG = ((uiRollover)<<16) | seq;
+      unsigned int tsGm1 = ((uiRollover-1)<<16) | seq;
+      unsigned int tsGp1 = ((uiRollover+1)<<16) | seq;
+      
+      int d=(int)(uiPrevRolSeq-tsG);if(d<0)d=-d;
+      int dp=(int)(uiPrevRolSeq-tsGp1);if(dp<0)dp=-dp;
+      int dm=(int)(uiPrevRolSeq-tsGm1);if(dm<0)dm=-dm;
+      
+      if(dm<d){d=dm;tsG=tsGm1;}
+      if(dp<d){d=dp;tsG=tsGp1;if(d>((1<<15)+1)){iIncRoc=1;tsG+=(1<<16);}}
+      
+      
+      return tsG;
+   }
+   
+   void updateRocSeq(unsigned int tsG, unsigned short seq){
+      uiPrevRolSeq = tsG;
+      usPrevSeq=seq;
+      if(iIncRoc){
+         uiRollover++;
+         iIncRoc=0;
+      }
+   }
+};
+
+
 class CTRtpQueue{
    
    CTMemBuf mem;
+
+   CTRoc roc;
    
    typedef struct{
       int iInUse;
@@ -111,7 +163,7 @@ class CTRtpQueue{
    
    int iPrevDecodedSamples;
    
-   int iBurstCnt,iMaxBurstCnt,iPrevBurstCnt,iTooLate;
+   int iBurstCnt,iMaxBurstCnt,iPrevBurstCnt,iTooLate,iMaxBurstCall;
    int iBurstingResetCnt;
    
    double dJit;
@@ -137,15 +189,13 @@ class CTRtpQueue{
    int iErrFlag,iErrs;
    //<<debug
    
-   unsigned int uiPrevRolSeq;
-   unsigned int uiRollover;
-   unsigned short usPrevSeq;
+
 
    int iPlaySlowerFlag;
    int iRealDataReceived;
    
 public:
-   CTRtpQueue(){iHWReadSamples=300;iRate=16000;dJit=0;memset(qPack,0,sizeof(qPack));}
+   CTRtpQueue(){iPacketsAdded=iLostCnt=0;iErrFlag=0;reset();iHWReadSamples=300;iRate=16000;dJit=0;memset(qPack,0,sizeof(qPack));}
    ~CTRtpQueue(){reset();}
    
    void setRate(int rate){iRate=rate;}
@@ -162,7 +212,33 @@ public:
       return !iPrevWasCN && iUnderFlowCounter>iThresh;
    }
    
+   void log(){
+      if(iPacketsAdded<1)return;
+      const char *tag="CTRtpQueue:";
+      char b[128];
+      if(iErrFlag){
+         sprintf(b,"Error_Flag=%d",iErrFlag);
+         log_audio(tag, b);
+      }
+      if(iLostCnt){
+         sprintf(b,"Lost=%d  %.2f %% ",iLostCnt, (float)iLostCnt*100.f/(float)(iPacketsAdded));
+         log_audio(tag, b);
+      }
+      if(1)
+      {
+         sprintf(b,"Max burst=%d end",iMaxBurstCall==1?0:iMaxBurstCall);
+         log_audio(tag, b);
+      }
+      
+   }
+   
    void reset(){
+      
+      log();
+      iMaxBurstCall=0;
+      
+      roc.reset();
+      
       iPrevWasOK=0;
       iRealDataReceived=0;
       iPlaySlowerFlag=0;
@@ -181,24 +257,23 @@ public:
       dJit=0.01;
       iBurstCnt=iMaxBurstCnt=iPrevBurstCnt=0;
       uiPlayPos=0;iPacketsAdded=0;iPacketsRemoved=0;iSamplesInTmpQueueLeft=0;
-      uiRollover=1;
-      uiPrevRolSeq=1<<16;
       uiLastPlaySeq=0;
       uiLastReceiveSeq=0;
       iNextRolloverAfter=-1;
-      usPrevSeq=0;
       iPrevDecodedSamples=0;
       iPrevPackLen=0;
 
-      printf("[before rel mem=%d ]",mem.bytesUsed());
+      int bu = mem.bytesUsed();
       
       for(int i=0;i<eMaxPackInQueue;i++){
          if(qPack[i].iInUse){
             relPack(&qPack[i]);
-            qPack[i].seq=-1;
          }
+         qPack[i].seq=-1; //must be set here else "if(q->seq == tsG){iErrFlag|=256;return 0;}" will fail
       }
-      printf("[after rel mem=[%d must be 0]]",mem.bytesUsed());
+      if(mem.bytesUsed())
+         printf("[rel rtpQ mem=[%d must be 0] was=%d]",mem.bytesUsed(), bu);
+      
       qPrevRecv=NULL;
       mem.reset();
    }
@@ -256,23 +331,23 @@ public:
       //pack repeats check 1
       if(q->iInUse && q->seqRec == seq){iErrFlag|=512;return 0;}//could fail if pack is played and then received again.
       
-      unsigned int tsG = rolSeq(seq);
+      unsigned int tsG = roc.rolSeq(seq);
       
       //pack repeats check 2
       if(q->seq == tsG){iErrFlag|=256;return 0;}
       
       if(q->iInUse){
          relPack(q);
-         err("ERR: q->iInUse");//if was not deleted - probably was too late
-         iErrFlag|=1;
+         err("Warn: q->iInUse", 1);//if was not deleted - probably was too late
       }
       
 
       
       if(c){
-         if(iDataLen>1024){err("ERR iDataLen>1024");iErrFlag|=128; return -1;}
+         if(iDataLen>MAX_A_RTP_PACK_SIZE){err("ERR: bug or attack iDataLen>MAX_A_RTP_PACK_SIZE",128);return -1;}
+         if(iDataLen<1){err("ERR: imposible iDataLen<1",1024); return -1;}
          q->pData = mem.getBuf(iDataLen);
-         if(!q->pData){err("ERR !q->pData");iErrFlag|=4; return -1;}
+         if(!q->pData){err("ERR no-mem !q->pData", 4); return -1;}
          
          q->iDataLen = iDataLen;
          memcpy(q->pData, data, iDataLen);
@@ -280,6 +355,8 @@ public:
          iRealDataReceived=1;
       }
       else {q->iDataLen=0;}
+      
+      roc.updateRocSeq(tsG, seq);
       
       q->c=c;
       q->seqRec = seq;
@@ -293,13 +370,11 @@ public:
 
       if(uiLastReceiveSeq<uiLastPlaySeq){
          if(iTooLate<5000)iTooLate+=500;
-         err("[ERR TOO LATE]");
-         iErrFlag|=2;
+         err("[Warn TOO LATE]",2);
       }
       else if(uiLastReceiveSeq==uiLastPlaySeq){
          if(iTooLate<1000)iTooLate+=100;
-         err("[ERR TOO LATE]");
-         iErrFlag|=2;
+         err("[Warn TOO LATE]",2);
       }
       if(iTooLate>0)iTooLate--;
       
@@ -317,6 +392,14 @@ public:
 #endif
 
       iPacketsAdded++;
+      
+      if(iPacketsAdded<250){//tmp reset counters after zrtp is finished
+         iLostCnt=0;
+         iMaxBurstCall=0;
+         iMaxBurstCnt=0;
+         iPrevBurstCnt=0;
+         if(dJit>.5)dJit=.5;
+      }
       
       return 0;
    }
@@ -339,10 +422,10 @@ public:
       {
          static int dbg;
          if((dbg&127)==1)
-            printf("==[bp=%u pp=%u dJit=%.3f ns=%d si=%d tq=%d  mb=%d pb=%d ef=%x errs=%d mem=%d]==\n"
+            printf("==[bp=%u pp=%u dJit=%.3f ns=%d si=%d tq=%d  mb=%d pb=%d ef=%x errs=%d lr=%u spdq=%u mem=%d]==\n"
                    ,uiBufferedTS,uiPlayPos, dJit,iNeedSamplesInBuf,si,iSamplesInTmpQueueLeft
                    ,iMaxBurstCnt,iPrevBurstCnt
-                   ,iErrFlag,iErrs
+                   ,iErrFlag,iErrs,uiLastReceiveSeq,iSeqPlayDecodePackInQueue
                    ,mem.bytesUsed());
          dbg++;
       }
@@ -383,28 +466,12 @@ public:
       return 0;
    }
 private:
+
    
-   unsigned int rolSeq(unsigned short seq){
-    
-      unsigned int tsG = ((uiRollover)<<16) | seq;
-      unsigned int tsGm1 = ((uiRollover-1)<<16) | seq;
-      unsigned int tsGp1 = ((uiRollover+1)<<16) | seq;
-      
-      int d=(int)(uiPrevRolSeq-tsG);if(d<0)d=-d;
-      int dp=(int)(uiPrevRolSeq-tsGp1);if(dp<0)dp=-dp;
-      int dm=(int)(uiPrevRolSeq-tsGm1);if(dm<0)dm=-dm;
-      
-      if(dm<d){d=dm;tsG=tsGm1;}
-      if(dp<d){d=dp;tsG=tsGp1;if(d>((1<<15)+1)){uiRollover++;tsG+=(1<<16);}}
-      uiPrevRolSeq = tsG;
-      
-      usPrevSeq=seq;
-      
-      return tsG;
-   }
-   
-   void err(const char *p){
+   void err(const char *p, int flag){
       iErrs++;
+      if(!(iErrFlag&flag))log_audio("a-err", p);
+      iErrFlag|=flag;
       puts(p);
    }
    
@@ -495,6 +562,10 @@ private:
          if(iBurstCnt>iPrevBurstCnt)
             iPrevBurstCnt=iBurstCnt;
          
+         if(iBurstCnt>iMaxBurstCall){
+            iMaxBurstCall=iBurstCnt;
+         }
+         
       }
       else {
          if(iBurstCnt){
@@ -553,7 +624,7 @@ private:
          }
       }
       else {
-         printf("[reset faild try later %d]\n",cnt);
+         printf("[reset failed try later %d]\n",cnt);
          iResetPos = 1;
          if(!uiPlayPos)
             uiPlayPos = uiTS_recv -  (unsigned int)iNeedSamplesInBuf;
@@ -565,28 +636,31 @@ private:
       return iR;
       
    }
-   unsigned char prevPackD[1024*2];
+   unsigned char prevPackD[MAX_A_RTP_PACK_SIZE+512];
    int iPrevPackLen;
    CCodecBase *prevCodec;
 
    void decodeNextPacket(int iSamples){
       
+      QPack *qNext = findNext(iSeqPlayDecodePackInQueue, eMaxLost);
+      
       QPack *q = &qPack[iSeqPlayDecodePackInQueue & eMaxPackInQueue];
       QPack *qN = &qPack[(iSeqPlayDecodePackInQueue + 1) & eMaxPackInQueue];
-      QPack *qNext = findNext(iSeqPlayDecodePackInQueue, eMaxLost);
       
       
       if(q->iInUse && q->seq!=iSeqPlayDecodePackInQueue){
-         printf("seq=%d %d\n",q->seq,iSeqPlayDecodePackInQueue);
+         char b[128];
+         sprintf(b, "[seq q %d %d, qn %d %d]",q->seq,iSeqPlayDecodePackInQueue, qN->iInUse, qN->seq);
          relPack(q);
-         err("[Seq ERR]");
-         iErrFlag|=8;
+         err(b, 8);
       }
       if(qN->iInUse && qN->seq!=iSeqPlayDecodePackInQueue+1){
-         printf("seqN=%d %d\n",qN->seq,iSeqPlayDecodePackInQueue+1);
+         //if !q->iInUse && qPack[(iSeqPlayDecodePackInQueue + 2) & eMaxPackInQueue].seq==qN->seq+1
+            //then dont_clear_this and reset iSeqPlayDecodePackInQueue
+         char b[128];
+         sprintf(b, "[seqN qn %d %d, q %d %d]",qN->seq,iSeqPlayDecodePackInQueue+1,q->iInUse,q->seq);
          relPack(qN);
-         err("[Seq ERR qN]");
-         iErrFlag|=16;
+         err(b, 16);
       }
       
 #ifdef T_CALC_JIT_IN_PLAYBACK

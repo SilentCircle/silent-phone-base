@@ -1,8 +1,0 @@
-//
-// Prefix header for all source files of the 'polar_ssl' target in the 'polar_ssl' project
-//
-/*
-#ifdef __OBJC__
-   #import <Foundation/Foundation.h>
-#endif
-*/

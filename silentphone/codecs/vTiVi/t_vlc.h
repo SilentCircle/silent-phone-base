@@ -457,7 +457,7 @@ public:
    }
 
    static int  decZero2b(CTVLCX &vlc){
-      int val;
+      int val=0;
       /*
       val=vlc.getVlc_PN(2);
 

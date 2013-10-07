@@ -248,7 +248,7 @@ public:
            //-- iItemCnt--;
             iIsSaved=0;
          }
-         else if(!iCurrentListIsMissed && ((CTRecentsItem*)tmp)->iDir==CTRecentsItem::eMissed){
+         else if(!iCurrentListIsMissed){// && ((CTRecentsItem*)tmp)->iDir!=CTRecentsItem::eMissed){
             remove(tmp);
            //-- iItemCnt--;
             iIsSaved=0;
@@ -362,15 +362,15 @@ public:
       }
    }
    
-   CTRecentsItem* add(int iDir, const char *peer, const char *myAddr, const char *serv, unsigned int uiDuration){
+   CTRecentsItem* add(int iDir, CTEditBase *nameFromABorSIP, const char *peer, const char *myAddr, const char *serv, unsigned int uiDuration){
       if(iDir==CTRecentsItem::eMissed)uiDuration=0;
       CTRecentsItem *i=new CTRecentsItem();
       if(!i){
          //TODO LOG
          return NULL;
       }
-      
       i->iDir=iDir;
+      i->name.setText(*nameFromABorSIP);
       i->peerAddr.setText(peer);
       i->myAddr.setText(myAddr);
       i->lbServ.setText(serv);

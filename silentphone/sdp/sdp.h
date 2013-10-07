@@ -86,10 +86,13 @@ typedef struct {
    int iMediaCnt:8;
    int iParsed:1;//TODO remove not used
    int codecCount:7;// will suport max 63 codecs
-
-
    
 }SDP;
+
+int findMediaId(SDP *sdp, int eType, int n);
+int hasAttrib(SDP &sdp, const char *attr, int iType);
+int parseSDP(SDP *psdp, char *buf, int iLen);
+
 /*
 struct CODECS{
    unsigned int          uiID;

@@ -19,6 +19,7 @@
  * Authors: Werner Dittmann <Werner.Dittmann@t-online.de>
  */
 
+#include <ctype.h>
 #include <libzrtpcpp/ZrtpPacketHello.h>
 
 
@@ -62,8 +63,6 @@ void ZrtpPacketHello::configureHello(ZrtpConfigure* config) {
     setLength(length / ZRTP_WORD_SIZE);
     setMessageType((uint8_t*)HelloMsg);
 
-    setVersion((uint8_t*)zrtpVersion);
-
     uint32_t lenField = nHash << 16;
     for (int32_t i = 0; i < nHash; i++) {
         AlgorithmEnum& hash = config->getAlgoAt(HashAlgorithm, i);
@@ -106,10 +105,15 @@ ZrtpPacketHello::ZrtpPacketHello(uint8_t *data) {
     uint32_t temp = zrtpNtohl(t);
 
     nHash = (temp & (0xf << 16)) >> 16;
+    nHash &= 0x7;                              // restrict to max 7 algorithms
     nCipher = (temp & (0xf << 12)) >> 12;
+    nCipher &= 0x7;
     nAuth = (temp & (0xf << 8)) >> 8;
+    nAuth &= 0x7;
     nPubkey = (temp & (0xf << 4)) >> 4;
+    nPubkey &= 0x7;
     nSas = temp & 0xf;
+    nSas &= 0x7;
 
     // +2 : the MAC at the end of the packet
     computedLength = nHash + nCipher + nAuth + nPubkey + nSas + sizeof(HelloPacket_t)/ZRTP_WORD_SIZE + 2;
@@ -124,4 +128,15 @@ ZrtpPacketHello::ZrtpPacketHello(uint8_t *data) {
 
 ZrtpPacketHello::~ZrtpPacketHello() {
     DEBUGOUT((fprintf(stdout, "Deleting Hello packet: alloc: %x\n", allocated)));
+}
+
+int32_t ZrtpPacketHello::getVersionInt() {
+    uint8_t* vp = getVersion();
+    int32_t version = 0;
+
+    if (isdigit(*vp) && isdigit(*vp+2)) {
+        version = (*vp - '0') * 10;
+        version += *(vp+2) - '0';
+    }
+    return version;
 }

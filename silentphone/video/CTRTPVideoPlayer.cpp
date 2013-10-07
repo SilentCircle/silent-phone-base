@@ -44,45 +44,30 @@ unsigned int getTickCount();
 #ifdef _WIN32
 #define VID_BUF_ST_SIZE 4*1024*1024
 #else
-#define VID_BUF_ST_SIZE 768*1024
+#define VID_BUF_ST_SIZE 500*1024
 #endif
 
-//TODO move to  CTVideoMem
-static int iVB_bytesFree=VID_BUF_ST_SIZE;
 
-class CTVideoMem{   
-   unsigned char *p;
-public:
-   CTVideoMem(){p=NULL;}
-   ~CTVideoMem(){if(p)delete p;p=NULL;}
-   
-   unsigned char *getBuf(){
-      if(!p)p=new unsigned char[VID_BUF_ST_SIZE+1024*128];
-      return p;
-   }
-   
-   
-};
-
-
-CTVideoMem vmem;
-
-void relVidFrameBuf(unsigned char *p){
-   //TODO move to CTVideoMem
-   if(!p)return;
-   iVB_bytesFree+=*(int*)(&p[-(signed int)sizeof(int)]);   
-   return;
+unsigned char *CTVideoMem::getBuf(){
+   if(!pMem)pMem=new unsigned char[VID_BUF_ST_SIZE+1024*128];
+   return pMem;
 }
 
-unsigned char *getVidFrameBuf(int sz){
+CTVideoMem::CTVideoMem(){pMem=NULL;iNextPos=0;iVB_bytesFree=VID_BUF_ST_SIZE;}
+
+unsigned char *CTVideoMem::getVidFrameBuf(int sz){
    
    //TODO move to CTVideoMem
-   unsigned char *vb=vmem.getBuf(); 
-   static int iNextPos=0;
+   unsigned char *vb=getBuf();
    
-   if(iVB_bytesFree<sz+30000)return 0;
+   
+   if(iVB_bytesFree<sz+10000)return 0;
+
    
    int nsz=(((sz+32)>>4)<<4);
+   
+   if(iNextPos+nsz>VID_BUF_ST_SIZE+1000)iNextPos=0;
+
    
    unsigned char *ret=&vb[iNextPos];
    *(int*)ret=nsz;
@@ -91,10 +76,29 @@ unsigned char *getVidFrameBuf(int sz){
    iVB_bytesFree-=nsz;
    iNextPos+=nsz;
    
-   if(iNextPos>VID_BUF_ST_SIZE)iNextPos=0;
    return ret;
 }
 
+void CTVideoMem::relVidFrameBuf(unsigned char *p){
+   if(!p || !pMem)return;
+   if(p<pMem || p>pMem+VID_BUF_ST_SIZE)return;
+   int n = *(int*)(&p[-(signed int)sizeof(int)]);
+   if(n<1 || n>VID_BUF_ST_SIZE)return;
+   if(p<pMem || p+n>pMem+VID_BUF_ST_SIZE)return;
+   iVB_bytesFree+=n;
+   return;
+}
+/*
+ CTVideoMem vmem;
+void relVidFrameBuf(unsigned char *p){
+   vmem.relVidFrameBuf(p);
+   return;
+}
+
+unsigned char *getVidFrameBuf(int sz){
+   return vmem.getVidFrameBuf(sz);
+}
+*/
 int CTRTPVideoPlayer::reset(){
    iCurrentPlayFrame=0;
    iFramesAfterAudio=0;
@@ -106,6 +110,7 @@ int CTRTPVideoPlayer::reset(){
    
    vmutex.lock();
    videoFrameList.removeAll();
+   //TODO mem release
    vmutex.unLock();
    return 0;
 }

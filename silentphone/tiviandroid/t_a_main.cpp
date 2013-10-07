@@ -97,12 +97,12 @@ void t_init_glob();
 int isFileExistsW(const short *fn);
 void setCfgFN(CTEditBase &b, int iIndex);
 
-#define INFO_MSG_ROW_CNT 12
+#define INFO_MSG_ROW_CNT 20
 
 class CTBMsg{
    CTEditBuf<128> m[INFO_MSG_ROW_CNT];
    int iLast;
-   CTEditBuf<2048> msg;
+   CTEditBuf<4096> msg;
    int iHasNew;
 public:
    inline int hasNewInfo(){return iHasNew;}
@@ -185,14 +185,16 @@ public:
       static unsigned int uiPrevG;
       unsigned int uiCT=getTickCount();
       if(iNow){
-         if(uiPrevG+1000<uiCT)
+         if(iNow!=2 && uiPrevG+1000<uiCT)
             iNow=0;
       }
       //if call is active check ip every 1 sec
       if(piIs3G)*piIs3G=i3g;
-      if(uiPrevG+10000>uiCT && !iNow && ip!=-1)return ip;
-      if(uiPrevG+500>uiCT && ip!=-1)return ip;
+      if(uiPrevG+50000>uiCT && !iNow && ip!=-1)return ip;
+      if(iNow!=2 && uiPrevG+500>uiCT && ip!=-1)return ip;
       uiPrevG=uiCT;
+      if(iNow==2)uiPrevG=uiCT-45000;
+         
       if(ip==-1)ip=0;
       
       
@@ -320,7 +322,7 @@ int hasIP(){
 
 int checkIPNow(){
    int i3g=0,ip;
-   ip=CTGetIP::getIPLoc(1,&i3g);
+   ip=CTGetIP::getIPLoc(2,&i3g);
    return hasNetworkConnect(ip);
 }
 
@@ -464,20 +466,13 @@ public:
          return -2;
       }
       getSamples((short*)p,iSamples);
-      //      short *ps=(short*)(pBuf+iPos);
-      //  printf("[%d %d %d ]",iPlayAfterPrev,ps[0],ps[20]);
       return iSamples*2;
    }
 protected:
    int getSamples(short *pDst, int iSamples){
       
-      
-      //--memcpy(pDst,pBuf+iPos,iSamples*2);
       int iUsed=0;
       resampler.doJob((short*)(pBuf+iPos),0,pDst,iSamples,&iUsed);
-      // printf("used %d, in=%d ",iUsed,iSamples);
-      
-      
       iPos+=iUsed*2;
       
       return 0;
@@ -495,9 +490,18 @@ static void signalFncOnStop(int id){
    tivi_log1("signalOnStop",id);
 }
 
+static int iVideoConfEnabled=0;
+
+int isVideoConfEnabled(){
+#if defined(ANDROID_NDK)  || defined(__linux__)
+   return 0;
+#endif
+   return iVideoConfEnabled;
+}
+
 class CTMediaMngr: public CTMediaMngrBase{
 public:
-   enum{eMaxAOCnt=12};//TODO global define
+   enum{eMaxAOCnt=16};//TODO global define
 
    CTAudioOut  cAO;
    
@@ -507,15 +511,69 @@ public:
       unsigned int uiReleasedAT;
       CTAudioOutVOIP *voipAudioOut;
    }T_AO;
-public:
    
-   CTAudioIn  cAI;
-   CTServVideoOut cVO;
-   CTServVideoIn cVI;
-   CTVadDetection2 vad;
+   typedef struct{
+      int iInUse;
+      unsigned int uiReleasedAT;
+      CTServVideoOut *vOut;
+   }T_VO;
    
    T_AO ao[eMaxAOCnt];
-   int iNextToUse;
+   T_VO vo[eMaxAOCnt];
+   
+   void *pQWView;
+   
+   
+   CTMediaListItem *getMediaListItem(int iVideo){
+      CTMediaListItem *i;
+      CTList *lr = iVideo ? &listRemV : &listRemA ;
+      mutexListRem.lock();
+      
+      i=(CTMediaListItem*)lr->getLRoot();
+      if(i)lr->remove(i,0);
+      
+      mutexListRem.unLock();
+      if(!i)i=new CTMediaListItem();
+      //getListItem
+      return i;
+   }
+   void relMediaListItem(CTMediaListItem *i, int iIsVideo){
+      if(!i)return;
+      mutexListRem.lock();
+      if(iIsVideo)
+         listRemV.addToTail(i);
+      else
+         listRemA.addToTail(i);
+      mutexListRem.unLock();
+   }
+   CTList listRemV;
+   CTList listRemA;
+   CTMutex mutexListRem;
+   
+   CTServVideoOut *getVOPriv(int iSecondPass){
+      CTServVideoOut *o=NULL;
+      
+      unsigned int uiTC=getTickCount();
+      
+      int iMaxCnt=maxVOCnt();
+      
+      for(int i=0;i<iMaxCnt;i++){
+         int d = (int)(uiTC-vo[i].uiReleasedAT);
+         if(!vo[i].iInUse && (iSecondPass || (vo[i].uiReleasedAT==0 && vo[i].vOut) || d>3000)){
+            vo[i].iInUse=3;
+            if(!vo[i].vOut)
+               vo[i].vOut = new CTServVideoOut();
+            o=vo[i].vOut;
+            o->setQWview(pQWView);
+            vo[i].uiReleasedAT=0;
+            vo[i].iInUse=1;
+            
+            break;
+         }
+      }
+      return o;
+   }
+   
    
    CTAudioOutVOIP *getAOPriv(int iRate, int iSecondPass){
       
@@ -524,13 +582,13 @@ public:
       unsigned int uiTC=getTickCount();
       
       for(int i=0;i<eMaxAOCnt;i++){
-         if(!ao[i].iInUse && (iSecondPass || ao[i].uiReleasedAT==0 || ao[i].uiReleasedAT+5000<uiTC)){
+         int d = (int)(uiTC-ao[i].uiReleasedAT);
+         if(!ao[i].iInUse && (iSecondPass || (ao[i].uiReleasedAT==0 && ao[i].voipAudioOut) || d>5000)){
             ao[i].iInUse=3;
             ao[i].iRate=iRate;
             if(!ao[i].voipAudioOut)
                ao[i].voipAudioOut = new CTAudioOutVOIP(iRate,1,&cAO);
             o=ao[i].voipAudioOut;
-            iNextToUse=i+1;
             ao[i].uiReleasedAT=0;
             ao[i].iInUse=1;
             
@@ -540,10 +598,32 @@ public:
       return o;
    }
    int iInitOk;
+   CTServVideoOut *lastVO;
+   
+public:
+   
+   CTVadDetection2 vad;
+   CTAudioIn  cAI;
+   CTServVideoIn cVI;
+   
+   inline int maxVOCnt(){
+      return isVideoConfEnabled()?eMaxAOCnt:1;
+   }
+   
+   
+   void setQWview(void *p){
+      pQWView=p;
+      for(int i=0;i<eMaxAOCnt;i++){if(vo[i].vOut && vo[i].iInUse)vo[i].vOut->setQWview(p);}
+    //  cVO.setQWview(p);
+      //cVO2.setQWview(p);
+   }
+
 public:
 
    CTMediaMngr():cAO(16,16000),cAI(NULL,16,16000){
       iInitOk=0;
+      pQWView=NULL;
+      lastVO=NULL;
    }
    int availableAO(){
       for(int i=0;i<eMaxAOCnt;i++){
@@ -557,8 +637,8 @@ public:
       if(iInitOk)return;
       iInitOk=2;
       cAO.init(NULL);
-      iNextToUse=0;
       int iInitCnt=0;
+      memset(vo, 0 ,sizeof(vo));
       
       int iRateO=16000;
       
@@ -566,7 +646,7 @@ public:
          ao[i].iInUse=1;
          iInitCnt++;
          
-         if(iInitCnt<3)
+         if(iInitCnt<2)
             ao[i].voipAudioOut=new CTAudioOutVOIP(iRateO,1,&cAO);
          else{
             ao[i].voipAudioOut=NULL;
@@ -581,6 +661,11 @@ public:
          ao[i].iInUse=1;
          if(ao[i].voipAudioOut)
             delete ao[i].voipAudioOut;
+      }
+      for(int i=0;i<eMaxAOCnt;i++){
+         vo[i].iInUse=1;
+         if(vo[i].vOut)
+            delete vo[i].vOut;
       }
    }
    
@@ -598,14 +683,60 @@ public:
       for(int i=0;i<eMaxAOCnt;i++){
          //TODO if (uiReleasedAT && uiReleasedAT+10000<getTickCount())delete ao[i].voipAudioOut
          if(ao[i].voipAudioOut==v){
-            v->stop();
-            ao[i].iInUse=0;
             ao[i].uiReleasedAT=getTickCount();
+            v->stop();
             puts("relAO ok");
+            ao[i].iInUse=0;
+
             break;
          }
       }
    }
+#if defined(ANDROID_NDK)  || defined(__linux__)
+   int getVidFrame(int prevf, int *i,int *sxy){
+      CTServVideoOut *o=lastVO;
+      if(!o)return -1;
+      
+      return o->getFrame(prevf, i, sxy);//it is safe to use - we are deleting a relased objects later
+   }
+#endif
+   
+   CTVideoOutBase *getVO(){
+      CTServVideoOut *o=getVOPriv(0);
+      if(!o)o=getVOPriv(1);
+      printf("[getVO ptr %p]",o);
+      if(o) lastVO=o;
+      return (CTVideoOutBase*)o;
+   }
+   void relVO(CTVideoOutBase *p){
+      CTServVideoOut *v=(CTServVideoOut*)p;
+      if(lastVO==v)lastVO=NULL;;
+      printf("[relVO ptr %p]",v);
+      if(!v)return;
+      for(int i=0;i<maxVOCnt();i++){
+         //TODO if (uiReleasedAT && uiReleasedAT+10000<getTickCount())delete ao[i].voipAudioOut
+         if(vo[i].vOut==v){
+            vo[i].uiReleasedAT=getTickCount();
+            v->stop();
+            puts("relVO ok");
+            vo[i].iInUse=0;
+            break;
+         }
+         
+      }
+   }
+   int VOInUse(){
+      int iCnt=0;
+      for(int i=0;i<maxVOCnt();i++){
+         if(vo[i].iInUse)iCnt++;
+      }
+      return iCnt;
+   }
+   int availableVO(){return maxVOCnt()-VOInUse();}
+
+   
+   CTVideoInBase &getVI(){return cVI;}
+   CTAudioInBase &getAI(){return cAI;}
 };
 
 #if defined(__APPLE__) || defined(__linux__)
@@ -616,9 +747,11 @@ public:
 #include "../tiviengine/CTConference.h"
 
 CTDtmfPlayer dtmfPlay;//TODO move to global class
-CTMediaMngr audioMngr;//TODO move to global class
+CTMediaMngr audioMngr;//TODO move to global class, rename to mediaMngr
 CTConference g_conf;//TODO move to global class
 CTLangStrings strings;
+
+CTLangStrings *g_getLang(){return &strings;}
 
 #include "../tiviengine/CTEntropyCollector.h"
 int CTEntropyCollector::iEntropyColectorCounter=0;
@@ -636,8 +769,8 @@ void setDtmfEnable(int iEnable){
    dtmfPlay.enable(iEnable);
 }
 
-static int iIsInBacground=0;
-int isInBackGround(){return iIsInBacground;}
+static int iIsInBackground=0;
+int isInBackGround(){return iIsInBackground;}
 
 
 void checkGlobalSettings(void *p);
@@ -659,6 +792,119 @@ void initGlobals(){
 
 #include "engcb.h"
 
+class CTEngUtils{
+public:
+   static char *tryRemovePlus1IfNot11Digits(char *sz, int &iLen){//PRZ
+      //some carriers prepended +1 even call originates outside US
+      if(iLen<6)return sz;//number is too small
+      if(sz[0]!='+' && sz[1]!='1')return sz;
+      int iDigits=0;
+      for(int i=0;i<iLen;i++){
+         if(isalpha(sz[i]))return sz;
+         if(sz[i]=='@'){
+            break;
+         }
+         if(isdigit(sz[i]))iDigits++;
+      }
+      if(iDigits==11)return sz;
+      iLen--;
+      sz[1]='+';
+      return sz+1;
+   }
+   static char *tryCleanNR(char *sz, int &iLen){
+      int iDots=0,iAtFound=0;
+      int iMustFix=0;
+      for(int i=0;i<iLen;i++){
+         
+         if(isalpha(sz[i]))return sz;
+         if(sz[i]=='@'){iAtFound=1;break;}
+         
+         if(isdigit(sz[i]) || (i==0 && sz[i]=='+'))continue;
+         if(sz[i]=='.')iDots++;
+         iMustFix=1;
+         
+      }
+      if(!iAtFound || iDots==3)return sz;
+      int iNewLen=0;
+      int wasAt=0;
+      for(int i=0;i<iLen;i++){
+         
+         if(sz[i]==0){break;}
+         if(sz[i]=='@')wasAt=1;
+         
+         int d = wasAt || isdigit(sz[i]) || (i==0 && sz[i]=='+');
+         
+         if(!d)continue;
+         
+         sz[iNewLen]=sz[i];
+         
+         iNewLen++;
+         
+      }
+      iLen=iNewLen;
+      sz[iLen]=0;
+      
+      return sz;
+   }
+   //TODO move to eng utils
+   static char *checkAddr(PHONE_CFG &p_cfg, char *bufTmpIncomAddr, int iMaxLen, char *sz, int &iLen){
+      bufTmpIncomAddr[0]=0;
+      iMaxLen--;
+      
+      if(iLen>=iMaxLen){
+         strncpy(bufTmpIncomAddr,sz,iMaxLen);
+         bufTmpIncomAddr[iMaxLen]=0;
+         sz=&bufTmpIncomAddr[0];
+         iLen=iMaxLen;
+      }
+      else{
+         strncpy(bufTmpIncomAddr,sz,iLen);
+         bufTmpIncomAddr[iLen]=0;
+         sz=&bufTmpIncomAddr[0];
+      }
+      
+      
+      //  puts(sz);
+      
+      if(p_cfg.str32GWaddr.strVal[0]){
+         ADDR a;
+         for(int i=0;i<iLen;i++){
+            if(sz[i]=='@'){
+               a=sz+i+1;
+               if(a.ip && a.ip==p_cfg.GW.ip){//if ip addr is servers replace to serv addr
+                  strcpy(&sz[i+1],&p_cfg.str32GWaddr.strVal[0]);
+                  iLen=strlen(&sz[0]);
+               }
+               else{
+                  
+                  if(strcmp(&sz[i+1], &p_cfg.str32GWaddr.strVal[0])){//if is no serv name
+                     int iAtPos=i;
+                     for(;i<iLen;i++){
+                        if(sz[i]!='.')continue;
+                        int l=strlen(p_cfg.str32GWaddr.strVal);
+                        int z=l-(iLen-i);
+                        if(z>0){
+                           //if pbx.example.com replace to sip.example.com where sip.example.com is  serv addr
+                           puts(&sz[i]);
+                           puts(&p_cfg.str32GWaddr.strVal[z]);
+                           if(strcmp(&sz[i],&p_cfg.str32GWaddr.strVal[z])==0){
+                              strcpy(&sz[iAtPos+1],&p_cfg.str32GWaddr.strVal[0]);
+                              iLen=strlen(&sz[0]);
+                           }
+                        }
+                        i=iLen;
+                        break;
+                        
+                     }
+                  }
+               }
+            }
+         }
+      }
+      return sz;
+   }
+};
+
 #ifndef __APPLE__
 #include "../audio/ec/speex_aec/speex_aec.h"
 #endif
@@ -668,14 +914,34 @@ int getEchoEnableState(){return iEchoCancellerOn;}
 
 class CPhoneCons: public CTEngineCallBack, public CTZrtpCb
 {
+   class CTMute{
+      int iMute;
+      int iOnMuteCnt;
+      int iSR;
+   public:
+      CTMute(){iSR=16000;iMute=0;iOnMuteCnt=0;}
+      int isMuted(){return iMute;}
+      void setMute(int onOff){iMute=onOff;iOnMuteCnt=0;}
+      int shouldSendCN(int iSamples){
+         iOnMuteCnt++;
+         int iAnd=7;
+         if(iSamples>320){
+            int iPacketsPerSecond=iSR/iSamples;
+            if(iPacketsPerSecond>26)iAnd=7;
+            else if(iPacketsPerSecond>14)iAnd=3;
+            else if(iPacketsPerSecond>8)iAnd=1;
+            else iAnd=0;//send every pack
+         }
+         return iOnMuteCnt<8 || (iOnMuteCnt&iAnd)==0;
+      }
+   };
+   CTMute mute;
    
    int iEngStarted;
    int iDialing;
-   int iMute;
    
    int iFlagResetEC;
-   
-   int iShouldEnroll;// if not T_ENABLE_MULTI_CALLS
+
    
    CTMakeDtmf dtmf;
    CTZRTP *_thisZRTP;
@@ -689,10 +955,7 @@ class CPhoneCons: public CTEngineCallBack, public CTZrtpCb
    int iCallId;
    
    void playSound(int iRate, const char *fn, int iSesId, int iPlayAfterPrev){
-      
-      const char *path=findFilePath(fn);//??
-      if(!path)return;//??
-      
+
       CTAudioOutVOIP *ao=(CTAudioOutVOIP*)ph->findSessionAO(ph->findSessionByID(iSesId));
       
       int iCanDelete=1;
@@ -761,12 +1024,41 @@ public:
 #else
       int cid=iCallId;
 #endif
+      if(p){
+#warning speak to Werner, this should be here because i am playnig the warn sound
+         if(strncmp(p, "s2_c007:",8)==0 || strncmp(p, "s2_c051:",8)==0)
+            return;
+         
+         int v;
+         int iSDES=0;
+         int getCallInfo(int iCallID, const char *key, int *v);
+         if(getCallInfo(cid,iIsVideo ? "media.video.zrtp.sec_state" : "media.zrtp.sec_state", &v)==0 && v & 0x100)
+            iSDES=1;
+         
+         // Display SRTP authentication failure in any case
+         if(iSDES && strncmp(p, "s2_c006:",8)!=0)
+            return;
+      }
+
+      
       if(!zrtp->iFailPlayed && zrtp->isSecure(0) && zrtp->iSoundPlayed){
          zrtp->iFailPlayed=2;
          playSound(8000,"failed8k.raw",cid,1);
          zrtp->iSoundPlayed=1;
-         
       }
+      /*
+      //--------------------
+      printf("zrtp w=%s\n",p);
+      static char bPrev[128];
+      if(strcmp(bPrev, p)){
+         strncpy(bPrev,p,sizeof(bPrev)-1);bPrev[sizeof(bPrev)-1]=0;
+         CTEditBuf<256> b;
+         b.setText(iIsVideo?"zrtp-w-v:":"zrtp-w-a:");
+         b.addText(p);
+         info(&b,0,cid);
+      }
+      //-------------
+       */
       sendCB(CT_cb_msg::eZRTPWarn,cid,p);
    }
    
@@ -807,6 +1099,12 @@ public:
          sendCB(CT_cb_msg::eZRTP_sas,cid,p);
       }
       else if((stat==zrtp->eError) && p){
+         /*
+         CTEditBuf<256> b;
+         b.setText(iIsVideo?"zrtp-err-v:":"zrtp-err-a:");
+         b.addText(p);
+         info(&b,0,cid);
+         */
          sendCB(iIsVideo?CT_cb_msg::eZRTPErrV:CT_cb_msg::eZRTPErrA,cid,p);
       }
       if(!zrtp->iFailPlayed && (stat==zrtp->eError || (zrtp->iWarnDetected && zrtp->isSecure(0))) ){
@@ -820,7 +1118,7 @@ public:
    }
    void onNeedEnroll(CTZRTP *zrtp){
       _thisZRTP=zrtp;
-      iShouldEnroll=1;
+
 #ifdef T_ENABLE_MULTI_CALLS
       int cid=(int)ph->findSessionByZRTP(zrtp);
 #else
@@ -843,7 +1141,6 @@ public:
       ph=NULL;
       _thisZRTP=NULL;
       
-      iShouldEnroll=0;
       iPrevCfgChanges=0;
       
       bufLastRegErr[0]=0;
@@ -854,7 +1151,7 @@ public:
       iFlagResetEC=1;
       
       iEngStarted=0;
-      iMute=0;
+      
       iCallId=0;
       iDialing=0;
       
@@ -889,10 +1186,10 @@ public:
       
 #if defined(__linux__) && !defined(ANDROID_NDK)
       //used only for testing engines
-      static CTMedia *m=new CTMedia(*ph,this, audioMngr.cVO,audioMngr.cVI,audioMngr.cAI,audioMngr);
+      static CTMedia *m=new CTMedia(*ph,this, audioMngr);
 #else
       
-      CTMedia *m=new CTMedia(*ph,this, audioMngr.cVO,audioMngr.cVI,audioMngr.cAI,audioMngr);
+      CTMedia *m=new CTMedia(*ph,this, audioMngr);
 #endif
       m->setZrtpCB(this);//TODO set it when call is starting or ph->setZrtpCB(this);
       
@@ -990,7 +1287,7 @@ public:
                if(z)
                {
                   while(*p && !isspace(*p))p++;
-                  if(*p && p[1] &&  p[2]){
+                  if(*p && p[1]){
                      char buf[128];
                      safeStrCpy(&buf[0],p+1,sizeof(buf)-1);
                      trim(buf);
@@ -1118,7 +1415,7 @@ public:
                         strcpy(buf,p+2);
                         iEndDialingCall=0;
                         iDialing=1;
-                        CTSesMediaBase *mb = (*(p+1)!='v')?NULL:mediaFinder->findMedia("video",5);
+                        CTSesMediaBase *mb = (*(p+1)!='v')?NULL:tryGetMedia("video");
                         iCallId=ph->call(buf, mb);
                         if(!iCallId && mb){
                            mediaFinder->release(mb);
@@ -1164,7 +1461,7 @@ public:
             else if(iLen==5 && strcmp(p+1,"onka")==0){
                p_cfg.iIsInForeground=0;
                if(p_cfg.iAccountIsDisabled)return T_TRY_OTHER_ENG;
-               iIsInBacground=1;
+               iIsInBackground=1;
                
                
                getLocalIpNow();
@@ -1223,7 +1520,7 @@ public:
             }
             else if(iLen==13 && strcmp(p+1,"onforeground")==0){
                p_cfg.iIsInForeground=1;
-               iIsInBacground=0;
+               iIsInBackground=0;
                if(p_cfg.uiPrevExpires<800 && p_cfg.uiPrevExpires>0)p_cfg.uiExpires=p_cfg.uiPrevExpires;
                p_cfg.uiPrevExpires=0;
                puts("foreground");
@@ -1262,14 +1559,25 @@ public:
             }
             else if(iLen==7 && strcmp(p+1,"mute 1")==0)
             {
-               iMute=1;puts("mute mic");
+               mute.setMute(1);puts("mute mic");
                return T_TRY_OTHER_ENG;
             }
             else if(iLen==7 && strcmp(p+1,"mute 0")==0)
             {
-               iMute=0;puts("unmute mic");
+               mute.setMute(0);puts("unmute mic");
                return T_TRY_OTHER_ENG;
             }
+#if defined(ANDROID_NDK)
+            else if(iLen==6 && isdigit(p[5]) && strncmp(p+1,"aec ",4)==4){
+               void setSpkrModeAEC(void *aec, int echoMode);
+               
+               int m=p[5]-'0';
+               tivi_log1("set aec mode:", m);
+
+               setSpkrModeAEC(NULL, m);
+               
+            }
+#endif
             else if(iLen==12 && strcmp(p+1,"GSMactive 1")==0)
             {
                p_cfg.iGSMActive=1;
@@ -1457,7 +1765,6 @@ public:
       {
          g_conf.remCall((CSesBase*)SesId);
          iFlagResetEC=0;//if no calls left// are 0
-         iShouldEnroll=0;
          iCallId=0;
          sendCB(CT_cb_msg::eEndCall,SesId);
          
@@ -1523,6 +1830,12 @@ protected:
       return 0;
    }
    
+   CTSesMediaBase* tryGetMedia(const char *name){
+      if(strcmp(name,"video")==0 && audioMngr.availableVO())return mediaFinder->findMedia("video",5);
+      if(audioMngr.availableAO())return mediaFinder->findMedia("audio",5);
+      
+      return NULL;
+   }
    
    int canAccept(ADDR *addr, char *sz, int iLen, int iSesId, CTSesMediaBase **media)
    {
@@ -1532,9 +1845,8 @@ protected:
          if(iCallId==0 && audioMngr.availableAO())
 #endif
          {
-            CTSesMediaBase *m=mediaFinder->findMedia("video",5);
-            if(!m)m=mediaFinder->findMedia("audio",5);
-            *media =m;
+            CTSesMediaBase *m=tryGetMedia("audio");
+            *media = m;
             if(m)return (int)*media;
             
          }
@@ -1555,65 +1867,11 @@ protected:
       
       audioMngr.cVI.setVideoEveryMS(p_cfg.iVideoFrameEveryMs);
       
-      iShouldEnroll=0;
    }
    
    
-   char bufTmpIncomAddr[256];
-   //TODO move to eng utils
-   char *checkAddr(char *sz, int &iLen){
-      bufTmpIncomAddr[0]=0;
-      
-      if(iLen>=127){
-         strncpy(bufTmpIncomAddr,sz,127);
-         bufTmpIncomAddr[127]=0;
-         sz=&bufTmpIncomAddr[0];
-         iLen=127;
-      }
-      else{
-         strncpy(bufTmpIncomAddr,sz,iLen);
-         bufTmpIncomAddr[iLen]=0;
-         sz=&bufTmpIncomAddr[0];
-      }
-      //  puts(sz);
-      
-      if(p_cfg.str32GWaddr.strVal[0]){
-         ADDR a;
-         for(int i=0;i<iLen;i++){
-            if(sz[i]=='@'){
-               a=sz+i+1;
-               if(a.ip && a.ip==p_cfg.GW.ip){//if ip addr is servers replace to serv addr
-                  strcpy(&sz[i+1],&p_cfg.str32GWaddr.strVal[0]);
-                  iLen=strlen(&sz[0]);
-               }
-               else{
-                  
-                  if(strcmp(&sz[i+1], &p_cfg.str32GWaddr.strVal[0])){//if is no serv name
-                     int iAtPos=i;
-                     for(;i<iLen;i++){
-                        if(sz[i]!='.')continue;
-                        int l=strlen(p_cfg.str32GWaddr.strVal);
-                        int z=l-(iLen-i);
-                        if(z>0){
-                           //if pbx.example.com replace to sip.example.com where sip.example.com is  serv addr
-                           puts(&sz[i]);
-                           puts(&p_cfg.str32GWaddr.strVal[z]);
-                           if(strcmp(&sz[i],&p_cfg.str32GWaddr.strVal[z])==0){
-                              strcpy(&sz[iAtPos+1],&p_cfg.str32GWaddr.strVal[0]);
-                              iLen=strlen(&sz[0]);
-                           }
-                        }
-                        i=iLen;
-                        break;
-                        
-                     }
-                  }
-               }
-            }
-         }
-      }
-      return sz;
-   }
+   
+
    int onSdpMedia(int SesId, const char *media){
       sendCB(CT_cb_msg::eNewMedia,SesId,media,strlen(media));
       return 0;
@@ -1624,16 +1882,32 @@ protected:
       iCallId=SesId;
       resetDataOnCallStart();
       
-      sz=checkAddr(sz,iLen);
+      char out[256];
+      char *pOut=&out[0];
+      int iSipLen=0;
+      
+      if(iLen>4 && strncmp(sz,"sip:",4)==0){iSipLen=4;}
+      else if(iLen>5 && strncmp(sz,"sips:",5)==0){iSipLen=5;}
+      
+      if(iSipLen){
+        // strncpy(out,sz,iSipLen);
+         sz+=iSipLen;iLen-=iSipLen;
+      }
+      
+      pOut=CTEngUtils::checkAddr(p_cfg, &out[iSipLen], sizeof(out)-iSipLen-1,sz,iLen);
+      pOut=CTEngUtils::tryCleanNR(pOut, iLen);
+      pOut=CTEngUtils::tryRemovePlus1IfNot11Digits(pOut, iLen);//PRZ
+      
+      //iLen+=iSipLen;pOut=&out[0];//TODO use if(iSipLen){iLen+=iSipLen;strncpy(pOut-iSipLen,sz-iSipLen,iSipLen);pOut-=iSipLen;}
       
       CTEditBuf<128> b;
       b.addText(ph->strings.lIncomCall);
-      b.addText("\n ");
-      b.addText(sz,iLen);
+      b.addText(" ");
+      b.addText(pOut,iLen);
       
       info(&b,0,0);
       
-      sendCB(CT_cb_msg::eIncomCall,SesId,sz,iLen);
+      sendCB(CT_cb_msg::eIncomCall,SesId,pOut,iLen);
       
       return 0;
    }
@@ -1642,7 +1916,13 @@ protected:
    {
       audioMngr.vad.iSendNextNPackets=50*5;
       CTEditBuf<128> b;
-      b.setText("Connected");
+      b.setText("Connected,cid=");
+      CSesBase *ses=ph->findSessionByID(SesId);
+      if(ses){
+         char *p=ses->sSIPMsg.dstrCallID.strVal;
+         int l=ses->sSIPMsg.dstrCallID.uiLen;
+         if(p && l>0 && l<100)b.addText(p, l);//cid //2o2mxeOYAdlfO9F1
+      }
       info(&b,0,0);
       sendCB(CT_cb_msg::eStartCall,SesId);
       return 0;
@@ -1720,7 +2000,8 @@ protected:
       
       return 0;
    }
-#ifndef __APPLE__
+#if 0
+   //ndef __APPLE__
    
    void doEC(char *p, int iLen, int iIsMicSilent){
       if(iLen>80){
@@ -1831,13 +2112,14 @@ public:
    }
    void audioInFromMulitAccounts(char *p, int iLen, unsigned int uiPos, int iIsFirst){
       
-      int iTmpMute=iMute || CTUtilDataPlayer::mute_mic();
+      int iTmpMute=mute.isMuted() || CTUtilDataPlayer::mute_mic();
       
       
       if(iIsFirst){
          
          CTEntropyCollector::tryAddEntropy(p,iLen);
-#ifndef __APPLE__
+#if 0
+         //ndef __APPLE__
          if(iEchoCancellerOn){
             if(iEchoCancellerOn==1)
                doEC(p,iLen,0);
@@ -1856,8 +2138,11 @@ public:
       }
       
       
-      if(iTmpMute)
+      if(iTmpMute){
+         if(mute.isMuted() && !mute.shouldSendCN(iLen>>1))return;
+         //printf("[send CN %u]",getTickCount()/20);
          return ph->onDataSend(NULL,0,uiPos,CTSesMediaBase::eAudio,0);//send CN
+      }
       
       int iIsVoice=1;
       if(p_cfg.useVAD())//cn is on
@@ -1922,6 +2207,9 @@ typedef struct{
 
 CPhoneCons * cPhone=NULL;
 
+
+void *findGlobalCfgKey(char *key, int iKeyLen, int &iSize, char **opt, int *type);
+void *findGlobalCfgKey(const char *key);
 
 
 class CTPhoneMain: public CTAudioCallBack, public CTVideoCallBack{
@@ -2054,7 +2342,7 @@ public:
    }
    
    void start(){
-      if(iStarted )return;
+      if(iStarted ){for(int i=0;i<10 && iStarted==2;i++)Sleep(20);return;}
       iStarted=2;
       audioMngr.cAI.cb=this;
       audioMngr.cVI.cb=this;
@@ -2120,14 +2408,24 @@ public:
    }
    
    typedef struct{
+      enum {eMaxAccounts=5};
       
       int iTmpCallID;
       
       CTPhoneMain *self;
       
       int iCnt;
-      CPhoneCons *eng[eAccountCount];
+      
+      struct{
+         CPhoneCons *eng;
+         int iOptionsCallID;
+         int iIsOnline;
+      }eng[eMaxAccounts];
+      
       char cmd[128];
+      
+      
+      
       
    }T_ENG_LIST_CALL_TO;
    
@@ -2138,8 +2436,14 @@ public:
          eng=getAccountByID(iCurrentDialOutIndex,1);
       }
       
-      T_ENG_LIST_CALL_TO l;
-      l.eng[0]=eng;
+      T_ENG_LIST_CALL_TO *pl=new T_ENG_LIST_CALL_TO;
+      
+      if(!pl)return;
+      
+      T_ENG_LIST_CALL_TO &l =*pl;
+      
+      memset(pl, 0, sizeof(T_ENG_LIST_CALL_TO));
+      l.eng[0].eng=eng;
       l.iCnt=1;
       int iAccounts=0;
       
@@ -2154,12 +2458,14 @@ public:
          if(ret!=eng && ret->ph && isSameAccount(ret,eng)
             //ret->p_cfg.szTitle[0] && strcmp(ret->p_cfg.szTitle,eng->p_cfg.szTitle)==0
             ){
-            l.eng[l.iCnt]=ret;l.iCnt++;
+            l.eng[l.iCnt].eng=ret;l.iCnt++;
+            if(l.iCnt>=T_ENG_LIST_CALL_TO::eMaxAccounts)break;
          }
       }
       if(l.iCnt <= 1){
          tivi_log1("l.iCnt=1 accounts=", iAccounts);
          if(eng)eng->command(cmd);
+         delete pl;
          return;
       }
       
@@ -2170,9 +2476,6 @@ public:
       strncpy(l.cmd, cmd, sizeof(l.cmd)-1);
       l.cmd[sizeof(l.cmd)-1]=0;
       
-      T_ENG_LIST_CALL_TO *pl=new T_ENG_LIST_CALL_TO;
-      memcpy(pl,&l,sizeof(T_ENG_LIST_CALL_TO));
-      
       CTThread *th=new CTThread();
       th->destroyAfterExit();
       th->create(makeCallTh,pl);
@@ -2181,24 +2484,50 @@ public:
       //TODO set TmpID
    }
    
-   static int makeCallTh(void *p){
-      
-      static int resp[eAccountCount];
-      T_ENG_LIST_CALL_TO *pl=(T_ENG_LIST_CALL_TO *)p;
-      
-      char *un=&pl->cmd[3];//":c "
-      
-      for(int i=0;i<pl->iCnt;i++){
-         resp[i]=0;
-         pl->eng[i]->ph->isDstOnline(un, &resp[i]);
-      }
-      int ok=0;
-      int iFailCnt=0;
-      int iFirstOk=0;
-      int e=0,j;
-      for(j=0;j<300 && pl->iTmpCallID>pl->self->iLastTmpCallIDToStop;j++){//|| not canceled
+   static int waitOnlineCT(T_ENG_LIST_CALL_TO *pl, int iMaxWaitMS){
+      int iOnlineCnt=0;
+      int ip=hasIP();
+      for(int t=0;t<iMaxWaitMS;t++){
          
-         if(j==299){
+         if(!hasIP()){t+=100;Sleep(100);continue;}
+         if(!ip){ip=1;Sleep(100);t+=100;}
+         
+         iOnlineCnt=0;
+         for(int i=0;i<pl->iCnt;i++){
+            int v = !!pl->eng[i].eng->p_cfg.isOnline();;
+            iOnlineCnt+=v;
+            pl->eng[i].iIsOnline=v;
+         }
+         if(iOnlineCnt==pl->iCnt){break;}
+         if(iOnlineCnt && t>1000){break;}
+         Sleep(20);t+=20;
+         //TODO force go online
+         //if(iFOn)
+      }
+      return iOnlineCnt;
+   }
+   
+   static void notifyEndCall(T_ENG_LIST_CALL_TO *pl, const char *un, const char *msg, CTEditBase *e=NULL){
+      CTEditBuf<128> b;
+      if(!e){
+         e=&b;
+         b.setText(msg);
+      }
+      
+      //fake call id
+      int cid=15+(pl->iTmpCallID&15);
+      pl->eng[0].eng->onCalling(&pl->eng[0].eng->p_cfg.GW, (char*)un, strlen(un), cid);
+      pl->eng[0].eng->info(e,*(int *)"ERRO",cid);
+      pl->eng[0].eng->onEndCall(cid);
+   }
+   
+   static int waitResp(T_ENG_LIST_CALL_TO *pl, int *resp){
+      int iFirstOk=-1;
+      int iFailCnt=0;
+      int e=3,j;
+      for(j=0;pl->iTmpCallID>pl->self->iLastTmpCallIDToStop;j++){//|| not canceled
+         
+         if(j>=299){
             //send msg to user
             //check network
             e=1;
@@ -2210,46 +2539,138 @@ public:
          iFailCnt=0;
          
          for(int i=0;i<pl->iCnt;i++){
-            if(resp[i]==200 || (resp[i]>=300 && resp[i]<400)){iFirstOk=i;ok++;}
+            if(resp[i]==200 || (resp[i]>=300 && resp[i]<400)){iFirstOk=i;}
             else if(resp[i]<0 || resp[i]>=400)iFailCnt++;
          }
          
          if(iFailCnt==pl->iCnt){e=2;break;}//fail
          
-         if(ok){
+         if(iFirstOk>=0){
             break;
          }
       }
+      if(iFirstOk<0)iFirstOk=-e;
+      return iFirstOk;
+   }
+   
+   static int makeCallTh(void *p){
       
-      //TODO stop others
-      if(ok){
+      int resp[T_ENG_LIST_CALL_TO::eMaxAccounts];
+      CTEditBuf<128> respMsg[T_ENG_LIST_CALL_TO::eMaxAccounts];
+      
+      T_ENG_LIST_CALL_TO *pl=(T_ENG_LIST_CALL_TO *)p;
+      
+      int iOnlineCnt = waitOnlineCT(pl, 3000);
+      
+      if(!iOnlineCnt){
+         for(int i=0;i<pl->iCnt;i++){
+            pl->eng[i].eng->command(":reg");
+         }
+         iOnlineCnt = waitOnlineCT(pl, 2000);
+      }
+      
+      char *un=&pl->cmd[3];//":c "
+      
+      if(!iOnlineCnt && !hasIP()){
+         notifyEndCall(pl, un, "No network");
+         delete pl;
+         return 0;
+      }
+      if(!iOnlineCnt){
+         //should i show last reg error ??
          
-         if(pl->iTmpCallID>pl->self->iLastTmpCallIDToStop)
-         {
-            pl->eng[iFirstOk]->command(pl->cmd);//probl if press ned call when
+         notifyEndCall(pl, un, NULL, &strings.lCouldNotReachServer);
+         delete pl;
+         return 0;
+      }
+      
+      CPhoneCons *firstOnlineEng=NULL;
+      
+
+      for(int i=0;i<pl->iCnt;i++){
+         resp[i]=0;
+         respMsg[i].reset();
+         pl->eng[i].iOptionsCallID = 0;
+         if(pl->eng[i].iIsOnline){
+            pl->eng[i].iOptionsCallID = pl->eng[i].eng->ph->isDstOnline(un, &resp[i], &respMsg[i]);
+            if(!firstOnlineEng && pl->eng[i].iOptionsCallID)firstOnlineEng=pl->eng[i].eng;
+         }
+         else resp[i]=-1;
+      }
+      if(!firstOnlineEng){
+         notifyEndCall(pl, un, NULL, &strings.lCouldNotReachServer);
+         delete pl;
+         return 0;
+      }
+      
+#if 1
+
+      int iFirstOk=waitResp(pl,resp);
+
+#endif
+   
+      for(int i=0;i<pl->iCnt;i++){
+         if(pl->eng[i].eng->ph && pl->eng[i].iOptionsCallID)
+            pl->eng[i].eng->ph->removeRetMsg(pl->eng[i].iOptionsCallID);
+      }
+      
+      if(pl->iTmpCallID>pl->self->iLastTmpCallIDToStop){//check if not canceled by caller
+      
+         if(iFirstOk>=0){
+            pl->eng[iFirstOk].eng->command(pl->cmd);
+            
             if(pl->iTmpCallID<=pl->self->iLastTmpCallIDToStop){
                //TODO make something better
-               pl->eng[iFirstOk]->command(":e");//end last call
+               pl->eng[iFirstOk].eng->command(":e");//end last call
             }
+            
          }
-         
-      }
-      else{
-         //TODO wait 3 sec try Again
-         if(e){
-            for(int i=0;i<pl->iCnt;i++){if(resp[i]>=400){e=3;break;}}
+         else{
+            //TODO wait 3 sec try Again
+            CTEditBase *servMsg=NULL;
+            
+            for(int i=0;i<pl->iCnt;i++){
+               if(respMsg[i].getLen()>0){servMsg=&respMsg[i];break;}
+            }
+            
+            if(servMsg){
+               //number,user does not exist or user is not online
+               //[Not Found -user not online]
+               if(servMsg->getLen()>12 && servMsg->cmpN(CTEditBuf<32>("Not Found -"), 10)==0){
+                  servMsg->remCharsFrom(11,11);
+                  //??  if(servMsg->getChar(0)=='u')servMsg->pData[0]='U';
+               }
+               
+               notifyEndCall(pl,un,NULL, servMsg);
+            }
+            else{
+               // const char *msg=(e==1?"Error: slow network":(e==2?"Could not call":(e==3?"User is not online":"Error-0")));
+               const char *msg="Could not reach server";
+               CTEditBase *trMsg=&strings.lCouldNotReachServer;
+               
+               //>>check can we reach server?
+               int servResp=0;
+               int ses = 0; if(firstOnlineEng)ses = firstOnlineEng->ph->sendSipKA(1,&servResp);
+               for(int j=0;j<100 && ses && pl->iTmpCallID>pl->self->iLastTmpCallIDToStop;j++){
+                  Sleep(50);
+                  if(servResp)break;
+               }
+               if(firstOnlineEng)
+                  firstOnlineEng->ph->removeRetMsg(ses);
+               //<<check can we reach server?
+               
+               if(servResp>0){
+                  msg="Remote party is out of coverage";
+                  trMsg=&strings.lRemoteOutOfReach;
+               }
+               else if(servResp==-2){msg="Slow network";trMsg=NULL;}
+               
+               notifyEndCall(pl,un,msg,trMsg);
+            }
+            
+            
          }
-         CTEditBuf<128> b;b.setText((e==1?"Error: slow network":(e==2?"Could not call":(e==3?"User is not online":"Error-0"))));
-         
-         //fake call id
-         int cid=15+(pl->iTmpCallID&15);
-         pl->eng[0]->onCalling(&pl->eng[0]->p_cfg.GW, un, strlen(un), cid);
-         pl->eng[0]->info(&b,*(int *)"ERRO",cid);
-         pl->eng[0]->onEndCall(cid);
-         //show err msg
       }
-      
-      printf("engCnt=%d iFirstOk=%d ok=%d w=%dms\n",pl->iCnt,iFirstOk,ok?ok:-e,(j+1)*50);
       
       delete pl;
       
@@ -2318,7 +2739,7 @@ public:
       return 0;
       
    }
-   int getReqTimeToLive()
+   int getReqTimeToLive()//TODO check do we have new tasks within next 1min
    {
       int iCalls=0;
       int iSessions=0;
@@ -2371,6 +2792,19 @@ public:
       if(!iStarted || iExiting)return "";
       
       int l=p?strlen(p):0;
+      
+      if(l==5 && t_isEqual(p,"title",5)){
+         if(!pEng)return "";
+         for(int i=0;i<eAccountCount;i++){
+            CPhoneCons *ret=getAccountByID(i);
+            if(ret==pEng){
+               const char *getAccountTitle(void *pS);
+               return getAccountTitle(pEng);
+            }
+         }
+         return "";
+      }
+      
       if(!pEng){
          if(!p)return "";
          
@@ -2402,16 +2836,6 @@ public:
          return "ok";
       }
       
-      if(l==5 && t_isEqual(p,"title",5)){
-         for(int i=0;i<eAccountCount;i++){
-            CPhoneCons *ret=getAccountByID(i);
-            if(ret==pEng){
-               const char *getAccountTitle(void *pS);
-               return getAccountTitle(pEng);
-            }
-         }
-         return "unknown";
-      }
       
       for(int i=0;i<eAccountCount;i++){
          CPhoneCons *ret=getAccountByID(i,1);
@@ -2509,7 +2933,6 @@ public:
          CPhoneCons *ret=getAccountByID(i,1);
          if(!ret)break;
          const char *getAccountTitle(void *pS);
-         void *findGlobalCfgKey(const char *key);
          char *sz=(char*)findGlobalCfgKey("szLastUsedAccount");
          
          if(sz && strcmp(sz,getAccountTitle(ret))==0){
@@ -2557,19 +2980,40 @@ public:
       audioMngr.cAI.cb=this;
       audioMngr.cVI.cb=this;
       CPhoneCons *ret;
-      
+
       if(p && strncmp(p,"*##*",4)==0){
          
          if(strcmp(p+4,"3357768*")==0){//delprov
+            int created_by_user[eAccountCount];
+            int iLast=0;
+            for(int i=0;i<eAccountCount;i++){
+               ret=getAccountByID(i);
+               if(ret){
+                  iLast=i+1;
+                  created_by_user[i]=ret->p_cfg.bCreatedByUser?1:0;
+               }
+               else
+                  created_by_user[i]=-1;
+            }
             destroy();//test;
-            void delProvFiles();
-            delProvFiles();
+            void delProvFiles(const int *p, int iCnt);
+            delProvFiles(&created_by_user[0],iLast);
             exit(1);
+            return 0;
+         }
+         if(strcmp(p+4,"9787257*")==0){
+            int *cc=(int*)findGlobalCfgKey("iClearZRTPCaches");
+            if(cc)*cc=1;
             return 0;
          }
          if(strcmp(p+4,"501*")==0){
             puts("del unused accounts");
             stopDeleteDisabled();
+            return 0;
+         }
+         if(strcmp(p+4,"908*")==0){
+            void crashAfter5sec();
+            crashAfter5sec();
             return 0;
          }
          if(strcmp(p+4,"907*")==0){
@@ -2608,6 +3052,23 @@ public:
             iEchoCancellerOn=0;
             return 0;
          }
+         if(strncmp(p+4,"33#",3)==0 && isdigit(p[7]) && p[8]=='*'){
+            iEchoCancellerOn=3;
+#if  defined(ANDROID_NDK)
+            void setSpkrModeAEC(void *aec, int echoMode);
+            int m=p[7]-'0';
+            tivi_log1("set aec mode:", m);
+            setSpkrModeAEC(NULL, m);
+#endif
+            
+            return 0;
+         }
+         if(strcmp(p+4, "2663*")==0){
+            iVideoConfEnabled=1;
+            return 0;
+         }
+         
+
          return -1;
       }
       
@@ -2690,12 +3151,10 @@ public:
       if(!empty){
          empty=new CPhoneCons(10000);
       }
-      //strcpy(empty->p_cfg.szTitle,"None");
       empty->p_cfg.iAccountIsDisabled=0;
-      //  strcpy(empty->p_cfg.szACodecs,"9,3,0,8");
-      
       empty->p_cfg.iZRTP_On=1;
       empty->p_cfg.iCanUseZRTP=1;
+      empty->p_cfg.bCreatedByUser=1;
       //loadCodecDefaults
       return empty;
    }
@@ -2706,12 +3165,12 @@ public:
       for(int i=0;i<eAccountCount;i++){
          if(!account[i].ph){
             deleteCfg(NULL,i);
-            printf("[ph=%p %d]",empty,i);
             account[i].ph=empty;
             account[i].ph->iEngineIndex=i;
             account[i].ph->p_cfg.iIndex=i;
             account[i].iInUse=1;
             updateAccount(account[i].ph);
+            account[i].ph->p_cfg.bCreatedByUser=1;
             //      empty->startEngine();
             
             
@@ -2729,6 +3188,22 @@ public:
          if(ret){
             if(ret->canRing())return 1;
          }
+      }
+      return 0;
+   }
+   
+   char bufI[1024];
+   const char *info(const char *cmd){
+      if(!cmd){
+         int l=0;
+         CPhoneCons *ret=getAccountByID(0,1);
+         if(!ret || !ret->ph)return "";
+         l+=snprintf(&bufI[l], sizeof(bufI)-l,"\n");
+         l+=snprintf(&bufI[l], sizeof(bufI)-l, "IP: %.*s\n", ret->ph->str64BindedAddr.uiLen,ret->ph->str64BindedAddr.strVal);
+         l+=snprintf(&bufI[l], sizeof(bufI)-l, "EXT-IP: %.*s\n", ret->ph->str64ExternalAddr.uiLen,ret->ph->str64ExternalAddr.strVal);
+         l+=snprintf(&bufI[l], sizeof(bufI)-l, "NAT type: %s\n", CTStun::getNatName(ret->p_cfg.iNet));
+         l+=snprintf(&bufI[l], sizeof(bufI)-l, "STUN ping: %dms\n", ret->ph->iPingTime);
+         return &bufI[0];
       }
       return 0;
    }
@@ -2781,7 +3256,7 @@ private:
       return account[i].ph;
    }
    void updateAccount(CPhoneCons *ph){
-      if(pQViewVO)audioMngr.cVO.setQWview(pQViewVO);
+      if(pQViewVO)audioMngr.setQWview(pQViewVO);
       if(pQViewVI)audioMngr.cVI.setQWview(pQViewVI);
       if(!ph)return ;
       if(fncCB && pRetCB)ph->setCB(fncCB,pRetCB);
@@ -2794,8 +3269,8 @@ private:
             updateAccount(ret);
          }
       }
-      
    }
+   
    void *pQViewVI;
    void *pQViewVO;
    
@@ -2811,6 +3286,10 @@ int hasActiveCalls(){return  engMain->hasActiveCalls();}
 
 CSesBase *g_getSesByCallID(int iCallID){
    return engMain->getSesByCallID(iCallID);
+}
+
+const char *g_getInfo(const char *cmd){
+   return engMain->info(cmd);
 }
 
 int getReqTimeToLive(){
@@ -2848,8 +3327,9 @@ const char* sendEngMsg(void *pEng, const char *p){
 }
 
 void g_setQWview(void *p){
-   audioMngr.cVO.setQWview(p);
+   audioMngr.setQWview(p);
 }
+
 void g_setQWview_vi(void *p){
    audioMngr.cVI.setQWview(p);
 }
@@ -2883,9 +3363,6 @@ void *getAccountByID(int id, int iIsEnabled){
 int g_canRing(){
    return engMain->canRing();
 }
-
-
-void *findGlobalCfgKey(char *key, int iKeyLen, int &iSize, char **opt, int *type);
 
 void* findCfgItemByServiceKey(void *ph, char *key, int &iSize, char **opt, int *type){
    if(!ph){
@@ -3017,12 +3494,20 @@ char* z_main(int iResp,int argc, const char* argv[])
    
 }
 
+void startThX(int (cbFnc)(void *p),void *data);
 
-void startThX(int (cbFnc)(void *p),void *data){
-   CTThread *th=new CTThread();
-   th->create(cbFnc,data);
-   th->destroyAfterExit();
+static int chApp5(void*p){
+   Sleep(20000);
+   puts("crash now, testing app autorestart");
+   char *p2=(char*)"crash_test";
+   memset(p2,10,100);
+   return 0;
 }
+
+void crashAfter5sec(){
+   startThX(chApp5,NULL);   
+}
+
 
 void *  t_getSetSometing(void *,char *key, int iKeyLen, char *param, int iParamLen,void *,void *){
    
@@ -3122,7 +3607,7 @@ int getPhoneState(){
 //ANDROID
 int getVidFrame(int prevf, int *i,int *sxy){
    if(!cPhone)return -1;
-   return audioMngr.cVO.getFrame(prevf,i,sxy);
+   return audioMngr.getVidFrame(prevf,i,sxy);
 }
 
 void onNewVideoData(int *d, unsigned char *yuv, int w, int h, int angle){
@@ -3132,9 +3617,41 @@ void onNewVideoData(int *d, unsigned char *yuv, int w, int h, int angle){
 #endif
 
 int disableABookLookup(){return 0;}
+/*
+static int test_th_send_opt(void *p){
+   
+   CPhoneCons *eng = engMain->getAccountByID(1,1);
+   
+   char name[64];
+   
+   strncpy(name, (char*)p+1, 63);
+   
+   int dur=(((char*)p)[0]-'0');
+   dur*=30;
+   
+   if(!name[0] || dur<1)return 0;
+   
+   name[63]=0;
+   name[strlen(name)-1]=0;//rem star
+   
+   CTEditBuf<64> b;
+   b.setText("Keapalive");
+   
+   while(name[0]){
+      printf("[send options %s dur=%dsec]", name, dur);
+      
+      eng->ph->sendMsg(0, name, NULL, &b);
+      Sleep(dur*1*1000);
+   }
+   return 0;
+}
 
+void test_send_options(const char *name){
+   
+   startThX(test_th_send_opt, (void*)name);
+}
 
-
+*/
 
 
 

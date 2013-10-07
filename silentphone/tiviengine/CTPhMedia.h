@@ -30,7 +30,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 
 #ifndef _C_TIVI_PH_MEDIA_H
-#define _C_TIVI_PH_MEDIA_H 
+#define _C_TIVI_PH_MEDIA_H
 
 #include "../baseclasses/CTBase.h"
 #include "../baseclasses/CTListBase.h"
@@ -49,6 +49,8 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "../os/CTMutex.h"
 
 #include "../codecs/vTiVi/tina_enc_c.h"
+
+#include "../video/CTRTPVideoPlayer.h"
 
 #ifdef USE_JPG_VID
 #include "../codecs/jpg/CTJpg.h"
@@ -69,7 +71,7 @@ public:
    int hasPLC(){return 1;}
    virtual inline int encodeFrame(short *pIn,unsigned  char *pOut)
    {
-      return iCodecFrameSizeEnc; 
+      return iCodecFrameSizeEnc;
    }
    virtual inline int decodeFrame(unsigned char *pIn, short *pOut)
    {
@@ -114,7 +116,7 @@ public:
 protected:
    
    static int thFnc(void *p);
-
+   
    int iRun;
    int iClosed;
    
@@ -135,7 +137,7 @@ public:
    CTVCodCol vidCodec;
 #ifdef USE_JPG_VID
    CTJpgED jpgEnc;
-   CTTina_Enc_Dec tinaEncDec;
+   CTTina_Enc_Dec tinaEnc;
    int iDecFPS;
 #endif
    
@@ -155,10 +157,12 @@ int isSameRtpSSRC(char *pack, int iLen, unsigned int ssrc);
 class CTXIce{
 public:
    
+   enum{ePackLen = 12};
    enum{eMaxAddrToTry=6};
    enum{eNoICE=0, eFailed=1, eTesting=2, ePeerPingRecv=4, ePingSent=8, ePingRespRecv=16};
 private:
    enum{eIDXByte=7, ePingFreq=50*10};
+   
    
    int iIceFlag;
    int iTestICECnt;//if>0 then
@@ -174,7 +178,7 @@ private:
       int iRespReceived;
       int iReqSent;
       int iReqRecv;
-
+      
       ADDR a;
       
       char szVers[16];//v1 current
@@ -184,7 +188,7 @@ private:
       
    }CANDIDATE;
    
-   CANDIDATE candidateArr[eMaxAddrToTry+1];
+   CANDIDATE candidateArr[eMaxAddrToTry+2];
    int iAddrDstToTry;
    
    int iCandidatesCreated;
@@ -200,14 +204,21 @@ private:
       return iAddrDstToTry;
    }
    
- //  int isP2PAvailable(){return !!(iIceFlag & ePeerPingRecv);}
 public:
    
 #define T_SC_ICE "t-sc-ice:"
- 
+   
    CTXIce(){reset();sock=NULL;}
    
    inline int active(){return iAddrDstToTry && iCandidatesCreated; }
+   
+   void onSDPRecv(){
+      iAddrDstToTry=0;
+      iIceFlag=0;
+      iTestICECnt=0;
+      memset(candidateArr, 0, sizeof(candidateArr));
+   }
+   int testing(){return iTestICECnt>0;}
    
    int pingTime(){
       int pt=iP2P_candidate;
@@ -235,7 +246,7 @@ public:
       
       return *a==candidateArr[pt].a;
    }
-
+   
    void reset(){
       
       iIceFlag = eNoICE;
@@ -251,14 +262,19 @@ public:
       memset(candidateArr, 0, sizeof(candidateArr));
       iP2P_candidate=-1;
    }
-   
-   void setPeerData(CTSock *s, unsigned int _uiMySSRC, unsigned int _uiDstSSRC){
+   void setPeerData(CTSock *s, unsigned int _uiMySSRC, unsigned int _uiDstSSRC, int _iIsSecure=1){
       sock=s;
       this->uiMySSRC=_uiMySSRC;
       this->uiDstSSRC=_uiDstSSRC;
       
       SWAP_INT(_uiMySSRC);
       uiMySSRCNet=_uiMySSRC;
+      iIsSecure=_iIsSecure;
+   }
+   
+   void startTestAgainAndSendNow(){
+      iTestICECnt = 5 * 8 + 1; // iTestICECnt--; & 7
+      onSendRTP(1);
    }
    
    void onSendRTP(int iIsZRTPSecure){
@@ -302,19 +318,18 @@ public:
       }
    }
    
-
    
-
+   
+   
    
    int recData(char *p, int iLen, ADDR *a){
       
-      //--if(!active() || iLen!=12)return 0;
-      if(uiDstSSRC==0 || !sock || !iIsSecure)return -2;
+      if(uiDstSSRC==0 || !sock || !iIsSecure)return 2;
       if(!active())return -1;
       
-      if(iLen<12)return -1;
+      if(iLen<ePackLen)return -2;
       
-      if(iLen>12){
+      if(iLen>ePackLen){
          if(!isSameRtpSSRC(p,iLen,uiDstSSRC))return -1;
          //TODO idxInList(a);
          return 1;
@@ -336,7 +351,8 @@ public:
          int idx = idxInList(a);
          if(idx<0){
             //what to do if iP2P_candidate>=0 should i update "candidateArr[idx].a=*a;" peer addr??
-            if(iP2P_candidate>=0)return -1;
+            if(iIceFlag & ePeerPingRecv)return 0;
+            if(iP2P_candidate>=0 && iAddrDstToTry>eMaxAddrToTry)return 0;
             idx=iAddrDstToTry;
             
             iP2P_candidate=idx;
@@ -345,15 +361,15 @@ public:
             candidateArr[idx].a=*a;
             iAddrDstToTry++;
          }
-          iIceFlag|=ePeerPingRecv;
+         iIceFlag|=ePeerPingRecv;
          //ePingSent
          
          if(!(iIceFlag & ePingSent)){
-
+            
             iP2P_candidate=idx;
             sendPingReq(idx);
          }
-        
+         
          return 0;
       }
       
@@ -362,8 +378,9 @@ public:
          
          //??if(idx!=idxInList(a))return -1;
          
-         if(idx<0 || idx>=getTryAddrCnt())return -1;
          if(!isSameRtpSSRC(p,iLen,uiMySSRC))return -1;
+         
+         if(idx<0 || idx>=getTryAddrCnt())return 0;
          //TODO check is TS registred
          
          iIceFlag|=ePingSent;
@@ -372,35 +389,37 @@ public:
          
          iP2P_candidate=idx;
          //startSendRTP
-
-
+         
+         
          calcPingTime(p, iLen, &candidateArr[idx].uiPingTime);
          
          return 0;
       }
-
+      
       return 1;
    }
-
+   
    //c1) priv.ip priv.port;
    //c2) if(priv.ip!=publ.ip)publ.ip      publ.port;
    //c3) if(publ.port!=priv.port)publ.ip      priv.port;
    
    //a=t-sc-ice:v1 host|relay non|fc|rc|prc|sym|fw|unkn udp|tcp|https ip port
-//a=t-sc-ice:v1 host sym udp4 25.215.155.22 51234 10.0.0.1 18000
-
+   //a=t-sc-ice:v1 host sym udp4 25.215.155.22 51234 10.0.0.1 18000
+   
    int createCandidates(ADDR *priv, ADDR *publ, char *pOut, int iMaxLen){
-      char b1[64];
-      char b2[64];
+      char b1[ADDR::eMaxDNS_SIZE];
+      char b2[ADDR::eMaxDNS_SIZE];
+      
       publ->toStr(b1,1);
       const char *natType = "unkn";//TODO get type
       iCandidatesCreated=1;
       if(*publ == *priv){
-         return snprintf(pOut, iMaxLen-1, "a=t-sc-ice:v1 host %s udp4 %s\r\n", natType, b1);
+         return snprintf(pOut, iMaxLen-1, "a=t-sc-ice:v1.1 host %s udp4 %s\r\n", natType, b1);
       }
       priv->toStr(b2,1);
-      return snprintf(pOut, iMaxLen-1, "a=t-sc-ice:v1 host %s udp4 %s %s\r\n", natType, b1,b2);
+      return snprintf(pOut, iMaxLen-1, "a=t-sc-ice:v1.1 host %s udp4 %s %s\r\n", natType, b1,b2);
    }
+   
    
    int addDstCandidate(const char *p, int iLen){
       //a=t-sc-ice:v1 host|relay non|fc|rc|prc|sym|fw|unkn udp|tcp|tls ip port
@@ -421,7 +440,7 @@ public:
       
       CANDIDATE *c=&cStack;
       
-
+      
       
       int l=0;
       l = getToken(p, iLen);
@@ -455,11 +474,13 @@ public:
       int idx = idxInList(&c->a);
       if(idx>=0)return 0;
       
+      
       memcpy(&candidateArr[iAddrDstToTry], c, sizeof(CANDIDATE));
+      CANDIDATE *cPubl=&candidateArr[iAddrDstToTry];
       
       iAddrDstToTry++;if(iAddrDstToTry>=eMaxAddrToTry)return 0;
       
-      iTestICECnt = 50 * 10;
+      iTestICECnt = 30 * 8 + 1;
       
       if(iLen<T_MIN_IP_PORT_LEN)return 0;
       
@@ -482,17 +503,35 @@ public:
       
       iAddrDstToTry++;if(iAddrDstToTry>=eMaxAddrToTry)return 0;
       
-      if(cPriv->a.getPort() != c->a.getPort()){
+      if(cPriv->a.getPort() != cPubl->a.getPort()){
          CANDIDATE *c3 = &candidateArr[iAddrDstToTry];
          memcpy(c3, c, sizeof(CANDIDATE));
          
          c3->a=c->a;
          c3->a.setPort(cPriv->a.getPort());
          iAddrDstToTry++;if(iAddrDstToTry>=eMaxAddrToTry)return 0;
+         if(iAddrDstToTry<5){
+            // --- test --- >>>
+            CANDIDATE *c4 = &candidateArr[iAddrDstToTry];
+            memcpy(c4, c, sizeof(CANDIDATE));
+            
+            c4->a=c->a;
+            c4->a.setPort(cPubl->a.getPort()+1);
+            iAddrDstToTry++;if(iAddrDstToTry>=eMaxAddrToTry)return 0;
+            
+            CANDIDATE *c5 = &candidateArr[iAddrDstToTry];
+            memcpy(c5, c, sizeof(CANDIDATE));
+            
+            c5->a=c->a;
+            c5->a.setPort(cPubl->a.getPort()+2);
+            iAddrDstToTry++;if(iAddrDstToTry>=eMaxAddrToTry)return 0;
+            
+            // --- test --- <<<
+         }
       }
       
       for(int i=0;i<iAddrDstToTry;i++){
-         char b[64];
+         char b[ADDR::eMaxDNS_SIZE];
          CANDIDATE *c=&candidateArr[i];
          
          printf("addr=%s v=%s t=%s nt=%s ct=%s\n",c->a.toStr(&b[0],1),c->szVers, c->szType, c->szNatType, c->szConnType);
@@ -500,7 +539,7 @@ public:
       
       return 0;
    }
-
+   
 private:
    void sendPingReq(int idx){
       if(!sock)return;
@@ -519,12 +558,12 @@ private:
       *(unsigned int*)&buf[4]=getTickCount();
       buf[eIDXByte]=(char)idx;
       
-      sock->sendTo(buf,12,&candidateArr[idx].a);
+      sock->sendTo(buf,ePackLen,&candidateArr[idx].a);
    }
    
    int calcPingTime(char *p, int iLen, unsigned int *resp){
       
-      if(iLen!=12 || !resp)return -1;
+      if(iLen!=ePackLen || !resp)return -1;
       
       unsigned int uiSendTS=*(unsigned int*)(p+4);
       unsigned int uiTS=getTickCount();
@@ -570,7 +609,7 @@ private:
 class CRTPX{
 public:
    
-   enum{eRtpOk, eRtpBad=-1, eRtpNotMine=-2};
+   enum{eRtpOk, eRtpIce, eRtpBad=-1, eRtpNotMine=-2};
    
    CTXIce ice;
    
@@ -585,22 +624,21 @@ public:
    unsigned char codecMatches[2][128];
    int iCodecsMatching[2];
    
-   
    int iPrevPT,iLost,iPrevId;
    
-   //unsigned short  lastSeqNr;
    unsigned int    rtpPackLost;
    unsigned int    uiStopAudio;
    unsigned int    uiPrevSendRTPpt;
    unsigned int uiIP2;//test addr
-
+   
    unsigned int uiPrevRecTS;
-  
+   
    ADDR addrDst;
    
    ADDR addrPublic;
    
    int iCanResetMedia;
+   
    void clear()
    {
       ice.reset();
@@ -616,29 +654,29 @@ public:
    }
    
    CRTPX(){clearAll();}
-
+   
+   void onSDPAttribs(SDP &sdp , int eType, PHONE_CFG &p_cfg, int iInviter, CTZRTP *pzrtp);
    int onSdp(SDP &sdp , int eType, CSessionsBase &eng);
-   int makeSdp(char *p, int iMaxLen, unsigned int uiPort, 
+   int makeSdp(char *p, int iMaxLen, unsigned int uiPort,
                const char *media, int eType, CSessionsBase &eng, unsigned uiSSRC);
    
-   inline int onRtp(char *p, int iLen, ADDR *a)
+   inline int onRtp(char *p, int iLen, ADDR *a, int iCanChangeSSRC=0)
    {
-#if 1
-      if(ice.active() && addrDst.ip!=a->ip){
+      
+      if(ice.active() && !iCanResetMedia && (addrDst.ip!=a->ip || iLen==ice.ePackLen)){
          int r = ice.recData(p,iLen, a);
-         if(r==-2 && !iCanResetMedia)return  eRtpNotMine;
          if(r==-1)return eRtpNotMine;
-         if(r==0)return eRtpOk;
-       
+         if(r==0)return eRtpIce;
       }
       else if (iCanResetMedia==0 && (addrDst.ip!=a->ip))
          return eRtpNotMine;
+      
       if(iLen<12)return eRtpBad;
-#else
-      if(iLen<12)return eRtpBad;
-      if (iCanResetMedia==0 && (addrDst.ip!=a->ip))return eRtpNotMine;
-#endif
+      
       if(parseRtp(p,iLen)<0)return eRtpBad;
+      
+      if(rtpRec.ssrc!= uiSSRC && uiSSRC && iCanChangeSSRC==0)
+         return CRTPX::eRtpNotMine;
       
       return eRtpOk;
    }
@@ -650,17 +688,17 @@ public:
 };
 
 class CRTPA: public CTSesMediaBase, public CtZrtpSendCb{
-
+   
    
    CGsmcodec gDec;
    CGsmcodec gEnc;
    
-   CTG729EncDec g729Dec; 
-   CTG729EncDec g729Enc; 
+   CTG729EncDec g729Dec;
+   CTG729EncDec g729Enc;
    
    CTG711Ulaw uLawDec;
    CTG711Alaw aLawDec;
-
+   
    CTG722_16khz g722enc;
    CTG722_16khz g722dec;
    
@@ -668,12 +706,12 @@ class CRTPA: public CTSesMediaBase, public CtZrtpSendCb{
    
    char *bufPcm;
    char bufPcmBuf[4096*2];
-
+   
 protected:
-   int iSdpParsed;//--//
+   
    int iMediaSent;//--//
    int iWillStop;//--//
-
+   
    unsigned int uiMaxDecodeBufSize;
    
    t_ph_tick uiStopMediaAt;//obsolete
@@ -683,11 +721,12 @@ protected:
    CTMediaMngrBase &mediaMngr;
 public:
    CRTPX rtp;//--//
-   CTRecSendUDP &sockth;
-
+   CTRecSendUDP *sockth;//must never be NULL
+   //CTRecSendUDP &stest;
+   
    CRTPA(CTRecSendUDP &sockth, CSessionsBase &eng, CTAudioEngine &cb,CTAudioInBase &cAI ,  CTMediaMngrBase &mediaMngr)
    :CTSesMediaBase(eng)
-   ,sockth(sockth)
+   ,sockth(&sockth)//,stest(sockth)
    ,mediaMngr(mediaMngr)
    ,cb(cb),cAI(cAI)
    {
@@ -705,7 +744,13 @@ public:
       onStop();
       if(cAO)mediaMngr.relAO(cAO);
       cAO=NULL;
-      
+   }
+   void setBaseData(CTRecSendUDP &_sockth, CSessionsBase &_eng){
+     // printf("[sockth1=%p %p ",&stest, &_sockth);
+     // stest=_sockth;//must not be used, will copy class data from _sockth to old stest
+     // printf("sockth2=%p %p]",&stest, &_sockth);
+      sockth=&_sockth;
+      cbEng=&_eng;
    }
    void clear()
    {
@@ -721,7 +766,7 @@ public:
    }
    virtual inline void onTimer()
    {
-      if(uiStopMediaAt && uiStopMediaAt<cbEng.uiGT)
+      if(uiStopMediaAt && uiStopMediaAt<cbEng->uiGT)
       {
          //clears audio buffer
          uiStopMediaAt=0;
@@ -731,46 +776,51 @@ public:
       {
          onSend(NULL,0,eAudio,NULL,0);
       }
-
+      
    }
    int sendPacket(char *p, unsigned int uiLen);
    
    virtual int onData(char *p, int iLen, ADDR *a);
-
+   
    virtual const char *getMediaName(){return "audio";}
-  
-   virtual void sendRtp(CtZrtpSession const *session, uint8_t* packet, size_t length, CtZrtpSession::streamName streamNm); 
+   
+   virtual void sendRtp(CtZrtpSession const *session, uint8_t* packet, size_t length, CtZrtpSession::streamName streamNm);
    
    int onWillStop(){iWillStop=1;return 0;}
    
    int getInfo(const char *key, char *p, int iMax);
-   unsigned int getSSRC(){return rtp.rtpSend.ssrc;}
    inline  int isSesActive(){return iIsActive && rtp.addrDst.ip;}
-   virtual int onSdp(char *pSdp, int iLen);
+   virtual int onSdp(char *pSdp, int iLen, int iIsReq, int iForceMedia);
    virtual int onSend(char *p, int iLen, int iCurType, void* pMediaParam, int iIsVoice);
    virtual int onSendUAlawSpliter(char *p, int iLen, int iCurType, void* pMediaParam, int iIsVoice);
-
+   
    virtual int onStart();//old
    virtual int onStop();
    virtual void onRel();
    virtual int makeSdp(char *p, int iMaxLen, int fUseExtPort);
+   
+   virtual void onReceiveAudio(unsigned int ts){}
+   
 protected:
    int tryEncryptSendPack(CRTPX *r, CTSock *s, int iIsVideo);
-
+   
 };
 
 class CRTPV: public CRTPA{
-
-   CTVideoOutBase &cVO;
+   
+   CTVideoOutBase *cVO;
    CTVideoInBase &cVI;
    
    int iCanSendVideo;
 #ifdef USE_JPG_VID
    CTJpgED jpgDec;
+   CTTina_Enc_Dec tinaDec;
 #endif
    int iDestHasTina;
-
-public:   
+   
+   int iVideoPacketSent;
+   
+public:
    
    int iIsInUse;
    
@@ -778,8 +828,13 @@ public:
    
    CRTPX rtpV;
    
+   CTRTPVideoPlayer videoPlayer;//must not be global
+   
+   void onReceiveAudio(unsigned int ts){videoPlayer.onReceiveAudio(ts);}
+   
    void clear()
    {
+      iVideoPacketSent=0;
       iAskKey=1;
       iDestHasTina=-1;
       uiStopMediaAt=0;
@@ -787,17 +842,20 @@ public:
       CRTPA::clear();
    }
    CRTPV(CTRecSendUDP &sockth, CSessionsBase &eng, CTAudioEngine &cb ,CTAudioInBase &cAI
-         ,CTVideoOutBase &cVO, CTVideoInBase &cVI, CTMediaMngrBase &mediaMngr)
-   :CRTPA(sockth, eng,cb,cAI,mediaMngr),cVO(cVO),cVI(cVI)
+         , CTVideoInBase &cVI, CTMediaMngrBase &mediaMngr)
+   :CRTPA(sockth, eng,cb,cAI,mediaMngr),cVI(cVI)
    {
       iType=eVideo|eAudio;
       iIsInUse=0;
+      cVO=NULL;
+      iVideoPacketSent=0;
+      
       
    }
    ~CRTPV(){
       onStop();
-
    }
+   
    int onSend(char *p, int iLen, int iType, void* pMediaParam, int iIsVoice)
    {
       if(iType & eAudio)
@@ -806,24 +864,24 @@ public:
       return onVideoSend(p,iLen,iType,pMediaParam);
    }
    
-   
-   virtual void sendRtp(CtZrtpSession const *session, uint8_t* packet, size_t length, CtZrtpSession::streamName streamNm); 
+   virtual void sendRtp(CtZrtpSession const *session, uint8_t* packet, size_t length, CtZrtpSession::streamName streamNm);
    
    virtual int onData(char *p, int iLen, ADDR *a);
-   virtual int onSdp(char *pSdp, int iLen);
+   virtual int onSdp(char *pSdp, int iLen, int iIsReq, int iForceMedia);
    virtual int makeSdp(char *p, int iMaxLen, int fUseExtPort);
    virtual const char *getMediaName(){return "audio video";}
    int onVideoSend(char *p, int iLen, int iType, void* pMediaParam);
-//   int sendVideoPack(char *p, int iLen);
+   //   int sendVideoPack(char *p, int iLen);
    inline void onTimer()
    {
       CRTPA::onTimer();
-      if(rtpV.iCanResetMedia)
+      if(rtpV.iCanResetMedia || !iVideoPacketSent)
          onVideoSend(NULL,0,eVideo,NULL);
       
    }
    virtual int onStart();
    virtual int onStop();
+   void onRel();
    
 };
 
@@ -850,7 +908,18 @@ public:
       
       if(audio && audio->iIsActive){int r=audio->onData(p,iLen,a);return r;}
       if(video && video->iIsActive){int r=video->onData(p,iLen,a);return r;}
-      return -1;
+      return CRTPX::eRtpNotMine;
+   }
+   void clearAll(){
+      if(audio){
+         audio->clear();
+         audio->rtp.clearAll();//fix this
+      }
+      if(video){
+         video->clear();
+         video->rtp.clearAll();
+         video->rtpV.clearAll();
+      }
    }
    int iCanDelete;
    CRTPV *video;
@@ -861,9 +930,10 @@ public:
 
 class CTMedia: public CTMediaBase{
 public:
-   CTAudioEngine audioEng;
+   CTAudioEngine audioEng;//obsolete
 protected:
-   CTAudioInBase &cAI;
+   //  CTAudioInBase &cAI;
+   //CTAudioInBase &cVI;
    
    
    //?? var buut probl ar sho iespejams katram zv vajag savu
@@ -871,12 +941,11 @@ protected:
    CTRecSendUDP sockth;
    
    
-   CRTPV video;//TODO mark in Use
+   // CRTPV video;//TODO mark in Use
    
    CTMutex mutex;
    
    CTList list;
-   CTList listRem; //TODO make this global
    
    static int onRcv(char *p, int iLen, ADDR *a, void *pUser)
    {
@@ -901,31 +970,26 @@ protected:
          }
          m->mutex.unLock();
          
-         if(ret<0 && m->video.iIsActive)
-            ret=m->video.onData(p,iLen,a);
+         //  char b[64];a->toStr(b); printf("[rtp()=%d l=%d %x {%s}]\n",ret,iLen, p[0], b);
          
          return ret;
       }
       return -1;
    }
-
+   
    
    CTMediaMngrBase &mediaMngr;
    CSessionsBase &eng;
    CTSockRecvCB sockCB_RCV;
 public:
    
-   CTMedia(CSessionsBase &eng,CTSockCB *cbSock,
-           CTVideoOutBase &cVO, CTVideoInBase &cVI, CTAudioInBase &cAI , CTMediaMngrBase &mediaMngr
-           )
+   CTMedia(CSessionsBase &eng,CTSockCB *cbSock, CTMediaMngrBase &mediaMngr)
    :audioEng()
-   ,cAI(cAI)
    ,eng(eng)//move this to CTSesMediaBase::setBaseData(eng,
-   ,list(),listRem(),mutex()
+   ,list(),mutex()
    ,mediaMngr(mediaMngr)
    ,sockCB_RCV(NULL,NULL)
    ,sockth(*cbSock)
-   ,video(sockth,eng,audioEng,cAI,cVO, cVI,mediaMngr)
    {
       ADDR a;
       if(eng.p_cfg.iRtpPort<1024)eng.p_cfg.iRtpPort=1024;
@@ -934,11 +998,11 @@ public:
       
       sockCB_RCV=CTSockRecvCB(onRcv,this);//makes copy
       sockth.start(sockCB_RCV,&a);
-
+      
    }
    void setZrtpCB(CTZrtpCb *p)
    {
-//move to CTiViPhone 
+      //move to CTiViPhone
       if(p)eng.zrtpCB=p;
       if(eng.pZrtpGlob==NULL)
       {
@@ -948,10 +1012,11 @@ public:
    }
    virtual ~CTMedia()
    {
-
+      
       list.removeAll();
-      listRem.removeAll();
-
+      //  listRem.removeAll();
+      //listRemVid.removeAll();
+      
       relZrtpG(eng.pZrtpGlob);
    }
    void stop()
@@ -983,82 +1048,77 @@ public:
    {
       int iIsAudio=iLen==5 && strncmp(p,"audio",5)==0;
       int iIsVideo=0;
-#ifndef DONT_USE_VIDEO   
+#ifndef DONT_USE_VIDEO
       iIsVideo=!iIsAudio && iLen==5 && strncmp(p,"video",5)==0;
 #else
       if(iIsVideo)iIsAudio=1;
 #endif
+      //    CTList *lr = iIsAudio ? &listRem : (iIsVideo ? &listRemVid : NULL);
+      
+      if(!iIsAudio && !iIsVideo)return NULL;
+      
+      
+      CTMediaListItem *i = mediaMngr.getMediaListItem(!iIsAudio);
+      
+      if(!i)return 0;
+      
+      
+      mutex.lock();
 
-      if(iIsAudio)
-      {
-         mutex.lock();//--new
-
-         CTMediaListItem *i=(CTMediaListItem *)listRem.getLRoot();
-         int _TODO_CHECK_IS_AUDIO;
-         if(i) listRem.remove(i,0);//TODO listrem global
-         if(!i)i=new CTMediaListItem();
-
+      i->clearAll();
+      
+      
+      if(iIsAudio){
          if(!i->audio){
-            i->audio=new CRTPA(sockth,eng,audioEng,cAI,mediaMngr);
+            i->audio=new CRTPA(sockth,eng,audioEng,mediaMngr.getAI(),mediaMngr);
             
          }
-         i->audio->clear();
-         i->audio->rtp.clearAll();//fix this
-
+         i->audio->setBaseData(sockth,eng);
+         
          list.addToTail(i);
-         mutex.unLock();//--new
+         mutex.unLock();
          return (CTSesMediaBase* )i->audio;
       }
-      if(iIsVideo)
-      {
-         if(video.isSesActive() || video.iIsInUse)return NULL;
-         video.iIsInUse=1;
-         video.clear();
-         video.rtpV.clearAll();
-         video.rtp.clearAll();
-         int _TODO_VIDEO_SES;
-         return (CTSesMediaBase* )&video;
-      }
       
-      return NULL;
+      if(!i->video){
+         i->video=new CRTPV(sockth,eng,audioEng,mediaMngr.getAI(),mediaMngr.getVI(),mediaMngr);
+      }
+      i->video->setBaseData(sockth,eng);
+      
+      list.addToTail(i);
+      mutex.unLock();
+      return (CTSesMediaBase* )i->video;
+      
+      
    }
    void release(CTSesMediaBase * m)
    {
       if(!m)return;
       
-      if(m==(CTSesMediaBase* )&video)
       {
-         //TODO release codec data
-         int iActive=m->isSesActive();
-         m->onWillStop();
-         if(iActive)Sleep(20);
-         m->onStop();
-         if(iActive)Sleep(20);
-         m->onRel();
-         video.iIsInUse=0;
-      }
-      else
-      {
-         CListItem *i=list.findItem(m,sizeof(m));
+         CTMediaListItem *i=(CTMediaListItem*)list.findItem(m,sizeof(m));
          if(i)
          {
+            int v=!!i->video;
             int iActive=m->isSesActive();
             m->onWillStop();
             if(iActive)Sleep(20);
             m->onStop();
             if(iActive)Sleep(20);//max encode time
             m->onRel();
-            mutex.lock();//--new
+            
+            mutex.lock();
             list.remove(i,0);
-            if(i)listRem.addToTail(i);
-            mutex.unLock();//--new
+            mutex.unLock();
+            
+            mediaMngr.relMediaListItem((CTMediaListItem*)i ,v);
          }
-         else puts("rel ERR media is not found");
+         else puts("ERR:rel media is not found");
          // tivi_log("rel-a<<");
          
       }
       
-
+      
    }
 };
 
@@ -1152,7 +1212,7 @@ public:
       iStatus=eEnding;
    }
    //dabuun fila nosaukumu un izmeru
-   virtual int onSdp(char *pSdp, int iLen);
+   virtual int onSdp(char *pSdp, int iLen, int iIsReq, int iForceMedia);
    virtual int makeSdp(char *p, int iMaxLen, int fUseExtPort);
 protected:
    int sendPacket();

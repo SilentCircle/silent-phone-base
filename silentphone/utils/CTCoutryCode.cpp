@@ -48,7 +48,7 @@ const char *pTest=
 "3:3712:lv:Latvia:Mobile:\r\n"
 "2:93:ag:Avg:Mobile:\r\n";
 
-class CListItemStirngCountry: public CListItem{
+class CListItemStringCountry: public CListItem{
 public:
    CTEditBuf<64> countryName;
    CTEditBuf<32> city;
@@ -56,9 +56,9 @@ public:
    char ccode[8];
    char sz2code[4];
    
-   CListItemStirngCountry(char *country,char *code):CListItem(atoi(code)){strcpy(ccode,code);countryName.setText(country);iCountryCodeLen=strlen(code);}
+   CListItemStringCountry(char *country,char *code):CListItem(atoi(code)){strcpy(ccode,code);countryName.setText(country);iCountryCodeLen=strlen(code);}
    
-   CListItemStirngCountry(char *country,int iCLen,char *code, int iCodeLen=0):CListItem(atoi(code)){
+   CListItemStringCountry(char *country,int iCLen,char *code, int iCodeLen=0):CListItem(atoi(code)){
       sz2code[0]=0;
       countryName.setText(country,iCLen);
       if(iCodeLen<=0)iCodeLen=strlen(code);
@@ -98,7 +98,7 @@ class CTCountryCode{
    enum{eAnd=1023,eLists=1024};
    CTList ccListI[eLists];
    
-   CListItemStirngCountry *selected;
+   CListItemStringCountry *selected;
    
    char path[512];
    char szCurCCode[16];
@@ -151,7 +151,7 @@ class CTCountryCode{
        */
       
       CTList *l=list(pCode);
-      CListItemStirngCountry *i=new CListItemStirngCountry(pC,iCLen,pCode,iCodeLen);
+      CListItemStringCountry *i=new CListItemStringCountry(pC,iCLen,pCode,iCodeLen);
       
       i->iCountryCodeLen=iCCLen;
       strncpy(i->sz2code,p2Code,2);i->sz2code[2]=0;
@@ -186,7 +186,7 @@ class CTCountryCode{
       if(start[0]=='\"')iCLen--;
       
       CTList *l=list(pcode);
-      l->addToTail(new CListItemStirngCountry(start[0]=='\"'?(start+1):start,iCLen,pcode));
+      l->addToTail(new CListItemStringCountry(start[0]=='\"'?(start+1):start,iCLen,pcode));
       
       while(!isalnum(p[0]) && iLeft>0){p++;iLeft--;}
       
@@ -269,11 +269,11 @@ class CTCountryCode{
    }
    
    int setCC(char *cc, int iLen){
-      CListItemStirngCountry *li=NULL;
+      CListItemStringCountry *li=NULL;
       
       
       int c=atoi(cc);
-      li=(CListItemStirngCountry*)list((unsigned int)c)->getById(c);
+      li=(CListItemStringCountry*)list((unsigned int)c)->getById(c);
       
       if(!li){
          return 0;
@@ -306,7 +306,7 @@ public:
       }
       return 0;
    }
-   CListItemStirngCountry *getSelected(){
+   CListItemStringCountry *getSelected(){
       return selected;
    }
 };
@@ -461,6 +461,37 @@ void initCC(char *p, int iLen){
    cc.init(p, iLen);
 }
 
+#define US_NR_LEN 10
+
+int canAddUS_CCode(const char *nr){
+   if(*nr=='0' || *nr=='1' || *nr=='+')return 0;
+   int iLen=strlen(nr);
+   
+   char nrClean[US_NR_LEN+2];
+   int iCleanLen=1;nrClean[0]='1';
+   
+   if(iLen<US_NR_LEN || iLen>63)return 0;
+   
+   for(int i=0;i<iLen;i++){
+      if(isalpha(nr[i]))return 0;
+      if(nr[i]=='@'){break;}
+      if(isdigit(nr[i])){nrClean[iCleanLen]=nr[i];iCleanLen++; if(iCleanLen>US_NR_LEN+1)return 0;}
+   }
+   if(iCleanLen!=US_NR_LEN+1)return 0;
+   nrClean[iCleanLen]=0;
+   
+   
+   
+   CTEditBuf<64> b;
+   cc.findCountry(nrClean,&b);
+   
+   CListItemStringCountry *s=cc.getSelected();
+   
+   if(!s)return 0;
+   
+   return s->city.getLen()>0?1:0;
+}
+
 int fixNR(const char *in, char *out, int iLenMax){
    return fixNR(&cc,in,out,iLenMax);
 }
@@ -468,7 +499,7 @@ int fixNR(const char *in, char *out, int iLenMax){
 int findCSC_C_S(const char *nr, char *szCountry, char *szCity, char *szID, int iMaxLen){
    char tmp[128];
    if(fixNR(nr,tmp,127)<=0)return 0;
-   CListItemStirngCountry *i=(CListItemStirngCountry*)cc.getSelected();
+   CListItemStringCountry *i=(CListItemStringCountry*)cc.getSelected();
    if(!i)return 0;
    
    int l=toNR(tmp,127, nr);
@@ -491,7 +522,7 @@ int findCSC_C_S(const char *nr, char *szCountry, char *szCity, char *szID, int i
 int findCSC_C_S_java(const char *nr, char *ret, int iMaxLen){
    char tmp[128];
    if(fixNR(nr,tmp,127)<=0)return 0;
-   CListItemStirngCountry *i=(CListItemStirngCountry*)cc.getSelected();
+   CListItemStringCountry *i=(CListItemStringCountry*)cc.getSelected();
    if(!i)return 0;
    
    int l=toNR(tmp,127, nr);

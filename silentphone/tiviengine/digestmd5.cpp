@@ -67,7 +67,21 @@ int calcMD5(unsigned char *p, int iLen, char *out){
    return strlen(out);
 }
 
+unsigned int calcMD5(const char *p, int iLen){
+   CTMd5 md5;
+   if(!iLen)iLen=strlen(p);
+   md5.update((unsigned char*)p, iLen);
+   return md5.final();
+}
 
+unsigned int calcMD5(const char *p, int iLen, int n){
+   CTMd5 md5;
+   if(!iLen)iLen=strlen(p);
+   for(int i=0;i<n;i++)
+      md5.update((unsigned char*)p, iLen);
+   
+   return md5.final();
+}
 
 /* calculate H(A1) as per spec */
 int DigestCalcHA1(IN  HDR_AUT * aut, IN unsigned char *un, IN unsigned char * pwd, 

@@ -183,7 +183,7 @@ int CMakeSip::makeReq(int id, PHONE_CFG * cfg, ADDR *addrExt,STR_64 *str64ExtADD
       if(iPrevId!=spSes->cs.iSendS)
       {
          if(spSes->cs.iSendS==METHOD_OPTIONS){
-            spSes->sSendTo.setRetransmit(2,5*T_GT_SECOND);
+            spSes->sSendTo.setRetransmit(5,3*T_GT_SECOND);
          }
          else if(iIsTCP || iIsTLS)
             spSes->sSendTo.setRetransmit(7,5*T_GT_SECOND);
@@ -277,7 +277,8 @@ int CMakeSip::makeReq(int id, PHONE_CFG * cfg, ADDR *addrExt,STR_64 *str64ExtADD
    switch(id)
    {
       case METHOD_INVITE:
-         sMsg->hdrCSeq.dstrID.uiVal=uiCSeq;
+         spSes->uiSipCseq=uiCSeq;
+         //sMsg->hdrCSeq.dstrID.uiVal=uiCSeq;
          break;
       case METHOD_ACK:
       case METHOD_CANCEL:
@@ -293,6 +294,7 @@ int CMakeSip::makeReq(int id, PHONE_CFG * cfg, ADDR *addrExt,STR_64 *str64ExtADD
       case METHOD_REGISTER:
          if(sMsg->hdrCSeq.dstrID.uiVal)uiCSeq=sMsg->hdrCSeq.dstrID.uiVal+1;//ast
          sMsg->hdrCSeq.dstrID.uiVal=uiCSeq;
+         spSes->uiSipCseq=uiCSeq;
       case METHOD_OPTIONS:
          
          ADD_STR(s,uiLen,"Allow: INVITE,ACK,CANCEL,OPTIONS,MESSAGE,BYE,INFO\r\n");
@@ -303,7 +305,9 @@ int CMakeSip::makeReq(int id, PHONE_CFG * cfg, ADDR *addrExt,STR_64 *str64ExtADD
          break;
          
    }
+
    //TODO test asterisk add
+   //"sMsg->hldVia.x[0].dstrRecived.uiLen<32" - overflow test "spSes->pIPVisble=str64ExtADDR;memcpy"
    if((id & METHOD_REGISTER) && cfg && !cfg->reg.bUnReg && cfg->iUseOnlyNatIp==0 && sMsg &&  sMsg->hldVia.x[0].dstrRecived.uiLen<32)
    {
       if(sMsg->hldVia.x[0].dstrRecived.strVal && sMsg->hldVia.x[0].dstrRecived.uiLen){
@@ -341,7 +345,8 @@ int CMakeSip::makeReq(int id, PHONE_CFG * cfg, ADDR *addrExt,STR_64 *str64ExtADD
    if(iIsTCP)ADD_STR(s,uiLen,"Via: SIP/2.0/TCP ")
       else if(iIsTLS)ADD_STR(s,uiLen,"Via: SIP/2.0/TLS ")
          else ADD_STR(s,uiLen,"Via: SIP/2.0/UDP ")
-            ADD_DSTR(s,uiLen,(*spSes->pIPVisble));
+            
+   ADD_DSTR(s,uiLen,(*spSes->pIPVisble));
    
    if(spSes->uiUserVisibleSipPort!=DEAFULT_SIP_PORT)
       uiLen += sprintf(s + uiLen, ":%u", spSes->uiUserVisibleSipPort);
@@ -358,12 +363,7 @@ int CMakeSip::makeReq(int id, PHONE_CFG * cfg, ADDR *addrExt,STR_64 *str64ExtADD
       ADD_STR(s,uiLen,"IN");
    }
    
-   uiLen += sprintf(s + uiLen, "%u",uiCSeq^0x123);
-   
-   
-   
-   
-   ADD_CRLF(s,uiLen);
+   uiLen += sprintf(s + uiLen, "%u",uiCSeq^0x123);ADD_CRLF(s,uiLen);
    
    uiLen += sprintf(s + uiLen, "CSeq: %u ", uiCSeq);
    ADD_DSTRCRLF(s,uiLen,sip_meth[iMeth])
@@ -484,8 +484,7 @@ int CMakeSip::makeReq(int id, PHONE_CFG * cfg, ADDR *addrExt,STR_64 *str64ExtADD
       else ADD_CRLF(s,uiLen);
    }
    
-   ADD_FSTR(s,uiLen,"Call-ID: ",9);
-   ADD_DSTRCRLF(s,uiLen,sMsg->dstrCallID);
+   ADD_FSTR(s,uiLen,"Call-ID: ",9);ADD_DSTRCRLF(s,uiLen,sMsg->dstrCallID);
    ADD_STR(s,uiLen,"Max-Forwards: 70\r\n");
    
    if(id==METHOD_REGISTER){
@@ -725,6 +724,8 @@ int CMakeSip::makeResp(int id, PHONE_CFG *cfg, char *uri, int iUriLen)
       case 488:
          /// uiLen+=sprintf(s+uiLen,"SIP/2.0 488 Not Acceptable Here\r\n");
          ADD_STR(s,uiLen,"SIP/2.0 488 Not Acceptable Here\r\n");
+      case 491:
+         ADD_STR(s, uiLen,"SIP/2.0 491 Request Pending\r\n");
          break;
       case 501:
          /// uiLen+=sprintf(s+uiLen,"SIP/2.0 488 Not Acceptable Here\r\n");
@@ -835,16 +836,14 @@ int CMakeSip::makeResp(int id, PHONE_CFG *cfg, char *uri, int iUriLen)
    {
       ADD_DSTRCRLF(s,uiLen,sMsg->hdrCSeq.dstrFullRow);
    }
-   //   ADD_STR(s,uiLen,USER_AGENT);
+
    if (sMsg->hdrCSeq.uiMethodID & METHOD_OPTIONS)
    {
-
       ADD_STR(s,uiLen,"Allow: INVITE,CANCEL,INFO,BYE,ACK,OPTIONS\r\n");
       ADD_STR(s,uiLen,"Accept: application/sdp ,text/plain\r\n");
    }
    
-   ADD_0_STR(s,uiLen,"Call-ID: ");
-   ADD_DSTRCRLF(s,uiLen,sMsg->dstrCallID);
+   ADD_0_STR(s,uiLen,"Call-ID: ");ADD_DSTRCRLF(s,uiLen,sMsg->dstrCallID);
    
    if (spSes && sMsg->hdrCSeq.uiMethodID & (METHOD_INVITE|METHOD_MESSAGE|METHOD_OPTIONS))
    {

@@ -48,7 +48,7 @@ class CTAVideoMem{
    int w,h;
 public:
    
-   CTAVideoMem(){data=NULL;w=h=0;iDataSize=0;}
+   CTAVideoMem(){dstLayer=NULL;data=NULL;w=h=0;iDataSize=0;}
    ~CTAVideoMem(){delete data;data=NULL;}
    
    void rel();
@@ -65,9 +65,44 @@ public:
    
 };
 
+typedef struct{
+   CTVideoOut *pVO;
+   CTAVideoMem vm[2];
+   CALayer *prevL;
+   
+   int iPrevVM;
+   int iPrevFrame;
+   int iInUse;
+   
+   int w,h;
+   
+   void init(){
+      iInUse=0;
+      prevL=NULL;
+      w=0;h=0;
+      iPrevFrame=-1;
+      pVO=NULL;
+   }
+   
+   
+   void setSize(int cx, int cy){
+      if(w==cx && h==cy)return;
+      w=cx;
+      h=cy;
+      vm[0].setSize(cx,cy);
+      vm[1].setSize(cx,cy);
+   }
+
+   
+}VOObject;
+
+#define eMaxVOObjCnt 8
 //TODO fix this class ,data, iDataSize ,drawCtx
 @interface QuartzImageView : UIView
 {
+@public int iCanDrawOnScreen;
+
+   /*
 @public CTAVideoMem vm[2];
    
 @public CTVideoOut *pVO;
@@ -86,14 +121,15 @@ public:
    
    int iPrevVM;
    
-   
+*/   
    
    id <UITouchDetector>  _touchDetector;
 }
--(int)getDrawInto;
--(void *)getNextData;
 
--(void)clearImg;
+-(int)getDrawInto:(CTVideoOut*)vo;
+-(void *)getNextData:(CTVideoOut*)vo;
+-(void )relData:(CTVideoOut*)vo;
+-(void)clearImg:(CTVideoOut*)vo;
 //-(void)drawInContext:(CGContextRef)context;
 
 @property(nonatomic,assign)   id <UITouchDetector>   touchDetector;

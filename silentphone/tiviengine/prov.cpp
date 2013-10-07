@@ -315,11 +315,21 @@ int isFileExistsW(const short *fn);
 void setCfgFN(CTEditBase &b, int iIndex);
 void setCfgFN(CTEditBase &b, const char *fn);
 
-void delProvFiles(){
+void delProvFiles(const int *p, int iCnt){
    CTEditBase b(1024);
-   for(int i=0;;i++){
+   for(int i=0;i<2;i++){
       if(!pFN_to_save[i])break;
       setCfgFN(b,pFN_to_save[i]);
+      deleteFileW(b.getText());
+   }
+   
+   char buf[64];
+   
+   for(int i=0;i<iCnt;i++){
+      printf("del prov %d\n",p[i]);
+      if(p[i]==1)continue;//dont delete if created by user
+      if(i)snprintf(buf, sizeof(buf)-1, "tivi_cfg%d.xml", i); else strcpy(buf,"tivi_cfg.xml");
+      setCfgFN(b,buf);
       deleteFileW(b.getText());
    }
 }
@@ -384,6 +394,8 @@ int checkProv(const char *pUserCode, void (*cb)(void *p, int ok, const char *pMs
    
    int iLen200ok=strlen(p10_200ok);
    
+   int iCfgPos=0;
+   
    for(int i=0;;i++){
       if(!pFN_to_download[i] || !pFN_to_save[i])break;
       snprintf(bufReq,sizeof(bufReq)-1,"%s/provisioning/silent_phone/%s?api_key=%s",pLink,pFN_to_download[i],bufToken);
@@ -406,14 +418,58 @@ int checkProv(const char *pUserCode, void (*cb)(void *p, int ok, const char *pMs
       cb(cbRet,1,pFN_to_save[i]);
       
       void saveCfgFile(const char *fn, void *p, int iLen);
+      int saveCfgFile(int iNextPosToTest, void *p, int iLen);
+#if 0
 #ifndef PROV_TEST
       saveCfgFile(pFN_to_save[i],p,iRespContentLen);
 #endif
+
       printf("Saving %s content=[%.*s]\n",pFN_to_save[i], iRespContentLen,p);
+#else
+      
+      if(strncmp("tivi_cfg", pFN_to_save[i],8) || 0==strcmp("tivi_cfg_glob.txt", pFN_to_download[i])){
+#ifndef PROV_TEST
+         saveCfgFile(pFN_to_save[i],p,iRespContentLen);
+#endif
+         
+         printf("Saving %s content=[%.*s]\n",pFN_to_save[i], iRespContentLen,p);
+      }
+      else{
+         iCfgPos=saveCfgFile(iCfgPos, p,iRespContentLen);
+         printf("Saving pos=%d content=[%.*s]\n",iCfgPos-1, iRespContentLen,p);
+      }
+      
+#endif
    }
    cb(cbRet,1,"OK");
    iProvisioned=1;
    return 0;
+}
+
+void setFileBackgroundReadable(CTEditBase &b);
+void setOwnerAccessOnly(const short *fn);
+
+int saveCfgFile(int iNextPosToTest, void *p, int iLen){
+
+   char fn[64];
+   CTEditBase b(1024);
+#define MAX_CFG_FILES 10000
+   
+   for(int i=iNextPosToTest;i<MAX_CFG_FILES;i++){
+      if(i)snprintf(fn, sizeof(fn)-1, "tivi_cfg%d.xml", i); else strcpy(fn,"tivi_cfg.xml");
+      setCfgFN(b, fn);
+      if(!isFileExistsW(b.getText())){
+         //save into i pos
+         iNextPosToTest=i+1;
+         break;
+      }
+   }
+
+   saveFileW(b.getText(),p,iLen);
+   setOwnerAccessOnly(b.getText());
+   setFileBackgroundReadable(b);
+   
+   return iNextPosToTest;
 }
 
 
@@ -423,34 +479,40 @@ void saveCfgFile(const char *fn, void *p, int iLen){
    CTEditBase b(1024);
    setCfgFN(b,fn);
    saveFileW(b.getText(),p,iLen);
-   void setOwnerAccessOnly(const short *fn);
-   setOwnerAccessOnly(b.getText());
    
+   setOwnerAccessOnly(b.getText());
+   setFileBackgroundReadable(b);
 }
+void tivi_log1(const char *p, int val);
 
 int isProvisioned(int iCheckNow){
 #ifdef PROV_TEST
    return 0;
 #endif
+   
+   
    if(iProvisioned!=-1 && !iCheckNow)return iProvisioned;
    
    CTEditBase b(1024);
    
-   setCfgFN(b,0);
+//   setCfgFN(b,0);
    
    do{
       iProvisioned=0;
+      /*
       if(isFileExistsW(b.getText())){
          iProvisioned=1;
          break;
       }
-      
+      */
       int getGCfgFileID();
       setCfgFN(b,getGCfgFileID());
       if(isFileExistsW(b.getText())){
          iProvisioned=1;
          break;
       }
+      
+      tivi_log1("isProvisioned fail ",getGCfgFileID());
       
    }while(0);
    //int isFileExists(const char *fn);

@@ -31,7 +31,134 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <string.h>
 #include "CTLangStrings.h"
 
+CTLangStrings *g_getLang();
 
+void translateZRTP_errMsg(CTEditBase &warn, CTEditBase *general, CTEditBase *descr){
+
+#define T_ZRTP_CODE_LEN 7
+   
+   CTLangStrings *lang = g_getLang();
+   if(!general && !descr)return;
+   
+   if(descr)descr->setText("");
+   
+   if(!lang || warn.getChar(0)!='s' || warn.getLen()<T_ZRTP_CODE_LEN){
+      if(general)general->setText(warn);
+      return;
+   }
+   
+   lang->initZRTPMsgs();
+   
+   enum{eCMP, eCLS, eUPD, eAPP};
+   CTEditBase *gm[]={&lang->zrtp_common_cmp, &lang->zrtp_common_cls, &lang->zrtp_common_upd, &lang->zrtp_common_app};
+   
+   struct{
+      const char *code;
+      int enum_id;
+   }table[]={
+      {"s2_c002", eCLS},
+      {"s2_c004", eCMP},
+      {"s2_c005", eCLS},
+      {"s2_c006", eCLS},
+      {"s2_c007", eCLS},
+      {"s2_c008", eCMP},
+      {"s2_c050", eCMP},
+      
+      {"s3_c001", eCLS},
+      {"s3_c002", eCLS},
+      {"s3_c003", eCLS},
+      {"s3_c004", eCLS},
+      {"s3_c005", eCLS},
+      {"s3_c006", eCLS},
+      {"s3_c007", eCLS},
+      {"s3_c008", eCLS},
+      
+      {"s4_c016", eCLS},
+      {"s4_c020", eCLS},
+      {"s4_c048", eUPD},
+      {"s4_c064", eUPD},
+      {"s4_c081", eUPD},
+      {"s4_c082", eUPD},
+      {"s4_c083", eUPD},
+      {"s4_c084", eUPD},
+      {"s4_c085", eUPD},
+      {"s4_c086", eCLS},
+      {"s4_c097", eCLS},
+      {"s4_c098", eCLS},
+      {"s4_c099", eCLS},
+      {"s4_c112", eCLS},
+      {"s4_c128", eCLS},
+      {"s4_c144", eAPP}
+   };
+   
+   const int sz=sizeof(table)/sizeof(*table);
+   
+   char bufC[T_ZRTP_CODE_LEN*2];
+   
+   for(int i=0;i<T_ZRTP_CODE_LEN;i++)bufC[i]=warn.getChar(i);
+   
+   int ok=0;
+   for(int i=0;i<sz;i++){
+      if(strncmp(table[i].code, bufC, T_ZRTP_CODE_LEN)==0){
+         if(general)general->setText(*gm[table[i].enum_id]);
+         ok=1;
+         break;
+      }
+   }
+   if(general && !ok)general->setText(warn);
+   
+   if(descr){
+      char key[64+T_ZRTP_CODE_LEN];
+      
+      int l = snprintf(key, sizeof(key), "zrtp_%.*s_explanation",T_ZRTP_CODE_LEN, bufC);
+      int r = lang->setGetTextById(key, l, *descr, 0);
+      
+      if(!r)descr->setText(warn);//temp
+   }
+   
+
+}
+
+void CTLangStrings::initZRTPMsgs(){
+   
+   if(iZRTPInitOk)return;
+   iZRTPInitOk=1;
+   //--------------------------
+   zrtp_common_cmp.setText("You should verbally compare the authentication code with the person you are calling. If it doesn’t match, it indicates that someone may have intercepted the call.");
+   zrtp_common_cls.setText("Connection Error. Please close and call again.");
+   zrtp_common_upd.setText("The person you are calling needs to update their Silent Phone application to the latest version");
+   zrtp_common_app.setText("Application Error. Please re-install Silent Phone.");
+   //--------------------------
+   
+   zrtp_s2_c004_explanation.setText("You should verbally compare this authentication code with your partner. If it doesn’t match, it indicates the presence of a wiretapper.");
+   zrtp_s2_c005_explanation.setText("The application received wrong ZRTP security data. Often indicates a bad network connection and you may try to setup a new call.");
+   zrtp_s2_c006_explanation.setText("The application received unauthenticated media.  May indicate misrouted packets, network errors, or attempted injection of false media packets from a third party.  You may try to setup a new call.");
+   zrtp_s2_c007_explanation.setText("The application received repeated media. Often indicates a bad network connection and you may try to setup a new call.");
+   zrtp_s2_c008_explanation.setText("You must verbally compare the authentication code with your partner. If it doesn’t match, it indicates the presence of a wiretapper.");
+   zrtp_s2_c050_explanation.setText("This may indicate a software error, or a possible attempted attack.");
+   zrtp_s3_c001_explanation.setText("ZRTP Hello message integrity failure. May indicate software error or possible attack. Close this call and setup a new call.");
+   zrtp_s3_c002_explanation.setText("ZRTP Commit message integrity failure. May indicate software error or possible attack. Close this call and setup a new call.");
+   zrtp_s3_c003_explanation.setText("ZRTP DHPart1 message integrity failure. May indicate software error or possible attack. Close this call and setup a new call.");
+   zrtp_s3_c004_explanation.setText("ZRTP DHPart2 message integrity failure. May indicate software error or possible attack. Close this call and setup a new call.");
+   zrtp_s3_c005_explanation.setText("Network connection lost during security setup. This indicates a network problem. Close this call and setup a new call.");
+   zrtp_s3_c006_explanation.setText("Internal application error. Close this call, restart the program and setup a new call.");
+   zrtp_s3_c007_explanation.setText("Internal application error. Close this call, restart the program and setup a new call.");
+   zrtp_s3_c008_explanation.setText("This indicates either a network problem or your partner’s software encountered a problem. Close this call and setup a new call.");
+   zrtp_s4_c016_explanation.setText("May indicate a software error, or a possible attempted attack. Close this call and setup a new call.");
+   zrtp_s4_c020_explanation.setText("Internal application error. Close this call, restart the app and setup a new call.");
+   zrtp_s4_c048_explanation.setText("The other party does not support the correct ZRTP version. Please ask the other party to update the application.");
+   zrtp_s4_c081_explanation.setText("The other party tried to use an unsupported hash algorithm. Close this call and ask the other party to update the application.");
+   zrtp_s4_c082_explanation.setText("The other party tried to use an unsupported encryption algorithm. Close this call and ask the other party to update the application.");
+   zrtp_s4_c083_explanation.setText("The other party tried to use an unsupported key exchange algorithm. Close this call and ask the other party to update the application.");
+   zrtp_s4_c084_explanation.setText("The other party tried to use an unsupported secure media authentication algorithm. Close this call and ask the other party to update the application.");
+   zrtp_s4_c085_explanation.setText("The other party tried to use an unsupported Short Authentication String (SAS) algorithm. Close this call and ask the other party to update the application.");
+   zrtp_s4_c097_explanation.setText("The other party computed insecure DH or ECDH key exchange data. Close this call and setup a new call.");
+   zrtp_s4_c098_explanation.setText("ZRTP Hash Commit did not match DH packet. Close this call and setup a new call.");
+   zrtp_s4_c099_explanation.setText("Wrong SAS relay behavior from an untrusted PBX. Please inform adminsitrator of the PBX if possible.");
+   zrtp_s4_c112_explanation.setText("ZRTP Confirm message integrity failure. Close this call and setup a new call.");
+   zrtp_s4_c144_explanation.setText("Your VoIP client and the other party’s client use the same ZRTP id (ZID). You may avoid this happening again if you dial *##*9787257* to generate a new ZID.");
+
+}
 
 void CTLangStrings::constrLatv()
 {
@@ -188,7 +315,119 @@ void CTLangStrings::constrItalian()
    //Options Opzioni //no nokia tel
 }
 
-short * getLine(short *line, short *end, char *name, int iMaxNameLen, int &iNameLen,CTEditBase *val){
+
+void CTLangStrings::constrEng()
+{
+   
+  
+   lCouldNotReachServer.setText("Could not reach server");
+   lRemoteOutOfReach.setText("Remote party is out of coverage");
+   
+   lRestartLang.setText("Instant language switch requires phone restart, continue?");
+   
+   lInvPhNr.setText("Invalid phone number");
+   lAllSesBusy.setText("All sessions are busy");
+   lError.setText("Error");
+   
+   lConTimeOut.setText("Connection timed out");
+   lCannotDeliv.setText("Cannot deliver a message. ");
+   lCannotReg.setText("Cannot register. ");
+   lCannotCon.setText("Cannot connect. ");
+   lReason.setText("Reason: \r\n");
+   lNoConn.setText("No connection");
+   lCalling.setText("Calling...");
+   lRegist.setText("Registering...");
+   
+   lCallEnded.setText("Call ended");
+   lRegSucc.setText("Registration successful");
+   lMissCall.setText("Missed call");
+   lIncomCall.setText("Incoming call from");
+   lConnecting.setText("Connecting to ");//i-net...");
+   lConnecting.addText(lApiShortName);
+   lConnecting.addText("...");
+   
+   
+   lMyUN.setText("My login name");
+   
+   lMyPwd.setText("My password");
+   lMyPhNr.setText("My ");
+   lMyPhNr.addText(lApiShortName);
+   //
+   lMyPhNr.addText(" number, (if you have one)");
+   
+   lEnterUN_PWD.setText("Enter username and password");
+   
+   lFind.setText("Find");
+   lConfig.setText("Config");
+   lPhoneBook.setText("Phone book");
+   
+   lCall.setText("Call");lHangUp.setText("End call");
+   
+   lEdit.setText("Edit");
+   lRemove.setText("Remove");
+   lAdd.setText("Add");
+   
+   lAbout.setText("About");
+   lLogin.setText("Login");
+   lLogout.setText("Logout");
+   lExit.setText("Exit");
+   
+   lDialledNumbers.setText("  Dialled numbers ->");
+   lReceivedCalls.setText("<- Received calls ->");//,lMissedCalls;
+   lMissedCalls.setText("<- Missed calls  ");
+   lToEnterCfgLogout.setText("To enter config Logout.");
+   lDeleteEntryFromList.setText("Delete entry from list?");
+   
+   
+   lRunAtStartup.setText("Run at startup");
+   lUsingAP.setText("Using AP - ");
+   
+   lVideoCall.setText("Video Call");
+   lEnterNumberChatWith.setText("Enter the username or number you want to chat with\nand press Chat button again.");
+   
+   lOptions.setText("Options");
+   lOk.setText("Ok");
+   lCancel.setText("Cancel");
+   lChat.setText("Chat");
+   
+   lNetworkConfiguration.setText("Network Configuration");
+   lDefault.setText("Default");
+   
+   lSoundAlertMsg.setText("Sound an alert on incoming messages");
+   lShowTSFrontMsg.setText("Show timestamp in front of messages");
+   lOutputSpeakersHead.setText("Output - speakers or headset");
+   lInputMicHead.setText("Input - microphone or headset");
+   lNRingsDings.setText("Notifications - ring and dings");
+   lAudio.setText("Audio");
+   lCalls.setText("Calls");
+   lEnterNumberHere.setText("Enter number here");
+   
+   lSend.setText("Send");
+   lMyScreenName.setText("My screen name");
+   lDoUWantSelectNewAp.setText("Do you want to select new access point?");
+   lDontShowMsgAgain.setText("Don't show this message again.");
+   
+   lForYourInfo.setText("For your information");
+   lNotifyMicCameraUsage.setText(
+                                 "This application will use of the following "
+                                 "features of your phone. If you have any questions or "
+                                 "concerns, please contact us at info@tivi.com:\n\n"
+                                 "* Using camera and microphone\n"
+                                 "* Making a connection to the internet\n"
+                                 );
+   lBillableEvent.setText("Billable event");
+   lAllowApiConnect.setText("Allow  this application to connect to the internet?");
+   
+   lKeyInvalid.setText("Licence is wrong... :(\nYou can get it from\nwww.tivi.com");
+   lKeyValid.setText("Thank You,\nkey is valid.");
+   
+   lKeyInvalidUnlimited.setText("Can not use ZRTP in unlimited mode!\n Please enter a valid ZRTP key or get it from\nwww.tivi.com");
+   lKeyInvalidActive.setText("Can not use ZRTP in active mode!\n Please enter a valid ZRTP key or get it from\nwww.tivi.com");
+   
+   
+}
+
+static short * getLine(short *line, short *end, char *name, int iMaxNameLen, int &iNameLen,CTEditBase *val){
    short *s=line;
    char *ps=(char*)s;
    int iBigEnd=(ps[0]==0);
@@ -313,7 +552,7 @@ int CTLangStrings::loadLang(CTEditBase *langFile){
    
    char name[128];
    int iNameLen;
-   CTEditBase val(1024); 
+   CTEditBase val(1024);
    
    while(tmp+5<end){
       //debugss("getL",val.getLen(),1);
@@ -332,111 +571,6 @@ endFnc:
    
 }
 
-void CTLangStrings::constrEng()
-{
-   lRestartLang.setText("Instant language switch requires phone restart, continue?");
-   
-   lInvPhNr.setText("Invalid phone number");
-   lAllSesBusy.setText("All sessions are busy");
-   lError.setText("Error");
-   
-   lConTimeOut.setText("Connection timed out");
-   lCannotDeliv.setText("Cannot deliver a message. ");
-   lCannotReg.setText("Cannot register. ");
-   lCannotCon.setText("Cannot connect. ");
-   lReason.setText("Reason: \r\n");
-   lNoConn.setText("No connection");
-   lCalling.setText("Calling...");
-   lRegist.setText("Registering...");
-   
-   lCallEnded.setText("Call ended");
-   lRegSucc.setText("Registration successful");
-   lMissCall.setText("Missed call");
-   lIncomCall.setText("Incoming call from");
-   lConnecting.setText("Connecting to ");//i-net...");
-   lConnecting.addText(lApiShortName);
-   lConnecting.addText("...");
-   
-   
-   lMyUN.setText("My login name");
-   
-   lMyPwd.setText("My password");
-   lMyPhNr.setText("My ");
-   lMyPhNr.addText(lApiShortName);
-   //
-   lMyPhNr.addText(" number, (if you have one)");
-   
-   lEnterUN_PWD.setText("Enter username and password");
-   
-   lFind.setText("Find");
-   lConfig.setText("Config");
-   lPhoneBook.setText("Phone book");
-   
-   lCall.setText("Call");lHangUp.setText("End call");
-   
-   lEdit.setText("Edit");
-   lRemove.setText("Remove");
-   lAdd.setText("Add");
-   
-   lAbout.setText("About");
-   lLogin.setText("Login");
-   lLogout.setText("Logout");
-   lExit.setText("Exit");
-   
-   lDialledNumbers.setText("  Dialled numbers ->");
-   lReceivedCalls.setText("<- Received calls ->");//,lMissedCalls;
-   lMissedCalls.setText("<- Missed calls  ");
-   lToEnterCfgLogout.setText("To enter config Logout.");
-   lDeleteEntryFromList.setText("Delete entry from list?");
-   
-   
-   lRunAtStartup.setText("Run at startup");
-   lUsingAP.setText("Using AP - ");
-   
-   lVideoCall.setText("Video Call");
-   lEnterNumberChatWith.setText("Enter the username or number you want to chat with\nand press Chat button again.");
-   
-   lOptions.setText("Options");
-   lOk.setText("Ok");
-   lCancel.setText("Cancel");
-   lChat.setText("Chat");
-   
-   lNetworkConfiguration.setText("Network Configuration");
-   lDefault.setText("Default");
-   
-   lSoundAlertMsg.setText("Sound an alert on incoming messages");
-   lShowTSFrontMsg.setText("Show timestamp in front of messages");
-   lOutputSpeakersHead.setText("Output - speakers or headset");
-   lInputMicHead.setText("Input - microphone or headset");
-   lNRingsDings.setText("Notifications - ring and dings");
-   lAudio.setText("Audio");
-   lCalls.setText("Calls");
-   lEnterNumberHere.setText("Enter number here");
-   
-   lSend.setText("Send");
-   lMyScreenName.setText("My screen name");
-   lDoUWantSelectNewAp.setText("Do you want to select new access point?");
-   lDontShowMsgAgain.setText("Don't show this message again.");
-   
-   lForYourInfo.setText("For your information");
-   lNotifyMicCameraUsage.setText(
-                                 "This application will use of the following "
-                                 "features of your phone. If you have any questions or "
-                                 "concerns, please contact us at info@tivi.com:\n\n"
-                                 "* Using camera and microphone\n"
-                                 "* Making a connection to the internet\n"
-                                 );
-   lBillableEvent.setText("Billable event");
-   lAllowApiConnect.setText("Allow  this application to connect to the internet?");
-   
-   lKeyInvalid.setText("Licence is wrong... :(\nYou can get it from\nwww.tivi.com");
-   lKeyValid.setText("Thank You,\nkey is valid.");
-   
-   lKeyInvalidUnlimited.setText("Can not use ZRTP in unlimited mode!\n Please enter a valid ZRTP key or get it from\nwww.tivi.com");
-   lKeyInvalidActive.setText("Can not use ZRTP in active mode!\n Please enter a valid ZRTP key or get it from\nwww.tivi.com");
-   
-   
-}
 
 #define T_LOAD_STRINGS
 #include "CTLangStrings.h"

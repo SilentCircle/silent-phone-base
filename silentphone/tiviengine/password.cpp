@@ -28,6 +28,9 @@ ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
+#ifdef _WIN32
+#define snprintf _snprintf
+#endif
 
 #include <stdio.h>
 #include <string.h>
@@ -85,9 +88,31 @@ void setPWDKey(unsigned char *k, int iLen){
       return  ;//should we exit here?
    }
 }
+/*
+int encryptTest(unsigned char *binIn, int iLen,  int iIndex){
+ 
+   unsigned char inCpy[1024];
+   unsigned char iv[] = IV_INIT;
+   snprintf((char*)&iv[0],sizeof(iv),"%d",iIndex);
+   
+   for(int i=0;i<iLen;i+=1000){
+      int bytesEncrypt=iLen;
+      if(bytesEncrypt>1000)bytesEncrypt=1000;
+      memcpy(inCpy, &binIn[i], bytesEncrypt);
+      aes.cfb_encrypt((unsigned char*)inCpy, &binIn[i], bytesEncrypt, iv);
+   }
+   aes.mode_reset();
+   return iLen;
+}
+*/
 
 int encryptPWD(const char *pwd, int iLen, char *hexOut, int iMaxOut, int iIndex){
 
+   if(iLen==0 && iMaxOut){
+      hexOut[0]=0;
+      return 0;
+   }
+   
    if (iLen < 1 || iLen*2 >= iMaxOut || iLen >= 128 || !iPasswordWasSet){
       return -1;
    }

@@ -39,9 +39,9 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "../utils/CdtMacros.h"
 
 class ADDR{
-   enum {eMaxDNS_SIZE=(128-16)};
    int iPortStr;
 public:
+   enum {eMaxDNS_SIZE=(128-16)};
    char bufAddr[eMaxDNS_SIZE];//dns
    ADDR(unsigned int ip=0, unsigned int port=0):ip(ip)
    {
@@ -108,6 +108,7 @@ public:
       if(!ip && bufAddr[0] && port==iPortStr)
       {
          strcpy(ipStr,bufAddr);
+         return ipStr;
       }
       int l;
       unsigned int a1=((unsigned char *)&ip)[0];

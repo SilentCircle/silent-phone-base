@@ -116,7 +116,6 @@
 		4C22C94E1556B4860068447D /* tabitem_keypad@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = 4C22C94D1556B4860068447D /* tabitem_keypad@2x.png */; };
 		4C22C9561556EAC10068447D /* Default.png in Resources */ = {isa = PBXBuildFile; fileRef = 4C22C9551556EAC00068447D /* Default.png */; };
 		4C22C95D155722B40068447D /* bt_gray.png in Resources */ = {isa = PBXBuildFile; fileRef = 4C22C957155722B30068447D /* bt_gray.png */; };
-		4C22C95E155722B40068447D /* bt_green_wide.png in Resources */ = {isa = PBXBuildFile; fileRef = 4C22C958155722B30068447D /* bt_green_wide.png */; };
 		4C22C95F155722B40068447D /* bt_green.png in Resources */ = {isa = PBXBuildFile; fileRef = 4C22C959155722B30068447D /* bt_green.png */; };
 		4C22C961155722B40068447D /* bt_red.png in Resources */ = {isa = PBXBuildFile; fileRef = 4C22C95B155722B40068447D /* bt_red.png */; };
 		4C22C962155722B40068447D /* ico_user.png in Resources */ = {isa = PBXBuildFile; fileRef = 4C22C95C155722B40068447D /* ico_user.png */; };
@@ -141,6 +140,8 @@
 		4C320E01157FDC0500D8FCF6 /* ico_antena_0.png in Resources */ = {isa = PBXBuildFile; fileRef = 4C320E00157FDC0500D8FCF6 /* ico_antena_0.png */; };
 		4C320E081580B00A00D8FCF6 /* main_lock_locked.png in Resources */ = {isa = PBXBuildFile; fileRef = 4C320E061580B00900D8FCF6 /* main_lock_locked.png */; };
 		4C320E091580B00A00D8FCF6 /* main_lock_verified.png in Resources */ = {isa = PBXBuildFile; fileRef = 4C320E071580B00A00D8FCF6 /* main_lock_verified.png */; };
+		4C34B79C175C87BE0047C208 /* libpolar_ssl.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 4C34B79B175C87BE0047C208 /* libpolar_ssl.a */; };
+		4C34B7D11760CB950047C208 /* ring_retro.caf in Resources */ = {isa = PBXBuildFile; fileRef = 4C34B7D01760CB950047C208 /* ring_retro.caf */; };
 		4C350B79152A3D5D00E44BC0 /* MainWindow.xib in Resources */ = {isa = PBXBuildFile; fileRef = 4C350B77152A3D5D00E44BC0 /* MainWindow.xib */; };
 		4C350B86152A3E8000E44BC0 /* SettingsController.mm in Sources */ = {isa = PBXBuildFile; fileRef = 4C350B82152A3E8000E44BC0 /* SettingsController.mm */; };
 		4C350B87152A3E8000E44BC0 /* UICellController.mm in Sources */ = {isa = PBXBuildFile; fileRef = 4C350B84152A3E8000E44BC0 /* UICellController.mm */; };
@@ -178,6 +179,7 @@
 		4C66C50D15580DFE00B6BB8C /* fpad_bt_3_down.png in Resources */ = {isa = PBXBuildFile; fileRef = 4C66C50C15580DFE00B6BB8C /* fpad_bt_3_down.png */; };
 		4C66C51015580E3E00B6BB8C /* ico_speaker.png in Resources */ = {isa = PBXBuildFile; fileRef = 4C66C50F15580E3E00B6BB8C /* ico_speaker.png */; };
 		4C66C513155814F800B6BB8C /* ico_mute.png in Resources */ = {isa = PBXBuildFile; fileRef = 4C66C512155814F800B6BB8C /* ico_mute.png */; };
+		4C6D506316DB4E4100553312 /* tivi_log.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 4C6D506216DB4E4000553312 /* tivi_log.cpp */; };
 		4C7B15BB15AB171D007D170B /* ad.png in Resources */ = {isa = PBXBuildFile; fileRef = 4C7B14E215AB171A007D170B /* ad.png */; };
 		4C7B15BC15AB171D007D170B /* ae.png in Resources */ = {isa = PBXBuildFile; fileRef = 4C7B14E315AB171A007D170B /* ae.png */; };
 		4C7B15BD15AB171D007D170B /* af.png in Resources */ = {isa = PBXBuildFile; fileRef = 4C7B14E415AB171A007D170B /* af.png */; };
@@ -407,8 +409,6 @@
 		4C8CB1C9156BFB7F00DE3804 /* ring.caf in Resources */ = {isa = PBXBuildFile; fileRef = 4C8CB1C8156BFB7F00DE3804 /* ring.caf */; };
 		4C8CB1D1156CD5E000DE3804 /* NonModalContactsViewViewController.mm in Sources */ = {isa = PBXBuildFile; fileRef = 4C8CB1D0156CD5E000DE3804 /* NonModalContactsViewViewController.mm */; };
 		4C8CB1D7156D67CC00DE3804 /* ico_add_call.png in Resources */ = {isa = PBXBuildFile; fileRef = 4C8CB1D6156D67CB00DE3804 /* ico_add_call.png */; };
-		4C9CC20E154E954A0031DB30 /* libpolar_ssl.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 4C9CC20D154E95480031DB30 /* libpolar_ssl.a */; };
-		4C9CC215155013730031DB30 /* bt_call_down.png in Resources */ = {isa = PBXBuildFile; fileRef = 4C9CC2131550136E0031DB30 /* bt_call_down.png */; };
 		4C9CC216155013730031DB30 /* bt_call_up.png in Resources */ = {isa = PBXBuildFile; fileRef = 4C9CC214155013700031DB30 /* bt_call_up.png */; };
 		4C9CC219155013EF0031DB30 /* bg_main.png in Resources */ = {isa = PBXBuildFile; fileRef = 4C9CC217155013EE0031DB30 /* bg_main.png */; };
 		4C9CC21A155013EF0031DB30 /* panel_dial_number_area.png in Resources */ = {isa = PBXBuildFile; fileRef = 4C9CC218155013EF0031DB30 /* panel_dial_number_area.png */; };
@@ -419,12 +419,13 @@
 		4CA185A915D58D7100812917 /* g_cfg.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 4CA185A815D58D7100812917 /* g_cfg.cpp */; };
 		4CA185B315D5A5DC00812917 /* sys_utils.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 4CA185B215D5A5DB00812917 /* sys_utils.cpp */; };
 		4CA185B515D5A5E700812917 /* app_license.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 4CA185B415D5A5E600812917 /* app_license.cpp */; };
-		4CA28D0A15595DF700D4C0C7 /* graphic_connect.png in Resources */ = {isa = PBXBuildFile; fileRef = 4CA28D0915595DF700D4C0C7 /* graphic_connect.png */; };
 		4CA28D0D1559BD1D00D4C0C7 /* ico_end_call.png in Resources */ = {isa = PBXBuildFile; fileRef = 4CA28D0C1559BD1D00D4C0C7 /* ico_end_call.png */; };
 		4CA28D0F1559F06000D4C0C7 /* bt_settings.png in Resources */ = {isa = PBXBuildFile; fileRef = 4CA28D0E1559F06000D4C0C7 /* bt_settings.png */; };
 		4CA28D15155A79E000D4C0C7 /* bg_meta.png in Resources */ = {isa = PBXBuildFile; fileRef = 4CA28D14155A79E000D4C0C7 /* bg_meta.png */; };
 		4CA28D1F155C071800D4C0C7 /* ico_keypad.png in Resources */ = {isa = PBXBuildFile; fileRef = 4CA28D1E155C071600D4C0C7 /* ico_keypad.png */; };
-		4CA28D21155C077B00D4C0C7 /* fkeypad.png in Resources */ = {isa = PBXBuildFile; fileRef = 4CA28D20155C077B00D4C0C7 /* fkeypad.png */; };
+		4CAB432116E20CAA00BB52A5 /* out_in_panel.png in Resources */ = {isa = PBXBuildFile; fileRef = 4CAB431C16E20CAA00BB52A5 /* out_in_panel.png */; };
+		4CAB432316E20CAA00BB52A5 /* private_panel.png in Resources */ = {isa = PBXBuildFile; fileRef = 4CAB431E16E20CAA00BB52A5 /* private_panel.png */; };
+		4CAB432416E20CAA00BB52A5 /* conf_panel.png in Resources */ = {isa = PBXBuildFile; fileRef = 4CAB431F16E20CAA00BB52A5 /* conf_panel.png */; };
 		4CACF7F1169D162E00B9FAEC /* password.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 4CACF7EF169D162D00B9FAEC /* password.cpp */; };
 		4CACF7F2169D162E00B9FAEC /* media.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 4CACF7F0169D162D00B9FAEC /* media.cpp */; };
 		4CACF80716A44E5600B9FAEC /* sip_reason_translator.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 4CACF80616A44E5100B9FAEC /* sip_reason_translator.cpp */; };
@@ -434,6 +435,7 @@
 		4CB28F6315D68586001425C9 /* Prov.xib in Resources */ = {isa = PBXBuildFile; fileRef = 4CB28F6115D68586001425C9 /* Prov.xib */; };
 		4CB28F6915D6FEA7001425C9 /* prov.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 4CB28F6815D6FEA6001425C9 /* prov.cpp */; };
 		4CB28F7115D98833001425C9 /* SilentPhone_57x57_.png in Resources */ = {isa = PBXBuildFile; fileRef = 4CB28F7015D98830001425C9 /* SilentPhone_57x57_.png */; };
+		4CB43A241770753B008C0D48 /* Default-568h@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = 4CB43A231770753B008C0D48 /* Default-568h@2x.png */; };
 		4CBD505F152A47E100FB848B /* AddressBook.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 4CBD505D152A47E100FB848B /* AddressBook.framework */; };
 		4CBD5060152A47E200FB848B /* AddressBookUI.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 4CBD505E152A47E100FB848B /* AddressBookUI.framework */; };
 		4CBFE560159B3BF30018E47C /* ico_video_call.png in Resources */ = {isa = PBXBuildFile; fileRef = 4CBFE55F159B3BF20018E47C /* ico_video_call.png */; };
@@ -448,11 +450,39 @@
 		4CC54AA7153316890032C392 /* t_g722.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 4CC54AA3153316890032C392 /* t_g722.cpp */; };
 		4CC54AA8153316890032C392 /* vector_int.c in Sources */ = {isa = PBXBuildFile; fileRef = 4CC54AA5153316890032C392 /* vector_int.c */; };
 		4CC54AC41534EAD50032C392 /* Recents.xib in Resources */ = {isa = PBXBuildFile; fileRef = 4CC54AC31534EAD50032C392 /* Recents.xib */; };
+		4CC583BD1711A08000E1C7B6 /* drag@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = 4CC583BB1711A08000E1C7B6 /* drag@2x.png */; };
+		4CC583BE1711A08000E1C7B6 /* drag.png in Resources */ = {isa = PBXBuildFile; fileRef = 4CC583BC1711A08000E1C7B6 /* drag.png */; };
+		4CC583C21711A0D300E1C7B6 /* bt_ico_answer_call@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = 4CC583C01711A0D200E1C7B6 /* bt_ico_answer_call@2x.png */; };
+		4CC583C31711A0D300E1C7B6 /* bt_ico_drop_call@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = 4CC583C11711A0D300E1C7B6 /* bt_ico_drop_call@2x.png */; };
+		4CC583C51711A20B00E1C7B6 /* out_in_panel@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = 4CC583C41711A20B00E1C7B6 /* out_in_panel@2x.png */; };
+		4CC583C81711A28B00E1C7B6 /* conf_panel@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = 4CC583C61711A28A00E1C7B6 /* conf_panel@2x.png */; };
+		4CC583C91711A28B00E1C7B6 /* private_panel@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = 4CC583C71711A28B00E1C7B6 /* private_panel@2x.png */; };
+		4CC583CC1711A41500E1C7B6 /* ico_add_call@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = 4CC583CA1711A41300E1C7B6 /* ico_add_call@2x.png */; };
+		4CC583CD1711A41500E1C7B6 /* ico_speaker@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = 4CC583CB1711A41400E1C7B6 /* ico_speaker@2x.png */; };
+		4CC583CF1711A49900E1C7B6 /* ico_video_call@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = 4CC583CE1711A49800E1C7B6 /* ico_video_call@2x.png */; };
+		4CC583D11711A4DA00E1C7B6 /* ico_mute@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = 4CC583D01711A4D900E1C7B6 /* ico_mute@2x.png */; };
+		4CC583D31711A50400E1C7B6 /* fpad@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = 4CC583D21711A50300E1C7B6 /* fpad@2x.png */; };
+		4CC583D51711A64400E1C7B6 /* ico_mute_small@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = 4CC583D41711A64200E1C7B6 /* ico_mute_small@2x.png */; };
+		4CC583D81711A9EB00E1C7B6 /* ico_call_out@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = 4CC583D61711A9E300E1C7B6 /* ico_call_out@2x.png */; };
+		4CC583D91711A9EB00E1C7B6 /* ico_call_in@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = 4CC583D71711A9E600E1C7B6 /* ico_call_in@2x.png */; };
+		4CC583DB1711AADA00E1C7B6 /* bt_call_up@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = 4CC583DA1711AAD600E1C7B6 /* bt_call_up@2x.png */; };
+		4CC583DD1711AB8D00E1C7B6 /* ico_antena_0@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = 4CC583DC1711AB8900E1C7B6 /* ico_antena_0@2x.png */; };
+		4CC583DF1711ABE900E1C7B6 /* bt_dial_backspace@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = 4CC583DE1711ABE600E1C7B6 /* bt_dial_backspace@2x.png */; };
+		4CC583E11711ACA000E1C7B6 /* bt_dial_contact@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = 4CC583E01711AC9B00E1C7B6 /* bt_dial_contact@2x.png */; };
+		4CC583E31711AD0C00E1C7B6 /* ico_keypad@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = 4CC583E21711AD0800E1C7B6 /* ico_keypad@2x.png */; };
+		4CC583E51711BEE000E1C7B6 /* ico_end_call@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = 4CC583E41711BED900E1C7B6 /* ico_end_call@2x.png */; };
+		4CC583FD17134C3300E1C7B6 /* panel_cmanager_call_active@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = 4CC583FC17134C2A00E1C7B6 /* panel_cmanager_call_active@2x.png */; };
+		4CC583FF1713504300E1C7B6 /* ico_user@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = 4CC583FE1713503A00E1C7B6 /* ico_user@2x.png */; };
+		4CC58401171350A900E1C7B6 /* ico_user_plus@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = 4CC584001713509F00E1C7B6 /* ico_user_plus@2x.png */; };
+		4CC58405171353EC00E1C7B6 /* panel_call_topbar@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = 4CC58404171353E100E1C7B6 /* panel_call_topbar@2x.png */; };
+		4CC584071713561D00E1C7B6 /* bg_time@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = 4CC584061713561200E1C7B6 /* bg_time@2x.png */; };
 		4CC83D59152A3C3D00D25CB9 /* UIKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 4CC83D58152A3C3D00D25CB9 /* UIKit.framework */; };
 		4CC83D5B152A3C3D00D25CB9 /* Foundation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 4CC83D5A152A3C3D00D25CB9 /* Foundation.framework */; };
 		4CC83D5D152A3C3D00D25CB9 /* CoreGraphics.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 4CC83D5C152A3C3D00D25CB9 /* CoreGraphics.framework */; };
 		4CC83D63152A3C3D00D25CB9 /* InfoPlist.strings in Resources */ = {isa = PBXBuildFile; fileRef = 4CC83D61152A3C3D00D25CB9 /* InfoPlist.strings */; };
 		4CC83D65152A3C3D00D25CB9 /* main.mm in Sources */ = {isa = PBXBuildFile; fileRef = 4CC83D64152A3C3D00D25CB9 /* main.mm */; };
+		4CD413F3170D85740004A19E /* Reachability.m in Sources */ = {isa = PBXBuildFile; fileRef = 4CD413F2170D85740004A19E /* Reachability.m */; };
+		4CD413F6170D87DE0004A19E /* SystemConfiguration.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 4CD413F5170D87DE0004A19E /* SystemConfiguration.framework */; };
 		4CD4691615659A0100D8AC8F /* bt_ico_answer_call.png in Resources */ = {isa = PBXBuildFile; fileRef = 4CD4691515659A0100D8AC8F /* bt_ico_answer_call.png */; };
 		4CD4691A15659FA100D8AC8F /* sc_app_logo_114px.png in Resources */ = {isa = PBXBuildFile; fileRef = 4CD4691915659FA100D8AC8F /* sc_app_logo_114px.png */; };
 		4CD6EDFB161B7640006A736E /* ico_user_plus.png in Resources */ = {isa = PBXBuildFile; fileRef = 4CD6EDFA161B7640006A736E /* ico_user_plus.png */; };
@@ -626,7 +656,6 @@
 		4C22C94D1556B4860068447D /* tabitem_keypad@2x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "tabitem_keypad@2x.png"; sourceTree = "<group>"; };
 		4C22C9551556EAC00068447D /* Default.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = Default.png; sourceTree = SOURCE_ROOT; };
 		4C22C957155722B30068447D /* bt_gray.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = bt_gray.png; sourceTree = "<group>"; };
-		4C22C958155722B30068447D /* bt_green_wide.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = bt_green_wide.png; sourceTree = "<group>"; };
 		4C22C959155722B30068447D /* bt_green.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = bt_green.png; sourceTree = "<group>"; };
 		4C22C95B155722B40068447D /* bt_red.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = bt_red.png; sourceTree = "<group>"; };
 		4C22C95C155722B40068447D /* ico_user.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = ico_user.png; sourceTree = "<group>"; };
@@ -656,6 +685,8 @@
 		4C320E00157FDC0500D8FCF6 /* ico_antena_0.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = ico_antena_0.png; sourceTree = "<group>"; };
 		4C320E061580B00900D8FCF6 /* main_lock_locked.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = main_lock_locked.png; sourceTree = "<group>"; };
 		4C320E071580B00A00D8FCF6 /* main_lock_verified.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = main_lock_verified.png; sourceTree = "<group>"; };
+		4C34B79B175C87BE0047C208 /* libpolar_ssl.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; name = libpolar_ssl.a; path = "../../../libs/polar_ssl_proj/DerivedData/polar_ssl/Build/Products/Debug-iphoneos/libpolar_ssl.a"; sourceTree = "<group>"; };
+		4C34B7D01760CB950047C208 /* ring_retro.caf */ = {isa = PBXFileReference; lastKnownFileType = file; path = ring_retro.caf; sourceTree = "<group>"; };
 		4C350B78152A3D5D00E44BC0 /* en */ = {isa = PBXFileReference; lastKnownFileType = file.xib; name = en; path = en.lproj/MainWindow.xib; sourceTree = SOURCE_ROOT; };
 		4C350B81152A3E8000E44BC0 /* SettingsController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = SettingsController.h; path = Classes/SettingsController.h; sourceTree = SOURCE_ROOT; };
 		4C350B82152A3E8000E44BC0 /* SettingsController.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; name = SettingsController.mm; path = Classes/SettingsController.mm; sourceTree = SOURCE_ROOT; };
@@ -703,6 +734,7 @@
 		4C66C50C15580DFE00B6BB8C /* fpad_bt_3_down.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = fpad_bt_3_down.png; sourceTree = "<group>"; };
 		4C66C50F15580E3E00B6BB8C /* ico_speaker.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = ico_speaker.png; sourceTree = "<group>"; };
 		4C66C512155814F800B6BB8C /* ico_mute.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = ico_mute.png; sourceTree = "<group>"; };
+		4C6D506216DB4E4000553312 /* tivi_log.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = tivi_log.cpp; path = ../../../tiviengine/tivi_log.cpp; sourceTree = "<group>"; };
 		4C7B14E215AB171A007D170B /* ad.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = ad.png; sourceTree = "<group>"; };
 		4C7B14E315AB171A007D170B /* ae.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = ae.png; sourceTree = "<group>"; };
 		4C7B14E415AB171A007D170B /* af.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = af.png; sourceTree = "<group>"; };
@@ -922,7 +954,7 @@
 		4C7B15BA15AB171D007D170B /* zw.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = zw.png; sourceTree = "<group>"; };
 		4C7B169515AD0C78007D170B /* CTRTPVideoPlayer.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = CTRTPVideoPlayer.cpp; path = ../../../video/CTRTPVideoPlayer.cpp; sourceTree = "<group>"; };
 		4C7B169615AD0C7A007D170B /* CTRTPVideoPlayer.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = CTRTPVideoPlayer.h; path = ../../../video/CTRTPVideoPlayer.h; sourceTree = "<group>"; };
-		4C804F3915BA1C1F0070B93B /* libwerner_zrtp.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; name = libwerner_zrtp.a; path = "../../../libs/werner_zrtp/DerivedData/werner_zrtp/Build/Products/Debug-iphoneos/libwerner_zrtp.a"; sourceTree = "<group>"; };
+		4C804F3915BA1C1F0070B93B /* libwerner_zrtp.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; name = libwerner_zrtp.a; path = "../../libs/zrtp-ios-proj/build/Debug-iphoneos/libwerner_zrtp.a"; sourceTree = "<group>"; };
 		4C804F4915BB674C0070B93B /* libsqlite3.0.dylib */ = {isa = PBXFileReference; lastKnownFileType = "compiled.mach-o.dylib"; name = libsqlite3.0.dylib; path = usr/lib/libsqlite3.0.dylib; sourceTree = SDKROOT; };
 		4C8A1E22157154250069240E /* RecentsInfo.xib */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = file.xib; path = RecentsInfo.xib; sourceTree = "<group>"; };
 		4C8A1E26157162150069240E /* RecentsInfoTW.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = RecentsInfoTW.h; path = Classes/RecentsInfoTW.h; sourceTree = SOURCE_ROOT; };
@@ -937,8 +969,6 @@
 		4C8CB1D0156CD5E000DE3804 /* NonModalContactsViewViewController.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; name = NonModalContactsViewViewController.mm; path = Classes/NonModalContactsViewViewController.mm; sourceTree = SOURCE_ROOT; };
 		4C8CB1D6156D67CB00DE3804 /* ico_add_call.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = ico_add_call.png; sourceTree = "<group>"; };
 		4C9CC13E154A8B800031DB30 /* CTAudioOutVOIP.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = CTAudioOutVOIP.h; path = ../../../audio/CTAudioOutVOIP.h; sourceTree = "<group>"; };
-		4C9CC20D154E95480031DB30 /* libpolar_ssl.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; name = libpolar_ssl.a; path = "../../../libs/polarssl-1.1.1/iphone/polar_ssl/DerivedData/polar_ssl/Build/Products/Debug-iphoneos/libpolar_ssl.a"; sourceTree = "<group>"; };
-		4C9CC2131550136E0031DB30 /* bt_call_down.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = bt_call_down.png; sourceTree = "<group>"; };
 		4C9CC214155013700031DB30 /* bt_call_up.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = bt_call_up.png; sourceTree = "<group>"; };
 		4C9CC217155013EE0031DB30 /* bg_main.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = bg_main.png; sourceTree = "<group>"; };
 		4C9CC218155013EF0031DB30 /* panel_dial_number_area.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = panel_dial_number_area.png; sourceTree = "<group>"; };
@@ -949,12 +979,13 @@
 		4CA185A815D58D7100812917 /* g_cfg.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = g_cfg.cpp; path = ../../../tiviengine/g_cfg.cpp; sourceTree = "<group>"; };
 		4CA185B215D5A5DB00812917 /* sys_utils.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = sys_utils.cpp; path = ../../../os/sys_utils.cpp; sourceTree = "<group>"; };
 		4CA185B415D5A5E600812917 /* app_license.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = app_license.cpp; path = ../../../tiviengine/app_license.cpp; sourceTree = "<group>"; };
-		4CA28D0915595DF700D4C0C7 /* graphic_connect.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = graphic_connect.png; sourceTree = "<group>"; };
 		4CA28D0C1559BD1D00D4C0C7 /* ico_end_call.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = ico_end_call.png; sourceTree = "<group>"; };
 		4CA28D0E1559F06000D4C0C7 /* bt_settings.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = bt_settings.png; sourceTree = "<group>"; };
 		4CA28D14155A79E000D4C0C7 /* bg_meta.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = bg_meta.png; sourceTree = "<group>"; };
 		4CA28D1E155C071600D4C0C7 /* ico_keypad.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = ico_keypad.png; sourceTree = "<group>"; };
-		4CA28D20155C077B00D4C0C7 /* fkeypad.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = fkeypad.png; sourceTree = "<group>"; };
+		4CAB431C16E20CAA00BB52A5 /* out_in_panel.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = out_in_panel.png; sourceTree = "<group>"; };
+		4CAB431E16E20CAA00BB52A5 /* private_panel.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = private_panel.png; sourceTree = "<group>"; };
+		4CAB431F16E20CAA00BB52A5 /* conf_panel.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = conf_panel.png; sourceTree = "<group>"; };
 		4CACF7EF169D162D00B9FAEC /* password.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = password.cpp; path = ../../../tiviengine/password.cpp; sourceTree = "<group>"; };
 		4CACF7F0169D162D00B9FAEC /* media.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = media.cpp; path = ../../../tiviengine/media.cpp; sourceTree = "<group>"; };
 		4CACF7FD169F951E00B9FAEC /* CTLangStrings.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = CTLangStrings.h; path = ../../../tiviengine/CTLangStrings.h; sourceTree = "<group>"; };
@@ -968,6 +999,7 @@
 		4CB28F6115D68586001425C9 /* Prov.xib */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = file.xib; name = Prov.xib; path = Classes/Prov.xib; sourceTree = SOURCE_ROOT; };
 		4CB28F6815D6FEA6001425C9 /* prov.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = prov.cpp; path = ../../../tiviengine/prov.cpp; sourceTree = "<group>"; };
 		4CB28F7015D98830001425C9 /* SilentPhone_57x57_.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = SilentPhone_57x57_.png; sourceTree = "<group>"; };
+		4CB43A231770753B008C0D48 /* Default-568h@2x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "Default-568h@2x.png"; sourceTree = "<group>"; };
 		4CBD505D152A47E100FB848B /* AddressBook.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = AddressBook.framework; path = System/Library/Frameworks/AddressBook.framework; sourceTree = SDKROOT; };
 		4CBD505E152A47E100FB848B /* AddressBookUI.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = AddressBookUI.framework; path = System/Library/Frameworks/AddressBookUI.framework; sourceTree = SDKROOT; };
 		4CBFE55F159B3BF20018E47C /* ico_video_call.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = ico_video_call.png; sourceTree = "<group>"; };
@@ -985,6 +1017,32 @@
 		4CC54AA4153316890032C392 /* t_g722.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = t_g722.h; path = ../../../codecs/g722/t_g722.h; sourceTree = "<group>"; };
 		4CC54AA5153316890032C392 /* vector_int.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = vector_int.c; path = ../../../codecs/g722/vector_int.c; sourceTree = "<group>"; };
 		4CC54AC31534EAD50032C392 /* Recents.xib */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = file.xib; path = Recents.xib; sourceTree = "<group>"; };
+		4CC583BB1711A08000E1C7B6 /* drag@2x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "drag@2x.png"; sourceTree = "<group>"; };
+		4CC583BC1711A08000E1C7B6 /* drag.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = drag.png; sourceTree = "<group>"; };
+		4CC583C01711A0D200E1C7B6 /* bt_ico_answer_call@2x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "bt_ico_answer_call@2x.png"; sourceTree = "<group>"; };
+		4CC583C11711A0D300E1C7B6 /* bt_ico_drop_call@2x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "bt_ico_drop_call@2x.png"; sourceTree = "<group>"; };
+		4CC583C41711A20B00E1C7B6 /* out_in_panel@2x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "out_in_panel@2x.png"; sourceTree = "<group>"; };
+		4CC583C61711A28A00E1C7B6 /* conf_panel@2x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "conf_panel@2x.png"; sourceTree = "<group>"; };
+		4CC583C71711A28B00E1C7B6 /* private_panel@2x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "private_panel@2x.png"; sourceTree = "<group>"; };
+		4CC583CA1711A41300E1C7B6 /* ico_add_call@2x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "ico_add_call@2x.png"; sourceTree = "<group>"; };
+		4CC583CB1711A41400E1C7B6 /* ico_speaker@2x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "ico_speaker@2x.png"; sourceTree = "<group>"; };
+		4CC583CE1711A49800E1C7B6 /* ico_video_call@2x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "ico_video_call@2x.png"; sourceTree = "<group>"; };
+		4CC583D01711A4D900E1C7B6 /* ico_mute@2x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "ico_mute@2x.png"; sourceTree = "<group>"; };
+		4CC583D21711A50300E1C7B6 /* fpad@2x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "fpad@2x.png"; sourceTree = "<group>"; };
+		4CC583D41711A64200E1C7B6 /* ico_mute_small@2x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "ico_mute_small@2x.png"; sourceTree = "<group>"; };
+		4CC583D61711A9E300E1C7B6 /* ico_call_out@2x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "ico_call_out@2x.png"; sourceTree = "<group>"; };
+		4CC583D71711A9E600E1C7B6 /* ico_call_in@2x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "ico_call_in@2x.png"; sourceTree = "<group>"; };
+		4CC583DA1711AAD600E1C7B6 /* bt_call_up@2x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "bt_call_up@2x.png"; sourceTree = "<group>"; };
+		4CC583DC1711AB8900E1C7B6 /* ico_antena_0@2x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "ico_antena_0@2x.png"; sourceTree = "<group>"; };
+		4CC583DE1711ABE600E1C7B6 /* bt_dial_backspace@2x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "bt_dial_backspace@2x.png"; sourceTree = "<group>"; };
+		4CC583E01711AC9B00E1C7B6 /* bt_dial_contact@2x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "bt_dial_contact@2x.png"; sourceTree = "<group>"; };
+		4CC583E21711AD0800E1C7B6 /* ico_keypad@2x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "ico_keypad@2x.png"; sourceTree = "<group>"; };
+		4CC583E41711BED900E1C7B6 /* ico_end_call@2x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "ico_end_call@2x.png"; sourceTree = "<group>"; };
+		4CC583FC17134C2A00E1C7B6 /* panel_cmanager_call_active@2x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "panel_cmanager_call_active@2x.png"; sourceTree = "<group>"; };
+		4CC583FE1713503A00E1C7B6 /* ico_user@2x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "ico_user@2x.png"; sourceTree = "<group>"; };
+		4CC584001713509F00E1C7B6 /* ico_user_plus@2x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "ico_user_plus@2x.png"; sourceTree = "<group>"; };
+		4CC58404171353E100E1C7B6 /* panel_call_topbar@2x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "panel_call_topbar@2x.png"; sourceTree = "<group>"; };
+		4CC584061713561200E1C7B6 /* bg_time@2x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "bg_time@2x.png"; sourceTree = "<group>"; };
 		4CC83D54152A3C3D00D25CB9 /* VoipPhone.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = VoipPhone.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		4CC83D58152A3C3D00D25CB9 /* UIKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = UIKit.framework; path = System/Library/Frameworks/UIKit.framework; sourceTree = SDKROOT; };
 		4CC83D5A152A3C3D00D25CB9 /* Foundation.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Foundation.framework; path = System/Library/Frameworks/Foundation.framework; sourceTree = SDKROOT; };
@@ -993,6 +1051,9 @@
 		4CC83D62152A3C3D00D25CB9 /* en */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = en; path = en.lproj/InfoPlist.strings; sourceTree = "<group>"; };
 		4CC83D64152A3C3D00D25CB9 /* main.mm */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.objcpp; path = main.mm; sourceTree = "<group>"; };
 		4CC83D66152A3C3D00D25CB9 /* VoipPhone-Prefix.pch */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = "VoipPhone-Prefix.pch"; sourceTree = "<group>"; };
+		4CD413F1170D85740004A19E /* Reachability.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = Reachability.h; path = ../../../utils/Reachability.h; sourceTree = "<group>"; };
+		4CD413F2170D85740004A19E /* Reachability.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = Reachability.m; path = ../../../utils/Reachability.m; sourceTree = "<group>"; };
+		4CD413F5170D87DE0004A19E /* SystemConfiguration.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = SystemConfiguration.framework; path = System/Library/Frameworks/SystemConfiguration.framework; sourceTree = SDKROOT; };
 		4CD4691515659A0100D8AC8F /* bt_ico_answer_call.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = bt_ico_answer_call.png; sourceTree = "<group>"; };
 		4CD4691915659FA100D8AC8F /* sc_app_logo_114px.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = sc_app_logo_114px.png; sourceTree = "<group>"; };
 		4CD6EDFA161B7640006A736E /* ico_user_plus.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = ico_user_plus.png; sourceTree = "<group>"; };
@@ -1012,12 +1073,13 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				4C34B79C175C87BE0047C208 /* libpolar_ssl.a in Frameworks */,
+				4CD413F6170D87DE0004A19E /* SystemConfiguration.framework in Frameworks */,
 				4CACF81C16AC1AAB00B9FAEC /* Security.framework in Frameworks */,
 				4C804F4A15BB674C0070B93B /* libsqlite3.0.dylib in Frameworks */,
 				4C804F3A15BA1C200070B93B /* libwerner_zrtp.a in Frameworks */,
 				4C8A1E2A15716A5F0069240E /* QuartzCore.framework in Frameworks */,
 				4C61249C155127C40045C9DA /* CFNetwork.framework in Frameworks */,
-				4C9CC20E154E954A0031DB30 /* libpolar_ssl.a in Frameworks */,
 				4C246D9215442652001A6E2F /* AVFoundation.framework in Frameworks */,
 				4C246D9015442647001A6E2F /* CoreMedia.framework in Frameworks */,
 				4C246D8E15442631001A6E2F /* ImageIO.framework in Frameworks */,
@@ -1215,6 +1277,7 @@
 				4C19A9F0152B37AF0062EDD5 /* CTEditBase.cpp */,
 				4C19A9BD152B36730062EDD5 /* threads.cpp */,
 				4C19A9E7152B36FA0062EDD5 /* t_a_main.cpp */,
+				4C6D506216DB4E4000553312 /* tivi_log.cpp */,
 				4C19A9E9152B375C0062EDD5 /* utils.cpp */,
 				4C19A9EA152B375C0062EDD5 /* utils.h */,
 				4CACF80616A44E5100B9FAEC /* sip_reason_translator.cpp */,
@@ -1274,16 +1337,18 @@
 				4C3E78D615D31805003932AE /* AppDelegate.mm */,
 				4C3E78D715D31805003932AE /* CallManeger.mm */,
 				4C3E78D915D31805003932AE /* CallManeger.h */,
-				4C3E78D815D31805003932AE /* CallCell.h */,
 				4C3E78DC15D31805003932AE /* CallCell.mm */,
-				4C3E78DA15D31805003932AE /* RecentsInfo.h */,
-				4C3E78DB15D31805003932AE /* RecentsInfo.m */,
+				4C3E78D815D31805003932AE /* CallCell.h */,
 				4C8A1E371573DCC50069240E /* ZRTPInfoView.h */,
 				4C8A1E381573DCC60069240E /* ZRTPInfoView.mm */,
+				4C3E78DA15D31805003932AE /* RecentsInfo.h */,
+				4C3E78DB15D31805003932AE /* RecentsInfo.m */,
 				4C320DEF157E36CC00D8FCF6 /* Favorites.h */,
 				4C320DF0157E36CC00D8FCF6 /* Favorites.mm */,
 				4C246D8415441FAC001A6E2F /* SqareCamViewController.mm */,
 				4C246D8515441FAC001A6E2F /* SquareCamViewController.h */,
+				4CD413F1170D85740004A19E /* Reachability.h */,
+				4CD413F2170D85740004A19E /* Reachability.m */,
 				4C8A1E26157162150069240E /* RecentsInfoTW.h */,
 				4C8A1E27157162150069240E /* RecentsInfoTW.mm */,
 				4C3E78CD15D311AA003932AE /* Recents.h */,
@@ -1313,65 +1378,90 @@
 			children = (
 				4C22C9551556EAC00068447D /* Default.png */,
 				4CECEF1F15A5B0B700F731CE /* flags */,
-				4C9CC21F155035D40031DB30 /* bt_dial_contact.png */,
+				4CAB431C16E20CAA00BB52A5 /* out_in_panel.png */,
+				4CC583C41711A20B00E1C7B6 /* out_in_panel@2x.png */,
+				4CAB431E16E20CAA00BB52A5 /* private_panel.png */,
+				4CC583C71711A28B00E1C7B6 /* private_panel@2x.png */,
+				4CAB431F16E20CAA00BB52A5 /* conf_panel.png */,
+				4CC583C61711A28A00E1C7B6 /* conf_panel@2x.png */,
 				4CA28D0C1559BD1D00D4C0C7 /* ico_end_call.png */,
+				4CC583E41711BED900E1C7B6 /* ico_end_call@2x.png */,
+				4C320E00157FDC0500D8FCF6 /* ico_antena_0.png */,
+				4CC583DC1711AB8900E1C7B6 /* ico_antena_0@2x.png */,
 				4C320DF8157FA3FC00D8FCF6 /* ico_antena_4.png */,
 				4C320DFA157FDBBE00D8FCF6 /* ico_antena_1.png */,
-				4CBFE561159B73170018E47C /* ico_mute_small.png */,
-				4CD6EDFA161B7640006A736E /* ico_user_plus.png */,
-				4C320E061580B00900D8FCF6 /* main_lock_locked.png */,
-				4C320E071580B00A00D8FCF6 /* main_lock_verified.png */,
 				4C320DFB157FDBBF00D8FCF6 /* ico_antena_2.png */,
 				4C320DFC157FDBBF00D8FCF6 /* ico_antena_3.png */,
+				4C320E061580B00900D8FCF6 /* main_lock_locked.png */,
+				4C320E071580B00A00D8FCF6 /* main_lock_verified.png */,
 				4C3E78C515D31079003932AE /* bg_time.png */,
-				4C320E00157FDC0500D8FCF6 /* ico_antena_0.png */,
-				4C5E8E1715766AE700987F22 /* ico_call_out2.png */,
+				4CC584061713561200E1C7B6 /* bg_time@2x.png */,
 				4C3E78C715D310F1003932AE /* panel_meta_ball_gray.png */,
 				4C3E78C815D310F1003932AE /* panel_meta_ball_green.png */,
 				4C3E78C915D310F1003932AE /* panel_meta_ball_red.png */,
-				4C5E8E1815766AE700987F22 /* ico_call_in2.png */,
+				4CC583BB1711A08000E1C7B6 /* drag@2x.png */,
+				4CC583BC1711A08000E1C7B6 /* drag.png */,
+				4CBFE561159B73170018E47C /* ico_mute_small.png */,
+				4CC583D41711A64200E1C7B6 /* ico_mute_small@2x.png */,
 				4C60FA8C158BAC9B0002197F /* ico_switch_camera.png */,
 				4C320DF6157FA27B00D8FCF6 /* panel_bubble.png */,
 				4C320DF4157F99FB00D8FCF6 /* panel_call_topbar.png */,
+				4CC58404171353E100E1C7B6 /* panel_call_topbar@2x.png */,
 				4C5E8E021574D2B100987F22 /* ico_call_out.png */,
 				4C5E8E031574D2B100987F22 /* ico_call_in.png */,
+				4CC583D61711A9E300E1C7B6 /* ico_call_out@2x.png */,
+				4CC583D71711A9E600E1C7B6 /* ico_call_in@2x.png */,
+				4C5E8E1815766AE700987F22 /* ico_call_in2.png */,
+				4C5E8E1715766AE700987F22 /* ico_call_out2.png */,
 				4C5E8E1315766ABA00987F22 /* ico_call_in2@2x.png */,
-				4CBFE55F159B3BF20018E47C /* ico_video_call.png */,
 				4C5E8E1415766ABA00987F22 /* ico_call_out2@2x.png */,
-				4C22C94D1556B4860068447D /* tabitem_keypad@2x.png */,
-				4C8CB1D6156D67CB00DE3804 /* ico_add_call.png */,
-				4C4ABE53155FCE4D009B7CA9 /* fpad.png */,
-				4C66C512155814F800B6BB8C /* ico_mute.png */,
 				4C22C9491556B3DB0068447D /* tabitem_keypad.png */,
+				4C22C94D1556B4860068447D /* tabitem_keypad@2x.png */,
+				4C4ABE53155FCE4D009B7CA9 /* fpad.png */,
+				4CC583D21711A50300E1C7B6 /* fpad@2x.png */,
+				4C9CC21F155035D40031DB30 /* bt_dial_contact.png */,
+				4CC583E01711AC9B00E1C7B6 /* bt_dial_contact@2x.png */,
 				4C9CC220155035D50031DB30 /* bt_dial_backspace.png */,
+				4CC583DE1711ABE600E1C7B6 /* bt_dial_backspace@2x.png */,
 				4C9CC21C155031E00031DB30 /* bt_dial_up.png */,
+				4C9CC214155013700031DB30 /* bt_call_up.png */,
+				4CC583DA1711AAD600E1C7B6 /* bt_call_up@2x.png */,
 				4C3E78C315D30F6C003932AE /* panel_call_meta.png */,
 				4C4ABE51155FCBF9009B7CA9 /* bt_ico_drop_call.png */,
+				4CC583C11711A0D300E1C7B6 /* bt_ico_drop_call@2x.png */,
 				4C22C957155722B30068447D /* bt_gray.png */,
-				4C22C958155722B30068447D /* bt_green_wide.png */,
 				4CD4691515659A0100D8AC8F /* bt_ico_answer_call.png */,
+				4CC583C01711A0D200E1C7B6 /* bt_ico_answer_call@2x.png */,
 				4C22C959155722B30068447D /* bt_green.png */,
 				4C22C95B155722B40068447D /* bt_red.png */,
 				4C22C95C155722B40068447D /* ico_user.png */,
+				4CC583FE1713503A00E1C7B6 /* ico_user@2x.png */,
+				4CD6EDFA161B7640006A736E /* ico_user_plus.png */,
+				4CC584001713509F00E1C7B6 /* ico_user_plus@2x.png */,
 				4C9CC217155013EE0031DB30 /* bg_main.png */,
-				4C22C965155730260068447D /* fpad_bt_1_down.png */,
 				4C22C9631557234D0068447D /* bg_panel_user.png */,
-				4CBFE56E15A24E820018E47C /* ico_camera.png */,
-				4CBFE57315A251600018E47C /* ico_camera_not@2x.png */,
-				4CBFE57415A251600018E47C /* ico_camera@2x.png */,
-				4CBFE56F15A24E820018E47C /* ico_camera_not.png */,
-				4CA28D0915595DF700D4C0C7 /* graphic_connect.png */,
 				4CA28D14155A79E000D4C0C7 /* bg_meta.png */,
+				4C66C512155814F800B6BB8C /* ico_mute.png */,
+				4CC583D01711A4D900E1C7B6 /* ico_mute@2x.png */,
+				4C8CB1D6156D67CB00DE3804 /* ico_add_call.png */,
+				4CC583CA1711A41300E1C7B6 /* ico_add_call@2x.png */,
+				4CBFE55F159B3BF20018E47C /* ico_video_call.png */,
+				4CC583CE1711A49800E1C7B6 /* ico_video_call@2x.png */,
+				4C66C50F15580E3E00B6BB8C /* ico_speaker.png */,
+				4CC583CB1711A41400E1C7B6 /* ico_speaker@2x.png */,
+				4CBFE56E15A24E820018E47C /* ico_camera.png */,
+				4CBFE57415A251600018E47C /* ico_camera@2x.png */,
+				4CA28D1E155C071600D4C0C7 /* ico_keypad.png */,
+				4CC583E21711AD0800E1C7B6 /* ico_keypad@2x.png */,
+				4CBFE56F15A24E820018E47C /* ico_camera_not.png */,
+				4CBFE57315A251600018E47C /* ico_camera_not@2x.png */,
 				4C00DC7F1568291C006512AA /* panel_cmanager_call_inactive.png */,
 				4C00DC801568291D006512AA /* panel_cmanager_call_active.png */,
+				4CC583FC17134C2A00E1C7B6 /* panel_cmanager_call_active@2x.png */,
 				4C9CC218155013EF0031DB30 /* panel_dial_number_area.png */,
-				4C9CC2131550136E0031DB30 /* bt_call_down.png */,
-				4C9CC214155013700031DB30 /* bt_call_up.png */,
 				4CA28D0E1559F06000D4C0C7 /* bt_settings.png */,
-				4C66C50F15580E3E00B6BB8C /* ico_speaker.png */,
+				4C22C965155730260068447D /* fpad_bt_1_down.png */,
 				4C66C50C15580DFE00B6BB8C /* fpad_bt_3_down.png */,
-				4CA28D1E155C071600D4C0C7 /* ico_keypad.png */,
-				4CA28D20155C077B00D4C0C7 /* fkeypad.png */,
 			);
 			name = img;
 			sourceTree = "<group>";
@@ -1391,13 +1481,15 @@
 		4CC83D49152A3C3C00D25CB9 = {
 			isa = PBXGroup;
 			children = (
+				4CB43A231770753B008C0D48 /* Default-568h@2x.png */,
+				4C34B79B175C87BE0047C208 /* libpolar_ssl.a */,
+				4CD413F5170D87DE0004A19E /* SystemConfiguration.framework */,
 				4CACF81B16AC1AA400B9FAEC /* Security.framework */,
 				4CB28F7015D98830001425C9 /* SilentPhone_57x57_.png */,
 				4C804F4915BB674C0070B93B /* libsqlite3.0.dylib */,
 				4C804F3915BA1C1F0070B93B /* libwerner_zrtp.a */,
 				4C0D830E158FC460004392A0 /* libsqlite3.dylib */,
 				4CD4691915659FA100D8AC8F /* sc_app_logo_114px.png */,
-				4C9CC20D154E95480031DB30 /* libpolar_ssl.a */,
 				4CC83D5E152A3C3D00D25CB9 /* VoipPhone */,
 				4CC83D57152A3C3D00D25CB9 /* Frameworks */,
 				4CC83D55152A3C3D00D25CB9 /* Products */,
@@ -1462,8 +1554,9 @@
 				4C0D8307158F64F3004392A0 /* settings.txt */,
 				4CD6EDFD161BA4DA006A736E /* prov_cert.prov */,
 				4CBFE57915A32D660018E47C /* Country.txt */,
-				4C3E78C115D30F2A003932AE /* failed8k.raw */,
 				4C8CB1C8156BFB7F00DE3804 /* ring.caf */,
+				4C34B7D01760CB950047C208 /* ring_retro.caf */,
+				4C3E78C115D30F2A003932AE /* failed8k.raw */,
 				4C8CB1C3156BD40800DE3804 /* securemode.raw */,
 				4C61451516AFDFB20003645E /* audio_interrupt16k.raw */,
 				4CC83D60152A3C3D00D25CB9 /* VoipPhone-Info.plist */,
@@ -1756,7 +1849,6 @@
 				4CC83D63152A3C3D00D25CB9 /* InfoPlist.strings in Resources */,
 				4C350B79152A3D5D00E44BC0 /* MainWindow.xib in Resources */,
 				4CC54AC41534EAD50032C392 /* Recents.xib in Resources */,
-				4C9CC215155013730031DB30 /* bt_call_down.png in Resources */,
 				4C9CC216155013730031DB30 /* bt_call_up.png in Resources */,
 				4C9CC219155013EF0031DB30 /* bg_main.png in Resources */,
 				4C9CC21A155013EF0031DB30 /* panel_dial_number_area.png in Resources */,
@@ -1773,7 +1865,6 @@
 				4C22C94E1556B4860068447D /* tabitem_keypad@2x.png in Resources */,
 				4C22C9561556EAC10068447D /* Default.png in Resources */,
 				4C22C95D155722B40068447D /* bt_gray.png in Resources */,
-				4C22C95E155722B40068447D /* bt_green_wide.png in Resources */,
 				4C22C95F155722B40068447D /* bt_green.png in Resources */,
 				4C22C961155722B40068447D /* bt_red.png in Resources */,
 				4C22C962155722B40068447D /* ico_user.png in Resources */,
@@ -1782,12 +1873,10 @@
 				4C66C50D15580DFE00B6BB8C /* fpad_bt_3_down.png in Resources */,
 				4C66C51015580E3E00B6BB8C /* ico_speaker.png in Resources */,
 				4C66C513155814F800B6BB8C /* ico_mute.png in Resources */,
-				4CA28D0A15595DF700D4C0C7 /* graphic_connect.png in Resources */,
 				4CA28D0D1559BD1D00D4C0C7 /* ico_end_call.png in Resources */,
 				4CA28D0F1559F06000D4C0C7 /* bt_settings.png in Resources */,
 				4CA28D15155A79E000D4C0C7 /* bg_meta.png in Resources */,
 				4CA28D1F155C071800D4C0C7 /* ico_keypad.png in Resources */,
-				4CA28D21155C077B00D4C0C7 /* fkeypad.png in Resources */,
 				4C4ABE45155E9A6F009B7CA9 /* CallManeger.xib in Resources */,
 				4C4ABE50155F0DE1009B7CA9 /* CallCell.xib in Resources */,
 				4C4ABE52155FCBF9009B7CA9 /* bt_ico_drop_call.png in Resources */,
@@ -2059,6 +2148,37 @@
 				4CD6EDFB161B7640006A736E /* ico_user_plus.png in Resources */,
 				4CD6EDFE161BA4DB006A736E /* prov_cert.prov in Resources */,
 				4C61451616AFDFB20003645E /* audio_interrupt16k.raw in Resources */,
+				4CAB432116E20CAA00BB52A5 /* out_in_panel.png in Resources */,
+				4CAB432316E20CAA00BB52A5 /* private_panel.png in Resources */,
+				4CAB432416E20CAA00BB52A5 /* conf_panel.png in Resources */,
+				4CC583BD1711A08000E1C7B6 /* drag@2x.png in Resources */,
+				4CC583BE1711A08000E1C7B6 /* drag.png in Resources */,
+				4CC583C21711A0D300E1C7B6 /* bt_ico_answer_call@2x.png in Resources */,
+				4CC583C31711A0D300E1C7B6 /* bt_ico_drop_call@2x.png in Resources */,
+				4CC583C51711A20B00E1C7B6 /* out_in_panel@2x.png in Resources */,
+				4CC583C81711A28B00E1C7B6 /* conf_panel@2x.png in Resources */,
+				4CC583C91711A28B00E1C7B6 /* private_panel@2x.png in Resources */,
+				4CC583CC1711A41500E1C7B6 /* ico_add_call@2x.png in Resources */,
+				4CC583CD1711A41500E1C7B6 /* ico_speaker@2x.png in Resources */,
+				4CC583CF1711A49900E1C7B6 /* ico_video_call@2x.png in Resources */,
+				4CC583D11711A4DA00E1C7B6 /* ico_mute@2x.png in Resources */,
+				4CC583D31711A50400E1C7B6 /* fpad@2x.png in Resources */,
+				4CC583D51711A64400E1C7B6 /* ico_mute_small@2x.png in Resources */,
+				4CC583D81711A9EB00E1C7B6 /* ico_call_out@2x.png in Resources */,
+				4CC583D91711A9EB00E1C7B6 /* ico_call_in@2x.png in Resources */,
+				4CC583DB1711AADA00E1C7B6 /* bt_call_up@2x.png in Resources */,
+				4CC583DD1711AB8D00E1C7B6 /* ico_antena_0@2x.png in Resources */,
+				4CC583DF1711ABE900E1C7B6 /* bt_dial_backspace@2x.png in Resources */,
+				4CC583E11711ACA000E1C7B6 /* bt_dial_contact@2x.png in Resources */,
+				4CC583E31711AD0C00E1C7B6 /* ico_keypad@2x.png in Resources */,
+				4CC583E51711BEE000E1C7B6 /* ico_end_call@2x.png in Resources */,
+				4CC583FD17134C3300E1C7B6 /* panel_cmanager_call_active@2x.png in Resources */,
+				4CC583FF1713504300E1C7B6 /* ico_user@2x.png in Resources */,
+				4CC58401171350A900E1C7B6 /* ico_user_plus@2x.png in Resources */,
+				4CC58405171353EC00E1C7B6 /* panel_call_topbar@2x.png in Resources */,
+				4CC584071713561D00E1C7B6 /* bg_time@2x.png in Resources */,
+				4C34B7D11760CB950047C208 /* ring_retro.caf in Resources */,
+				4CB43A241770753B008C0D48 /* Default-568h@2x.png in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -2217,6 +2337,8 @@
 				4CACF7F2169D162E00B9FAEC /* media.cpp in Sources */,
 				4CACF80716A44E5600B9FAEC /* sip_reason_translator.cpp in Sources */,
 				4CACF81A16AC182C00B9FAEC /* KeychainItemWrapper.m in Sources */,
+				4C6D506316DB4E4100553312 /* tivi_log.cpp in Sources */,
+				4CD413F3170D85740004A19E /* Reachability.m in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -2265,13 +2387,13 @@
 				GCC_WARN_UNUSED_VARIABLE = YES;
 				IPHONEOS_DEPLOYMENT_TARGET = 5.0;
 				LD_NO_PIE = NO;
-				ONLY_ACTIVE_ARCH = YES;
+				ONLY_ACTIVE_ARCH = NO;
 				"OTHER_CFLAGS[arch=*]" = "";
 				PROVISIONING_PROFILE = "";
 				"PROVISIONING_PROFILE[sdk=iphoneos*]" = "";
 				SDKROOT = iphoneos;
 				TARGETED_DEVICE_FAMILY = "1,2";
-				USER_HEADER_SEARCH_PATHS = "../../../libs/libzrtp-trunk/third_party/bnlib ../../../libs/libzrtp-trunk/include ../../../libs/libzrtp-trunk/third_party/bgaes ../../../libs/zrtp/** ../../../libs/zrtp/zrtp/libzrtpcpp/**";
+				USER_HEADER_SEARCH_PATHS = "../../../libs/zrtp/** ../../../libs/zrtp/zrtp/libzrtpcpp/** ../../../libs/polarssl/include";
 			};
 			name = Debug;
 		};
@@ -2295,14 +2417,14 @@
 				"HEADER_SEARCH_PATHS[arch=*]" = "";
 				IPHONEOS_DEPLOYMENT_TARGET = 5.0;
 				LD_NO_PIE = NO;
-				ONLY_ACTIVE_ARCH = YES;
+				ONLY_ACTIVE_ARCH = NO;
 				OTHER_CFLAGS = "-DNS_BLOCK_ASSERTIONS=1";
 				"OTHER_CFLAGS[arch=*]" = "";
 				PROVISIONING_PROFILE = "";
 				"PROVISIONING_PROFILE[sdk=iphoneos*]" = "";
 				SDKROOT = iphoneos;
 				TARGETED_DEVICE_FAMILY = "1,2";
-				USER_HEADER_SEARCH_PATHS = "../../../libs/libzrtp-trunk/third_party/bnlib ../../../libs/libzrtp-trunk/include ../../../libs/libzrtp-trunk/third_party/bgaes ../../../libs/zrtp/** ../../../libs/zrtp/zrtp/libzrtpcpp/**";
+				USER_HEADER_SEARCH_PATHS = "../../../libs/zrtp/** ../../../libs/zrtp/zrtp/libzrtpcpp/** ../../../libs/polarssl/include";
 				VALIDATE_PRODUCT = YES;
 			};
 			name = Release;
@@ -2315,6 +2437,10 @@
 				GCC_PRECOMPILE_PREFIX_HEADER = YES;
 				GCC_PREFIX_HEADER = "VoipPhone/VoipPhone-Prefix.pch";
 				GCC_VERSION = com.apple.compilers.llvm.clang.1_0;
+				HEADER_SEARCH_PATHS = (
+					../../libs/zrtpcpp/,
+					../../libs/zrtpcpp/clients/tivi/,
+				);
 				INFOPLIST_FILE = "VoipPhone/VoipPhone-Info.plist";
 				IPHONEOS_DEPLOYMENT_TARGET = 5.0;
 				LD_NO_PIE = NO;
@@ -2322,14 +2448,17 @@
 					"$(inherited)",
 					"\"$(SRCROOT)/../../encrypt/zrtp\"",
 					"\"$(SRCROOT)/../../../libs/libzrtp-trunk/projects/xcode_iphone/build/Debug-iphoneos\"",
-					"\"$(SRCROOT)/../../../libs/polarssl-1.1.1/iphone/polar_ssl/DerivedData/polar_ssl/Build/Products/Debug-iphoneos\"",
+					"\"$(SRCROOT)/../../libs/polarssl/iphone/polar_ssl/build/Debug-iphoneos\"",
 					"\"$(SRCROOT)/../../audio/ec/speex_aec\"",
 					"\"$(SRCROOT)/../../../libs/werner_zrtp/DerivedData/werner_zrtp/Build/Products/Debug-iphoneos\"",
+					"\"$(SRCROOT)/../../../libs/polarssl-1.1.4/iphone/polar_ssl/DerivedData/polar_ssl/Build/Products/Debug-iphoneos\"",
+					"\"$(SRCROOT)/../../../libs/polar_ssl_proj/DerivedData/polar_ssl/Build/Products/Debug-iphoneos\"",
 				);
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				PROVISIONING_PROFILE = "";
 				"PROVISIONING_PROFILE[sdk=iphoneos*]" = "";
 				TARGETED_DEVICE_FAMILY = 1;
+				USER_HEADER_SEARCH_PATHS = ../../libs/polarssl/include;
 				WRAPPER_EXTENSION = app;
 			};
 			name = Debug;
@@ -2343,6 +2472,10 @@
 				GCC_PRECOMPILE_PREFIX_HEADER = YES;
 				GCC_PREFIX_HEADER = "VoipPhone/VoipPhone-Prefix.pch";
 				GCC_VERSION = com.apple.compilers.llvm.clang.1_0;
+				HEADER_SEARCH_PATHS = (
+					../../libs/zrtpcpp/,
+					../../libs/zrtpcpp/clients/tivi/,
+				);
 				INFOPLIST_FILE = "VoipPhone/VoipPhone-Info.plist";
 				IPHONEOS_DEPLOYMENT_TARGET = 5.0;
 				LD_NO_PIE = NO;
@@ -2350,14 +2483,18 @@
 					"$(inherited)",
 					"\"$(SRCROOT)/../../encrypt/zrtp\"",
 					"\"$(SRCROOT)/../../../libs/libzrtp-trunk/projects/xcode_iphone/build/Debug-iphoneos\"",
-					"\"$(SRCROOT)/../../../libs/polarssl-1.1.1/iphone/polar_ssl/DerivedData/polar_ssl/Build/Products/Debug-iphoneos\"",
+					"\"$(SRCROOT)/../../libs/polarssl/iphone/polar_ssl/build/Debug-iphoneos\"",
 					"\"$(SRCROOT)/../../audio/ec/speex_aec\"",
 					"\"$(SRCROOT)/../../../libs/werner_zrtp/DerivedData/werner_zrtp/Build/Products/Debug-iphoneos\"",
+					"\"$(SRCROOT)/../../../libs/polarssl-1.1.4/iphone/polar_ssl/DerivedData/polar_ssl/Build/Products/Debug-iphoneos\"",
+					"\"$(SRCROOT)/../../../libs/polar_ssl_proj/DerivedData/polar_ssl/Build/Products/Debug-iphoneos\"",
 				);
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				PROVISIONING_PROFILE = "";
 				"PROVISIONING_PROFILE[sdk=iphoneos*]" = "";
 				TARGETED_DEVICE_FAMILY = 1;
+				USER_HEADER_SEARCH_PATHS = ../../libs/polarssl/include;
+				VALIDATE_PRODUCT = NO;
 				WRAPPER_EXTENSION = app;
 			};
 			name = Release;

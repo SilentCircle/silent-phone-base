@@ -86,6 +86,8 @@ ZRtp::ZRtp(uint8_t *myZid, ZrtpCallback *cb, std::string id, ZrtpConfigure* conf
     hmacFunctionImpl = hmac_sha256;
     hmacListFunctionImpl = hmac_sha256;
 
+    memcpy(ownZid, myZid, ZID_SIZE);        // save the ZID
+
     /*
      * Generate H0 as a random number (256 bits, 32 bytes) and then
      * the hash chain, refer to chapter 9. Use the implicit hash function.
@@ -95,20 +97,39 @@ ZRtp::ZRtp(uint8_t *myZid, ZrtpCallback *cb, std::string id, ZrtpConfigure* conf
     sha256(H1, HASH_IMAGE_SIZE, H2);        // H2
     sha256(H2, HASH_IMAGE_SIZE, H3);        // H3
 
-    zrtpHello.configureHello(&configureAlgos);
-    zrtpHello.setH3(H3);                    // set H3 in Hello, included in helloHash
+    // configure all supported Hello packet versions
+    zrtpHello_11.configureHello(&configureAlgos);
+    zrtpHello_11.setH3(H3);                    // set H3 in Hello, included in helloHash
+    zrtpHello_11.setZid(ownZid);
+    zrtpHello_11.setVersion((uint8_t*)zrtpVersion_11);
+
+
+    zrtpHello_12.configureHello(&configureAlgos);
+    zrtpHello_12.setH3(H3);                 // set H3 in Hello, included in helloHash
+    zrtpHello_12.setZid(ownZid);
+    zrtpHello_12.setVersion((uint8_t*)zrtpVersion_12);
+
+    if (mitmm) {                            // this session acts for a trusted MitM (PBX)
+        zrtpHello_11.setMitmMode();
+        zrtpHello_12.setMitmMode();
+    }
+    if (sasSignSupport) {                   // the application supports SAS signing
+        zrtpHello_11.setSasSign();
+        zrtpHello_12.setSasSign();
+    }
+
+    // Keep array in ascending order (greater index -> greater version)
+    helloPackets[0].packet = &zrtpHello_11;
+    helloPackets[0].version = zrtpHello_11.getVersionInt();
+    setClientId(id, &helloPackets[0]);      // set id, compute HMAC and final helloHash
+
+    helloPackets[1].packet = &zrtpHello_12;
+    helloPackets[1].version = zrtpHello_12.getVersionInt();
+    setClientId(id, &helloPackets[1]);      // set id, compute HMAC and final helloHash
+ 
+    currentHelloPacket = helloPackets[SUPPORTED_ZRTP_VERSIONS-1].packet;  // start with highest supported version
+    helloPackets[SUPPORTED_ZRTP_VERSIONS].packet = NULL;
     peerHelloVersion[0] = 0;
-
-    memcpy(ownZid, myZid, ZID_SIZE);
-    zrtpHello.setZid(ownZid);
-
-    if (mitmm)                              // this session acts for a trusted MitM (PBX)
-        zrtpHello.setMitmMode();
-
-    if (sasSignSupport)                     // the application supports SAS signing
-        zrtpHello.setSasSign();
-
-    setClientId(id);                        // set id, compute HMAC and final helloHash
 
     stateEngine = new ZrtpStateClass(this);
 }
@@ -235,7 +256,7 @@ bool ZRtp::inState(int32_t state)
 }
 
 ZrtpPacketHello* ZRtp::prepareHello() {
-    return &zrtpHello;
+    return currentHelloPacket;
 }
 
 ZrtpPacketHelloAck* ZRtp::prepareHelloAck() {
@@ -249,15 +270,14 @@ ZrtpPacketHelloAck* ZRtp::prepareHelloAck() {
  */
 ZrtpPacketCommit* ZRtp::prepareCommit(ZrtpPacketHello *hello, uint32_t* errMsg) {
 
+    if (!hello->isLengthOk()) {
+        *errMsg = CriticalSWError;
+        return NULL;
+    }
     // Save data before detailed checks - may aid in analysing problems
     peerClientId.assign((char*)hello->getClientId(), ZRTP_WORD_SIZE * 4);
     memcpy(peerHelloVersion, hello->getVersion(), ZRTP_WORD_SIZE);
     peerHelloVersion[ZRTP_WORD_SIZE] = 0;
-
-    if (memcmp(hello->getVersion(), zrtpVersion, ZRTP_WORD_SIZE-1) != 0) {
-        *errMsg = UnsuppZRTPVersion;
-        return NULL;
-    }
 
     // Save our peer's (presumably the Responder) ZRTP id
     memcpy(peerZid, hello->getZid(), ZID_SIZE);
@@ -452,6 +472,20 @@ ZrtpPacketDHPart* ZRtp::prepareDHPart1(ZrtpPacketCommit *commit, uint32_t* errMs
 
     sendInfo(Info, InfoRespCommitReceived);
 
+    if (!commit->isLengthOk()) {
+        *errMsg = CriticalSWError;
+        return NULL;
+    }
+
+    // Check if ZID in Commit is the same as we got in Hello
+    uint8_t tmpZid[ZID_SIZE];
+    memcpy(tmpZid, commit->getZid(), ZID_SIZE);
+    if (memcmp(peerZid, tmpZid, ZID_SIZE) != 0) {       // ZIDs do not match????
+        sendInfo(Severe, SevereProtocolError);
+        *errMsg = CriticalSWError;
+        return NULL;
+    }
+
     // The following code check the hash chain according chapter 10 to detect
     // false ZRTP packets.
     // Must use the implicit hash function.
@@ -576,7 +610,7 @@ ZrtpPacketDHPart* ZRtp::prepareDHPart1(ZrtpPacketCommit *commit, uint32_t* errMs
     // (always Initator's), then the DH1 message (which is always a
     // Responder's message).
     // Must use negotiated hash
-    hashCtxFunction(msgShaContext, (unsigned char*)zrtpHello.getHeaderBase(), zrtpHello.getLength() * ZRTP_WORD_SIZE);
+    hashCtxFunction(msgShaContext, (unsigned char*)currentHelloPacket->getHeaderBase(), currentHelloPacket->getLength() * ZRTP_WORD_SIZE);
     hashCtxFunction(msgShaContext, (unsigned char*)commit->getHeaderBase(), commit->getLength() * ZRTP_WORD_SIZE);
     hashCtxFunction(msgShaContext, (unsigned char*)zrtpDH1.getHeaderBase(), zrtpDH1.getLength() * ZRTP_WORD_SIZE);
 
@@ -595,6 +629,10 @@ ZrtpPacketDHPart* ZRtp::prepareDHPart2(ZrtpPacketDHPart *dhPart1, uint32_t* errM
 
     sendInfo(Info, InfoInitDH1Received);
 
+    if (!dhPart1->isLengthOk()) {
+        *errMsg = CriticalSWError;
+        return NULL;
+    }
     // Because we are initiator the protocol engine didn't receive Commit
     // thus could not store a peer's H2. A two step SHA256 is required to
     // re-compute H3. Then compare with peer's H3 from peer's Hello packet.
@@ -667,6 +705,10 @@ ZrtpPacketConfirm* ZRtp::prepareConfirm1(ZrtpPacketDHPart* dhPart2, uint32_t* er
 
     sendInfo(Info, InfoRespDH2Received);
 
+    if (!dhPart2->isLengthOk()) {
+        *errMsg = CriticalSWError;
+        return NULL;
+    }
     // Because we are responder we received a Commit and stored its H2.
     // Now re-compute H2 from received H1 and compare with stored peer's H2.
     // Use implicit hash function
@@ -689,7 +731,7 @@ ZrtpPacketConfirm* ZRtp::prepareConfirm1(ZrtpPacketDHPart* dhPart2, uint32_t* er
     // using my Hello packet and the Initiator's DHPart2 and compare with
     // hvi sent in commit packet. If it doesn't macht then a MitM attack
     // may have occured.
-    computeHvi(dhPart2, &zrtpHello);
+    computeHvi(dhPart2, currentHelloPacket);
     if (memcmp(hvi, peerHvi, HVI_SIZE) != 0) {
         *errMsg = DHErrorWrongHVI;
         return NULL;
@@ -770,6 +812,10 @@ ZrtpPacketConfirm* ZRtp::prepareConfirm1MultiStream(ZrtpPacketCommit* commit, ui
 
     sendInfo(Info, InfoRespCommitReceived);
 
+    if (!commit->isLengthOk()) {
+        *errMsg = CriticalSWError;
+        return NULL;
+    }
     // The following code checks the hash chain according chapter 10 to detect
     // false ZRTP packets.
     // Use implicit hash function
@@ -840,7 +886,7 @@ ZrtpPacketConfirm* ZRtp::prepareConfirm1MultiStream(ZrtpPacketCommit* commit, ui
     // First the Responder's (my) Hello message, second the Commit
     // (always Initator's)
     // use negotiated hash
-    hashCtxFunction(msgShaContext, (unsigned char*)zrtpHello.getHeaderBase(), zrtpHello.getLength() * ZRTP_WORD_SIZE);
+    hashCtxFunction(msgShaContext, (unsigned char*)currentHelloPacket->getHeaderBase(), currentHelloPacket->getLength() * ZRTP_WORD_SIZE);
     hashCtxFunction(msgShaContext, (unsigned char*)commit->getHeaderBase(), commit->getLength() * ZRTP_WORD_SIZE);
 
     closeHashCtx(msgShaContext, messageHash);
@@ -878,6 +924,10 @@ ZrtpPacketConfirm* ZRtp::prepareConfirm2(ZrtpPacketConfirm* confirm1, uint32_t* 
 
     sendInfo(Info, InfoInitConf1Received);
 
+    if (!confirm1->isLengthOk()) {
+        *errMsg = CriticalSWError;
+        return NULL;
+    }
     uint8_t confMac[MAX_DIGEST_LENGTH];
     uint32_t macLen;
 
@@ -994,6 +1044,10 @@ ZrtpPacketConfirm* ZRtp::prepareConfirm2MultiStream(ZrtpPacketConfirm* confirm1,
     // don't update SAS, RS
     sendInfo(Info, InfoInitConf1Received);
 
+    if (!confirm1->isLengthOk()) {
+        *errMsg = CriticalSWError;
+        return NULL;
+    }
     uint8_t confMac[MAX_DIGEST_LENGTH];
     uint32_t macLen;
 
@@ -1059,6 +1113,10 @@ ZrtpPacketConf2Ack* ZRtp::prepareConf2Ack(ZrtpPacketConfirm *confirm2, uint32_t*
 
     sendInfo(Info, InfoRespConf2Received);
 
+    if (!confirm2->isLengthOk()) {
+        *errMsg = CriticalSWError;
+        return NULL;
+    }
     uint8_t confMac[MAX_DIGEST_LENGTH];
     uint32_t macLen;
 
@@ -1151,7 +1209,8 @@ ZrtpPacketError* ZRtp::prepareError(uint32_t errMsg) {
 }
 
 ZrtpPacketPingAck* ZRtp::preparePingAck(ZrtpPacketPing* ppkt) {
-
+    if (ppkt->getLength() != 6)                    // A PING packet must have a length of 6 words
+        return NULL;
     // Because we do not support ZRTP proxy mode use the truncated ZID.
     // If this code shall be used in ZRTP proxy implementation the computation
     // of the endpoint hash must be enhanced (see chaps 5.15ff and 5.16)
@@ -1167,6 +1226,10 @@ ZrtpPacketRelayAck* ZRtp::prepareRelayAck(ZrtpPacketSASrelay* srly, uint32_t* er
     if (!mitmSeen || paranoidMode)
         return &zrtpRelayAck;
 
+    if (!srly->isLengthOk()) {
+        *errMsg = CriticalSWError;
+        return NULL;
+    }
     uint8_t* hkey, *ekey;
     // If we are responder then the PBX used it's Initiator keys
     if (myRole == Responder) {
@@ -1356,74 +1419,75 @@ AlgorithmEnum* ZRtp::findBestCipher(ZrtpPacketHello *hello, AlgorithmEnum* pk) {
 
 AlgorithmEnum* ZRtp::findBestPubkey(ZrtpPacketHello *hello) {
 
-    int i;
-    int ii;
-    int numAlgosIntersect;
-    AlgorithmEnum* algosIntersect[ZrtpConfigure::maxNoOfAlgos+1];
-
-    int numAlgosConf;
-    AlgorithmEnum* algosConf[ZrtpConfigure::maxNoOfAlgos+1];
+    AlgorithmEnum* peerIntersect[ZrtpConfigure::maxNoOfAlgos+1];
+    AlgorithmEnum* ownIntersect[ZrtpConfigure::maxNoOfAlgos+1];
 
     // Build list of own pubkey algorithm names, must follow the order
     // defined in RFC 6189, chapter 4.1.2.
     const char *orderedAlgos[] = {dh2k, ec25, dh3k, ec38};
     int numOrderedAlgos = sizeof(orderedAlgos) / sizeof(const char*);
 
-    int num = hello->getNumPubKeys();
-    if (num == 0) {
+    int numAlgosPeer = hello->getNumPubKeys();
+    if (numAlgosPeer == 0) {
         hash = &zrtpHashes.getByName(mandatoryHash);             // set mandatory hash
         return &zrtpPubKeys.getByName(mandatoryPubKey);
     }
-    // The list must include real public key algorithms only, so skip
-    // mult-stream mode, preshared and alike.
-    numAlgosConf = configureAlgos.getNumConfiguredAlgos(PubKeyAlgorithm);
-    for (i = 0, ii = 0; i < numAlgosConf; i++) {
-        algosConf[ii] = &configureAlgos.getAlgoAt(PubKeyAlgorithm, ii);
-        if (*(int32_t*)(algosConf[ii]->getName()) == *(int32_t*)mult) {
+    // Build own list of intersecting algos, keep own order or algorithms
+    // The list must include real public key algorithms only, so skip mult-stream mode, preshared and alike.
+    int numAlgosOwn = configureAlgos.getNumConfiguredAlgos(PubKeyAlgorithm);
+    int numOwnIntersect = 0;
+    for (int i = 0; i < numAlgosOwn; i++) {
+        ownIntersect[numOwnIntersect] = &configureAlgos.getAlgoAt(PubKeyAlgorithm, i);
+        if (*(int32_t*)(ownIntersect[numOwnIntersect]->getName()) == *(int32_t*)mult) {
             continue;                               // skip multi-stream mode
         }
-        ii++;
-    }
-    numAlgosConf = ii;
- 
-    // Build list of intersecting algos: own and offered in Hello, intersect list is ordered according to offered algorithms
-    for (numAlgosIntersect = 0, i = 0; i < num; i++) {
-        for (ii = 0; ii < numAlgosConf; ii++) {
-            algosIntersect[numAlgosIntersect] = &zrtpPubKeys.getByName((const char*)hello->getPubKeyType(i));
-            if (*(int32_t*)(algosConf[ii]->getName()) == *(int32_t*)(algosIntersect[numAlgosIntersect]->getName())) {
-                numAlgosIntersect++;
+        for (int ii = 0; ii < numAlgosPeer; ii++) {
+            if (*(int32_t*)(ownIntersect[numOwnIntersect]->getName()) == *(int32_t*)(zrtpPubKeys.getByName((const char*)hello->getPubKeyType(ii)).getName())) {
+                numOwnIntersect++;
+                break;
             }
         }
     }
-    if (numAlgosIntersect == 0) {
+    // Build list of peer's intersecting algos: take own list as input, order according to sequence in hello packet (peer's order)
+    int numPeerIntersect = 0;
+    for (int i = 0; i < numAlgosPeer; i++) {
+        peerIntersect[numPeerIntersect] = &zrtpPubKeys.getByName((const char*)hello->getPubKeyType(i));
+        for (int ii = 0; ii < numOwnIntersect; ii++) {
+            if (*(int32_t*)(ownIntersect[ii]->getName()) == *(int32_t*)(peerIntersect[numPeerIntersect]->getName())) {
+                numPeerIntersect++;
+                break;
+            }
+        }
+    }
+    if (numPeerIntersect == 0) {
         // If we don't find a common algorithm - use the mandatory algorithms
         hash = &zrtpHashes.getByName(mandatoryHash);
         return &zrtpPubKeys.getByName(mandatoryPubKey);
     }
     AlgorithmEnum* useAlgo;
-    if (numAlgosIntersect > 1 && *(int32_t*)(algosConf[0]->getName()) != *(int32_t*)(algosIntersect[0]->getName())) {
+    if (numPeerIntersect > 1 && *(int32_t*)(ownIntersect[0]->getName()) != *(int32_t*)(peerIntersect[0]->getName())) {
         int own, peer;
 
-        const int32_t *name = (int32_t*)algosConf[0]->getName();
+        const int32_t *name = (int32_t*)ownIntersect[0]->getName();
         for (own = 0; own < numOrderedAlgos; own++) {
             if (*name == *(int32_t*)orderedAlgos[own])
                 break;
         }
-        name = (int32_t*)algosIntersect[0]->getName();
+        name = (int32_t*)peerIntersect[0]->getName();
         for (peer = 0; peer < numOrderedAlgos; peer++) {
             if (*name == *(int32_t*)orderedAlgos[peer])
                 break;
         }
         if (own < peer) {
-            useAlgo = algosConf[0];
+            useAlgo = ownIntersect[0];
         }
         else {
-            useAlgo = algosIntersect[0];
+            useAlgo = peerIntersect[0];
         }
         // find fastest of conf vs intersecting
     }
     else {
-        useAlgo = algosIntersect[0];
+        useAlgo = peerIntersect[0];
     }
     // select a corresponding strong hash if necessary.
     if (*(int32_t*)(useAlgo->getName()) == *(int32_t*)ec38) {
@@ -1450,14 +1514,14 @@ AlgorithmEnum* ZRtp::findBestSASType(ZrtpPacketHello *hello) {
     if (num == 0) {
         return &zrtpSasTypes.getByName(mandatorySasType);
     }
-    // Buildlist of configured SAS algorithm names
+    // Build list of configured SAS algorithm names
     numAlgosConf = configureAlgos.getNumConfiguredAlgos(SasType);
     for (i = 0; i < numAlgosConf; i++) {
         algosConf[i] = &configureAlgos.getAlgoAt(SasType, i);
     }
     // Build list of offered known algos in Hello,
     for (numAlgosOffered = 0, i = 0; i < num; i++) {
-        algosOffered[numAlgosOffered] = &zrtpSasTypes.getByName((const char*)hello->getSasType(i++));
+        algosOffered[numAlgosOffered] = &zrtpSasTypes.getByName((const char*)hello->getSasType(i));
         if (!algosOffered[numAlgosOffered]->isValid())
             continue;
         numAlgosOffered++;
@@ -2211,6 +2275,13 @@ void ZRtp::resetSASVerified() {
     getZidCacheInstance()->saveRecord(zidRec);
 }
 
+void ZRtp::setRs2Valid() {
+
+    if (zidRec != NULL) {
+        zidRec->setRs2Valid();
+        getZidCacheInstance()->saveRecord(zidRec);
+    }
+}
 
 void ZRtp::sendInfo(GnuZrtpCodes::MessageSeverity severity, int32_t subCode) {
 
@@ -2262,33 +2333,32 @@ void ZRtp::setAuxSecret(uint8_t* data, int32_t length) {
     }
 }
 
-void ZRtp::setClientId(std::string id) {
-    if (id.size() < CLIENT_ID_SIZE) {
-        unsigned char tmp[CLIENT_ID_SIZE +1] = {' '};
-        memcpy(tmp, id.c_str(), id.size());
-        tmp[CLIENT_ID_SIZE] = 0;
-        zrtpHello.setClientId(tmp);
-    } else {
-        zrtpHello.setClientId((unsigned char*)id.c_str());
-    }
+void ZRtp::setClientId(std::string id, HelloPacketVersion* hpv) {
 
-    int32_t len = zrtpHello.getLength() * ZRTP_WORD_SIZE;
+    unsigned char tmp[CLIENT_ID_SIZE +1] = {' '};
+    memcpy(tmp, id.c_str(), id.size());
+    tmp[CLIENT_ID_SIZE] = 0;
 
-    // Hello packet is ready now, compute its HMAC
+    hpv->packet->setClientId(tmp);
+
+    int32_t len = hpv->packet->getLength() * ZRTP_WORD_SIZE;
+
+    // Hello packets are ready now, compute its HMAC
     // (excluding the HMAC field (2*ZTP_WORD_SIZE)) and store in Hello
     // use the implicit hash function
     uint8_t hmac[IMPL_MAX_DIGEST_LENGTH];
     uint32_t macLen;
-    hmacFunctionImpl(H2, HASH_IMAGE_SIZE, (uint8_t*)zrtpHello.getHeaderBase(), len-(2*ZRTP_WORD_SIZE), hmac, &macLen);
-    zrtpHello.setHMAC(hmac);
+    hmacFunctionImpl(H2, HASH_IMAGE_SIZE, (uint8_t*)hpv->packet->getHeaderBase(), len-(2*ZRTP_WORD_SIZE), hmac, &macLen);
+    hpv->packet->setHMAC(hmac);
 
     // calculate hash over the final Hello packet, refer to chap 9.1 how to
     // use this hash in SIP/SDP.
-    hashFunctionImpl((uint8_t*)zrtpHello.getHeaderBase(), len, helloHash);
+    hashFunctionImpl((uint8_t*)hpv->packet->getHeaderBase(), len, hpv->helloHash);
 }
 
 void ZRtp::storeMsgTemp(ZrtpPacketBase* pkt) {
-    int32_t length = pkt->getLength() * ZRTP_WORD_SIZE;
+    uint32_t length = pkt->getLength() * ZRTP_WORD_SIZE;
+    length = (length > sizeof(tempMsgBuffer)) ? sizeof(tempMsgBuffer) : length;
     memset(tempMsgBuffer, 0, sizeof(tempMsgBuffer));
     memcpy(tempMsgBuffer, (uint8_t*)pkt->getHeaderBase(), length);
     lengthOfMsgData = length;
@@ -2304,12 +2374,18 @@ bool ZRtp::checkMsgHmac(uint8_t* key) {
     return (memcmp(hmac, tempMsgBuffer+len, (HMAC_SIZE)) == 0 ? true : false);
 }
 
-std::string ZRtp::getHelloHash() {
+std::string ZRtp::getHelloHash(int32_t index) {
     std::ostringstream stm;
 
-    uint8_t* hp = helloHash;
+    if (index < 0 || index >= MAX_ZRTP_VERSIONS)
+        return std::string();
 
-    stm << zrtpVersion;
+    uint8_t* hp = helloPackets[index].helloHash;
+
+    char version[5] = {'\0'};
+    strncpy(version, (const char*)helloPackets[index].packet->getVersion(), ZRTP_WORD_SIZE);
+
+    stm << version;
     stm << " ";
     stm.fill('0');
     stm << hex;
@@ -2426,7 +2502,8 @@ void ZRtp::conf2AckSecure() {
     Event_t ev;
 
     ev.type = ZrtpPacket;
-    ev.packet = (uint8_t*)&zrtpConf2Ack;
+    ev.packet = (uint8_t*)zrtpConf2Ack.getHeaderBase();
+    ev.length = sizeof (Conf2AckPacket_t) + 12;  // 12 is fixed ZRTP (RTP) header size
 
     if (stateEngine != NULL) {
         stateEngine->processEvent(&ev);

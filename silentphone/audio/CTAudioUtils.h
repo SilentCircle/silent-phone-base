@@ -97,20 +97,21 @@ public:
             return; 
          }
       }
-      
-      TR tMult=8;
-      TR tDiv=10;
+      //TODO analyze how many are on mute or do not speak
+      TR tMult=4;//if one is speaking he can have 80% of max volume
+      TR tDiv=5;
       for(int i=2;i<iCnt;i++){
-         tMult*=8;
-         tDiv*=10;
+         tMult*=4;
+         tDiv*=5;
       }
-      
+      const long long _m=(((1<<14)*(long long)tMult/(long long)tDiv+1));
+      const int m=_m;
       for(int i=0; i<iSamples; i++){
          TR val=0;
          for(int c=0;c<iCnt;c++){
             val+=(TR)samples[c][i];
          }
-         val*=tMult;val/=tDiv;//TODO fixed point 
+         val*=m;val>>=14;
          if(val>ma)res[i]=ma;
          else if(val<mi)res[i]=mi;
          else res[i]=val;

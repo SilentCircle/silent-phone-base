@@ -231,12 +231,11 @@ int CSip::splitSIP(char *pFrom)
 {
    int flag=0;
    register char * cur=pFrom;
+   //pFrom must be zero terminated
    
-   //   bytesParsed=0;
    
    strList[n].uiLen=0;
    strList[n].strVal=cur;
-   //   strList[n].delta=0;
    
    for (;;cur++)
    {
@@ -258,6 +257,10 @@ int CSip::splitSIP(char *pFrom)
             cur++;
             strList[n].strVal=cur;
             while(*cur!=0 && *cur!='"')cur++;
+            if(*cur==0){
+               printError("*cur==0",DROP);
+               return DROP;
+            }
             strList[n].iFirst=34;
             strList[n].iLast=34;
             strList[n].uiLen=cur-strList[n].strVal;//

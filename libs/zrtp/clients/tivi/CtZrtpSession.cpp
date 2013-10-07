@@ -379,7 +379,7 @@ void CtZrtpSession::setSdesEnabled(bool yesNo) {
     sdesEnabled = yesNo;
 }
 
-int CtZrtpSession::getSignalingHelloHash(char *helloHash, streamName streamNm) {
+int CtZrtpSession::getSignalingHelloHash(char *helloHash, streamName streamNm, int32_t index) {
     if (!isReady || !(streamNm >= 0 && streamNm < AllStreams && streams[streamNm] != NULL))
         return 0;
 
@@ -387,7 +387,7 @@ int CtZrtpSession::getSignalingHelloHash(char *helloHash, streamName streamNm) {
     if (stream->isStopped)
         return 0;
 
-    return stream->getSignalingHelloHash(helloHash);
+    return stream->getSignalingHelloHash(helloHash, index);
 }
 
 void CtZrtpSession::setSignalingHelloHash(const char *helloHash, streamName streamNm) {
@@ -499,6 +499,46 @@ bool CtZrtpSession::setCryptoMixAttribute(const char *algoNames, streamName stre
     CtZrtpStream *stream = streams[streamNm];
     return stream->setCryptoMixAttribute(algoNames);
 }
+
+void CtZrtpSession::resetSdesContext(streamName streamNm, bool force) {
+    if (!isReady || !(streamNm >= 0 && streamNm < AllStreams && streams[streamNm] != NULL))
+        return;
+
+    CtZrtpStream *stream = streams[streamNm];
+    stream->resetSdesContext(force);
+}
+
+
+int32_t CtZrtpSession::getNumberSupportedVersions(streamName streamNm) {
+    if (!isReady || !(streamNm >= 0 && streamNm < AllStreams && streams[streamNm] != NULL))
+        return 0;
+
+    CtZrtpStream *stream = streams[streamNm];
+    return stream->getNumberSupportedVersions();
+}
+
+const char* CtZrtpSession::getZrtpEncapAttribute(streamName streamNm) {
+    if (!isReady || !(streamNm >= 0 && streamNm < AllStreams && streams[streamNm] != NULL))
+        return NULL;
+
+    CtZrtpStream *stream = streams[streamNm];
+    if (stream->isStopped)
+        return NULL;
+
+    return stream->getZrtpEncapAttribute();
+}
+
+void CtZrtpSession::setZrtpEncapAttribute(const char *attribute, streamName streamNm) {
+    if (!isReady || !(streamNm >= 0 && streamNm < AllStreams && streams[streamNm] != NULL))
+        return;
+
+    CtZrtpStream *stream = streams[streamNm];
+    if (stream->isStopped)
+        return;
+
+    stream->setZrtpEncapAttribute(attribute);
+}
+
 
 void CtZrtpSession::cleanCache() {
     getZidCacheInstance()->cleanup();

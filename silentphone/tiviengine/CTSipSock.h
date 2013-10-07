@@ -141,6 +141,7 @@ public:
    void emptyQueve();
    
 private:
+   void del_sock(DEL_SOCK *s);
    int (*errMsgTLS)(void *pRet, const char *err);
    void *pRetTLS;
    
